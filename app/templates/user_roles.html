@@ -1,0 +1,38 @@
+{%extends "base.html" %}
+{% block content %}
+ <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Роли пользователя</th>
+            <th scope="col">Возможные роли</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+                <table>
+                    <tr>
+                            {%for role in user.roles%}
+                            <td style = 'padding: 0px 5px; border:none'><div class="p-1 rounded bg-info text-light" >{{'{} '.format(role.name)}}</div></td>
+                            <td style = 'padding: 0px 5px; border:none'><a href="{{url_for('delete_role', user = user.username, role=role.name)}}"><button type="button" class="btn btn-outline-danger btn-sm mr-3">&times;</button></a></td>
+                            {%endfor%}
+                        
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table>
+                    <tr>
+                            {%for role in roles%}
+                            <td style = 'padding: 0px 5px; border:none'><div class="p-1 rounded bg-info text-light" >{{'{} '.format(role.name)}}</div></td>
+                            <td style = 'padding: 0px 5px; border:none'><a href="{{url_for('append_role', user = user.username, role=role.name)}}"><button type="button" class="btn btn-outline-success btn-sm mr-3">+</button></a></td>
+                            {%endfor%}
+                    </tr>
+                </table>
+            </td>
+          </tr>
+    
+        </tbody>
+    </table>
+    </div>
+ {% endblock %}

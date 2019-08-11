@@ -1,0 +1,53 @@
+{%extends 'base.html'%}
+
+{%block content%}
+<nav aria-label="breadcrumb">
+   <ol class="breadcrumb">
+     <li class="breadcrumb-item"><a href="{{url_for('component_table')}}">Комплектующие</a></li>
+     <li class="breadcrumb-item active" aria-current="page">{{component.component_name}}</li>
+   </ol>
+ </nav>
+
+<div class="row">
+    
+<div class = ' col-4'>
+        <div class="col"><p>Наименование: <span>{{component.component_name}}</span></p></div>
+        <div class="col"><p>Артикул: <span>{{component.product_item}}</span></p></div>
+        <div class="col"><p>Единицы измерения:  <span>{{component.component_unit}}</span></p></div>
+        <div class="col">
+            <div class="p-0 col"><a href="{{url_for('create_modal_component', modal_component = component.id, det = 'hollow')}}"><button type="button" class="btn btn-success btn-sm mr-3">Изменить сотавляющие</button></a></div>
+            <div class="p-0 col mt-2"><a href="{{url_for('delete_component', id = component.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3">Удалить</button></a></div>
+               
+         </div>
+    </div>
+<div class=" m-0 col-8">
+    <div class=" m-0 col">
+      
+       <table class="table table-sm table-hover  ">
+          <thead>
+          <tr>
+               <td scope="col">Деталь</td>
+               <td scope="col">Ед.изм</td>
+               <td scope="col">Кол-во</td>
+               <td></td>
+          </tr>
+          </thead>
+          <tbody>
+             {% for specification in specifications%}
+             <tr>
+                <td scope="row">{{specification.get_component().component_name}}</td>
+                <td>{{specification.get_component().component_unit}}</td>
+                <td>{{specification.count}}</td>
+                <td>
+                    {%if specification.get_children(specification.get_component().id)%}
+                        <a href="{{url_for('component_info', component=specification.get_component().id)}}"><button type="button" class="py-0 btn btn-success btn-sm mr-2">...</button></a>
+                    {%endif%}</td>
+             </tr>
+             {%endfor%}
+          <tr>
+          </tr>
+          </tbody>
+       </table>
+    </div>
+</div>
+{%endblock%}

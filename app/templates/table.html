@@ -1,0 +1,37 @@
+{%extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+<div class="container">
+<table class="table table-hover">
+    <thead>
+      <tr>
+        <td scope="col">ID</td>
+        <td scope="col">Имя</td>
+        <td scope="col">Роли</td>
+        <td></td>
+      </tr>
+    </thead>
+    <tbody>
+    {% for user in users%}
+      <tr>
+        <td scope="row">{{user.id}}</td>
+        <td>{{user.username}}</td>
+        <td>
+            <table>
+                <tr>
+                    {%for role in user.roles%}
+                    <td style = 'padding: 0px 5px; border:none'><div class="p-1 rounded bg-info text-light" >{{'{} '.format(role.name)}}</div></td>
+                    {%endfor%}
+                    
+                </tr>
+            </table>
+        </td>
+        <td><a href="{{url_for('roles_form', user = user.username)}}"><button type="button" class="btn btn-success btn-sm mr-3">Изменить</button></a></td>
+      </tr>
+    {%endfor%}
+
+    </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,289 @@
+{%extends 'base.html'%}
+
+
+
+{%block content%}
+<nav aria-label="breadcrumb">
+   <ol class="breadcrumb">
+     <li class="breadcrumb-item"><a href="{{url_for('product_info', product=product)}}">Товар</a></li>
+     <li class="breadcrumb-item active" aria-current="page">Добавление спецификации</li>
+   </ol>
+ </nav>
+ {% block flash_messages %}
+ {% with messages = get_flashed_messages() %}
+     {% if messages %}
+         {% for message in messages %}
+             {%if 'success' not in message and 'must' not in message%}
+             <div class="alert alert-danger">{{ message|safe }}</div>
+             {%endif%}
+         {% endfor %}
+     {% endif %}
+ {% endwith %}
+ {% endblock %}
+
+<div class = 'ml-1 mb-3 row'>
+<form class='form-inline' action = "" method = post>
+    <fieldset>
+       <legend>Спецификация товара</legend>
+       {{ form.hidden_tag() }}
+      <div class=" ml-1 row"> 
+         
+         <button type="button" class="btn btn-primary mr-3" data-toggle="modal" data-target="#exampleModal" data-whatever="@mdo">
+         {%if component_name == 'hollow'%}
+            Выбрать деталь
+         {%else%}
+            {{component_name}}
+         {%endif%}    
+         </button>
+         {%if component_name!='hollow'%}
+            {{ form.component_type(class_="form-control selectpicker mr-3 col-4") }}
+            {{ form.count(class_=" form-control col-2 mr-3", placeholder="Количество") }}
+            {{ form.submit(class_="btn btn-success btn-sm ") }}
+         {%endif%}
+         
+         <div class="modal fade " id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+               <div class="modal-dialog" role="document">
+               <div class="modal-content">
+                  <div class="modal-header">
+                     <div>Выбрать деталь</div>
+                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                     <span aria-hidden="true">&times;</span>
+                     </button>
+                  </div>
+                  <div class="modal-body" id='modal-body'>
+                        <div class="form-group">
+                              <input type="text" class="form-control pull-right" id="search" placeholder="Поиск по таблице">
+                          </div>
+                          
+                          <table class="table table-sm table-hover mt-4" id='mytable'>
+                              <tbody>
+                              {% for component in components%}
+                                <tr>
+                                  <td scope="row">{{component.component_name}}</td>
+                                  <td>{{component.component_item}}</td>
+                                  <td>
+                                      <a href="{{url_for('product_specification', product = product, det=component.id)}}"><button type="button" class="btn btn-success btn-sm mr-3">Выбрать</button></a>
+                                  </td>
+                                </tr>
+                              {%endfor%}
+                              </tbody>
+                          </table>
+               </div>
+               </div>
+            </div>
+         </div>
+         
+      </div>
+       
+    </fieldset>
+ </form>
+</div>
+
+<div class="row">
+<div class=" m-0 col-12">
+  
+   <table class="table table-sm table-hover ">
+      <h6>Детали корпуса</h6>
+      <thead>
+      <tr>
+            <td class='py-0'>Деталь</td>
+            <td class='py-0'>Ед.изм</td>
+            <td class='py-0'>Кол-во</td>
+            <td class='py-0'></td>
+      </tr>
+      </thead>
+      <tbody>
+         {% for specification in specifications%}
+         {% if specification.component_type == 'Детали корпуса'%}
+         <tr>
+            <td class='py-0'>{{specification.get_component().component_name}}</td>
+            <td class='py-0'>{{specification.get_component().component_unit}}</td>
+            <td class='py-0'>{{specification.count}}</td>
+            <td class='py-0'>
+               <a href="{{url_for('delete_specification', id = specification.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3  py-0">&times;</button></a>
+            </td>
+         </tr>
+         {%endif%}
+         {%endfor%}
+      <tr>
+      </tr>
+      </tbody>
+   </table>
+</div>
+<div class=" m-0 col-12">
+      <table class="table table-sm  table-hover ">
+               <h6> Электротехнические детали</h6>
+         <thead>
+         <tr>
+            <td class='py-0'>Деталь</td>
+            <td class='py-0'>Ед.изм</td>
+            <td class='py-0'>Кол-во</td>
+            <td class='py-0'></td>
+         </tr>
+         </thead>
+         <tbody>
+         {% for specification in specifications%}
+         {% if specification.component_type == 'Электротехнические детали'%}
+         <tr>
+            <td class='py-0'>{{specification.get_component().component_name}}</td>
+            <td class='py-0'>{{specification.get_component().component_unit}}</td>
+            <td class='py-0'>{{specification.count}}</td>
+            <td class='py-0'>
+               <a href="{{url_for('delete_specification', id = specification.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3 py-0">&times;</button></a>
+            </td>
+         </tr>
+         {%endif%}
+         {%endfor%}
+         <tr>
+         </tr>
+         </tbody>
+      </table>
+</div>
+<div class=" m-0 col-12">
+      <table class="table table-sm  table-hover ">
+               <h6>Герметики</h6>
+         <thead>
+         <tr>
+            <td class='py-0'>Деталь</td>
+            <td class='py-0'>Ед.изм</td>
+            <td class='py-0'>Кол-во</td>
+            <td class='py-0'></td>
+         </tr>
+         </thead>
+         <tbody>
+         {% for specification in specifications%}
+         {% if specification.component_type == 'Герметики'%}
+         <tr>
+            <td class='py-0'>{{specification.get_component().component_name}}</td>
+            <td class='py-0'>{{specification.get_component().component_unit}}</td>
+            <td class='py-0'>{{specification.count}}</td>
+            <td class='py-0'>
+               <a href="{{url_for('delete_specification', id = specification.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3 py-0">&times;</button></a>
+            </td>
+         </tr>
+         {%endif%}
+         {%endfor%}
+         <tr>
+         </tr>
+         </tbody>
+      </table>
+</div>
+
+<div class=" m-0 col-12">
+      <table class="table table-sm  table-hover ">
+               <h6>Метизы</h6>
+         <thead>
+         <tr>
+            <td class='py-0'>Деталь</td>
+            <td class='py-0'>Ед.изм</td>
+            <td class='py-0'>Кол-во</td>
+            <td class='py-0'></td>
+         </tr>
+         </thead>
+         <tbody>
+         {% for specification in specifications%}
+         {% if specification.component_type == 'Метизы'%}
+         <tr>
+            <td class='py-0'>{{specification.get_component().component_name}}</td>
+            <td class='py-0'>{{specification.get_component().component_unit}}</td>
+            <td class='py-0'>{{specification.count}}</td>
+            <td class='py-0'>
+               <a href="{{url_for('delete_specification', id = specification.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3 py-0">&times;</button></a>
+            </td>
+         </tr>
+         {%endif%}
+         {%endfor%}
+         <tr>
+         </tr>
+         </tbody>
+      </table>
+</div>
+
+<div class=" m-0 col-12">
+      <table class="table table-sm  table-hover ">
+               <h6> Упаковка</h6>
+         <thead>
+         <tr>
+            <td class='py-0'>Деталь</td>
+            <td class='py-0'>Ед.изм</td>
+            <td  class='py-0'>Кол-во</td>
+            <td class='py-0'></td>
+         </tr>
+         </thead>
+         <tbody>
+         {% for specification in specifications%}
+         {% if specification.component_type == 'Упаковка'%}
+         <tr>
+            <td  class='py-0'>{{specification.get_component().component_name}}</td>
+            <td class='py-0'>{{specification.get_component().component_unit}}</td>
+            <td class='py-0'>{{specification.count}}</td>
+            <td class='py-0'>
+               <a href="{{url_for('delete_specification', id = specification.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3 py-0">&times;</button></a>
+            </td>
+         </tr>
+         {%endif%}
+         {%endfor%}
+         <tr>
+         </tr>
+         </tbody>
+      </table>
+</div>
+
+<div class=" m-0 col-12">
+      <table class="table table-sm  table-hover ">
+               <h6> Расходные материалы</h6>
+         <thead>
+         <tr>
+            <td scope="col">Деталь</td>
+            <td scope="col">Ед.изм</td>
+            <td scope="col">Кол-во</td>
+            <td></td>
+         </tr>
+         </thead>
+         <tbody>
+         {% for specification in specifications%}
+         {% if specification.component_type == 'Расходные материалы'%}
+         <tr>
+            <td class='py-0'>{{specification.get_component().component_name}}</td>
+            <td class='py-0'>{{specification.get_component().component_unit}}</td>
+            <td class='py-0'>{{specification.count}}</td>
+            <td class='py-0'>
+               <a href="{{url_for('delete_specification', id = specification.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3 py-0">&times;</button></a>
+            </td>
+         </tr>
+         {%endif%}
+         {%endfor%}
+         <tr>
+         </tr>
+         </tbody>
+      </table>
+</div>
+
+</div>
+</div>
+
+<script>
+$('#exampleModal').on('show.bs.modal', function (event) {
+   var button = $(event.relatedTarget) // Кнопка, что спровоцировало модальное окно  
+ 
+   var recipient = button.data('whatever') // Извлечение информации из данных-* атрибутов  
+ 
+   // Если необходимо, вы могли бы начать здесь AJAX-запрос (и выполните обновление в обратного вызова).  
+   
+   // Обновление модальное окно Контента. Мы будем использовать jQuery здесь, но вместо него можно использовать привязки данных библиотеки или других методов.  
+ 
+   var modal = $(this)
+   modal.find('.modal-title').text('New message to ' + recipient)
+   modal.find('.modal-body input').val(recipient)
+   $("#search").keyup(function(){
+         _this = this;
+         $.each($("#mytable tbody tr"), function() {
+         if($(this).text().toLowerCase().indexOf($(_this).val().toLowerCase()) === -1)
+            $(this).hide();
+         else
+            $(this).show();                
+         });
+   });
+   })
+</script>
+{%endblock%}

@@ -1,0 +1,116 @@
+{%extends 'base.html'%}
+
+
+
+{%block content%}
+<nav aria-label="breadcrumb">
+   <ol class="breadcrumb">
+     <li class="breadcrumb-item"><a href="{{url_for('component_table')}}">Комплектующие</a></li>
+     <li class="breadcrumb-item active" aria-current="page">Добавление составного комплектующего</li>
+   </ol>
+ </nav>
+ {% block flash_messages %}
+ {% with messages = get_flashed_messages() %}
+     {% if messages %}
+         {% for message in messages %}
+             {%if 'success' not in message and 'must' not in message%}
+             <div class="alert alert-danger">{{ message|safe }}</div>
+             {%endif%}
+         {% endfor %}
+     {% endif %}
+ {% endwith %}
+ {% endblock %}
+
+<div class = 'ml-1 mb-3 row'>
+<form class='form-inline' action = "" method = post>
+    <fieldset>
+       {{ form.hidden_tag() }}
+      <div class=" ml-1 row"> 
+         <button type="button" class="btn btn-primary mr-3" data-toggle="modal" data-target="#exampleModal" data-whatever="@mdo">
+         {%if component_name == 'hollow'%}
+            Выбрать деталь
+         {%else%}
+            {{component_name}}
+         {%endif%}    
+         </button>
+         
+         <div class="modal fade " id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+               <div class="modal-dialog" role="document">
+               <div class="modal-content">
+                  <div class="modal-header">
+                     <div>Выбрать деталь</div>
+                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                     <span aria-hidden="true">&times;</span>
+                     </button>
+                  </div>
+                  <div class="modal-body" id='modal-body'>
+                        <div class="form-group">
+                              <input type="text" class="form-control pull-right" id="search" placeholder="Поиск по таблице">
+                          </div>
+                          
+                          <table class="table table-sm table-hover mt-4" id='mytable'>
+                              <tbody>
+                              {% for component in components%}
+                                 {%if component.id not in modals and component not in parents%}
+                                 
+                                <tr>
+                                  <td class='py-0'>{{component.component_name}}</td>
+                                  <td class='py-0'>{{component.component_item}}</td>
+                                  <td class='py-0'>
+                                      <a href="{{url_for('create_modal_component', modal_component = modal_component, det=component.id)}}"><button type="button" class="btn btn-success btn-sm mr-3 py-0">+</button></a>
+                                  </td>
+                                </tr>
+                                {%endif%}
+                              {%endfor%}
+                              </tbody>
+                          </table>
+               </div>
+               </div>
+            </div>
+         </div>
+         {%if component_name != 'hollow'%}
+            {{ form.count(class_=" form-control col-3 mr-3", placeholder="Кол-во") }}
+            {{ form.submit(class_="btn btn-success btn-sm ") }}
+         {%endif%}
+      </div>
+       
+    </fieldset>
+ </form>
+</div>
+
+<div class="row">
+<div class=" m-0 col-12">
+  
+   <table class="table table-sm table-hover ">
+      <h4>Компоненты комплектующего</h4>
+      <thead>
+      <tr>
+            <td  class='py-0'>Деталь</td>
+            <td  class='py-0'>Ед.изм</td>
+            <td  class='py-0'>Кол-во</td>
+            <td class='py-0'></td>
+      </tr>
+      </thead>
+      <tbody>
+         {% for specification in specifications%}
+         <tr>
+            <td class='py-0'>{{specification.get_component().component_name}}</td>
+            <td class='py-0'>{{specification.get_component().component_unit}}</td>
+            <td class='py-0'>{{specification.count}}</td>
+            <td class='py-0'>
+                <!-- {%for model in modals%}
+                <a href="{{url_for('component_info', component=specification.get_component().id)}}"><button type="button" class="btn btn-success btn-sm mr-3">Составляющие</button></a>
+                {%endfor%} -->
+               <a href="{{url_for('delete_modal_component', id = specification.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3 py-0">&times;</button></a>
+            </td>
+         </tr>
+         {%endfor%}
+      <tr>
+      </tr>
+      </tbody>
+   </table>
+</div>
+
+</div>
+</div>
+{% endblock %}

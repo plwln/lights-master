@@ -1,0 +1,40 @@
+{%extends 'base.html'%}
+
+
+{%block content%}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{url_for('component_table')}}">Комплектующие</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Добавление комплектующего</li>
+    </ol>
+  </nav>
+{% block flash_messages %}
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            {%if 'success' not in message and 'must' not in message%}
+            <div class="alert alert-danger">{{ message|safe }}</div>
+            {%endif%}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock %}
+<div class="col-6">
+<form action = "" method = post>
+    <fieldset>
+       {{ form.hidden_tag() }}
+       
+       
+          {{ form.name.label(class_="control-label mt-2") }}
+          {{ form.name(class_=" form-control mr-2") }}
+          
+          {{ form.item.label(class_="control-label mt-2") }} {{ form.item(class_=" form-control mr-2") }}
+          
+          {{ form.unit.label(class_="control-label mt-2") }}
+          {{ form.unit(class_="form-control mr-2") }}
+          {{ form.submit(class_="btn btn-success btn-sm mt-2") }}
+       
+    </fieldset>
+ </form>
+</div>
+{%endblock%}

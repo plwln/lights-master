@@ -1,0 +1,266 @@
+{%extends "base.html" %}
+{% block content %}
+{% block flash_messages %}
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            {%if 'success' not in message and 'must' not in message%}
+            <div id=message class="alert alert-success">{{ message|safe }}</div>
+            {%endif%}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{url_for('stock')}}">Склад</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Изменение склада</li>
+  </ol>
+</nav>
+<div class="row ml-1 mt-2">
+  {%if doc_type=='Приход'%}
+    <button id ='Приход' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary disabled">Приход</button>
+  <a href="{{url_for('fork', doc_type='Расход')}}"><button id ='Расход' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary">Расход</button></a> 
+  <a href="{{url_for('fork', doc_type='Списание')}}"><button id ='Списание' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary">Списание</button></a> 
+  {%elif doc_type=='Расход'%}
+  <a href="{{url_for('fork', doc_type='Приход')}}"><button id ='Приход' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary ">Приход</button></a> 
+    <button id ='Расход' type="button" class="btn ml-1 mt-4 mb-2 btn-secondary disabled">Расход</button>
+  <a href="{{url_for('fork', doc_type='Списание')}}"><button id ='Списание' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary">Списание</button></a> 
+  {%else%}
+  <a href="{{url_for('fork', doc_type='Приход')}}"><button id ='Приход' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary ">Приход</button></a> 
+  <a href="{{url_for('fork', doc_type='Расход')}}"><button id ='Расход' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary ">Расход</button></a> 
+    <button id ='Списание' type="button" class="ml-1 mt-4 mb-2 btn btn-secondary disabled">Списание</button>
+  {%endif%}
+  <div class=" colp-0 form-group ml-3 mt-4 mb-2">
+      <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
+  </div>
+</div>
+<div class="row mb-3">
+<div class="col">
+{%if doc_type=='Приход'%}
+<table  id=mytable class="table table-sm table-hover append_div " >
+    <thead>
+      <tr>
+        <td>Наименование</td>
+        <td>Единицы измерения</td>
+        <td>Артикул</td>
+        <td></td>
+      </tr>
+    </thead>
+    <tbody style="overflow: auto; height:400px;">
+    {% for component in components%}
+     {% if modal_component.get_children(component.id)==[]%}
+      <tr>
+        <td class="py-0" >{{component.component_name}}</td>
+        <td class="py-0" >{{component.component_unit}}</td>
+        <td class="py-0">{{component.component_item}}</td>
+        <td class="py-0">
+                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#'+component.get_name()}}">+</button>
+                
+                <div class="modal fade" id='{{component.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{component.get_name()+'Label'}}" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header text-center">
+                        <h5 class="modal-title">Добавление на склад</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <form class='form' action = "" method = post>
+                      
+                      <div class="modal-body">
+                        <div class="row px-3 py-2">
+                            
+                        </div>
+                        {%if doc_type!='Списание'%}
+                        <div class="row px-3 py-2">
+                            <div class="col mt-2"> Количество комплектующих:</div>
+                        <div class="col"> {{form.count( class_="mr-2 mb-2 form-control", placeholder="Кол-во")}}</div>
+                        {%else%}
+                        <div class="row px-3 py-2">
+                            <div class="col mt-2"> Добавить документ списания товара?</div>
+                        <div class="col"> {{form.count( class_="mr-2 mb-2 form-control", placeholder="Кол-во", type="hidden",value=0)}}</div>
+                        {%endif%}
+                        </div>
+                        {{form.id(value=component.id, type="hidden")}}
+                      </div>
+                      
+                      <div class="modal-footer">
+                        {{form.submit( class_="btn btn-success")}}
+                      </div>
+                    </form>
+                    </div>
+                  </div>
+                </div>
+        </td>
+      </tr>
+     {% endif%}
+    {%endfor%}
+    </tbody>
+</table>
+{%else%}
+<table  id=mytable  class="table table-sm table-hover remove_div">
+    <thead>
+      <tr>
+        <td>Наименование</td>
+        <td>Единицы измерения</td>
+        <td>Артикул</td>
+        <td>Кол-во</td>
+        <td></td>
+      </tr>
+    </thead>
+    <tbody style="overflow: auto; height:400px;">
+        {% for item in stock%}
+<<<<<<< HEAD
+        {%if item.get_component().stock_count!=0%}
+=======
+        {%if item.get_count()[0]!=0%}
+>>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
+          <tr>
+            <td class="py-0" >{{item.get_component().component_name}}</td>
+            <td class="py-0" >{{item.get_component().component_unit}}</td>
+            <td class="py-0">{{item.get_component().component_item}}</td>
+<<<<<<< HEAD
+            <td class="py-0">{{item.get_component().stock_count}}</td>
+=======
+            <td class="py-0">{{item.get_count()[0]}}</td>
+>>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
+        <td class="py-0">
+                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#del'+item.get_component().get_name()}}">+</button>
+                
+                <div class="modal fade" id='{{"del"+item.get_component().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{'del'+item.get_component().get_name()+'Label'}}" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header text-center">
+                        <h5 class="modal-title">Добавление на склад</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <form class='form' action = "" method = post>
+                      <div class="modal-body">
+                        <div class="row px-3 py-2">
+                            
+                        </div>{%if doc_type!='Списание'%}
+                        <div class="row px-3 py-2">
+                            <div class="col mt-2"> Количество комплектующих:</div>
+                        <div class="col"> {{form.count( class_="mr-2 mb-2 form-control", placeholder="Кол-во")}}</div>
+                        {%else%}
+                        <div class="row px-3 py-2 text-center">
+                            <div class="col mt-1"> Добавить документ списания товара?</div>
+                        <div> {{form.count( class_="mr-2 mb-2 form-control", placeholder="Кол-во", type="hidden",value=0)}}</div>
+                        </div>
+                        {%endif%}
+                        {{form.id(value=item.get_component().id, type="hidden")}}
+                        
+                      </div>
+                      
+                      <div class="modal-footer">
+                        {{form.submit( class_="btn btn-success")}}
+                      </div>
+                    </form>
+                    </div>
+                  </div>
+                </div>
+        </td>
+      </tr>
+     {% endif%}
+    {%endfor%}
+    </tbody>
+</table>
+{%endif%}
+</div>
+
+
+<div class="col">        
+        <table  id=mytable class="table table-sm table-hover table-bordered">
+          <thead>
+            <tr>
+              <td>Наименование</td>
+              <td>Количество</td>
+              <td colspan="2">Единицы измерения</td>
+            </tr>
+          </thead>
+          <tbody style="overflow: auto; height:400px;">
+          {% for item in current_user.added%}
+            <tr>
+              <td class="py-0" >{{item.get_name()}}</td>
+              {%if item.count==0%}
+              <td class="py-0" >Списание</td>
+              {%else%}
+              <td class="py-0" >{{item.count}}</td>
+              {%endif%}
+              <td class="py-0">{{item.get_unit()}}</td>
+              <td class="py-0">
+                  <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#delete'+item.get_component().get_name()}}">&times;</button>
+                  <div class="modal fade" id='{{"delete"+item.get_component().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{'delete'+item.get_component().get_name()+'Label'}}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header text-center">
+                          <h5 class="modal-title">Удалить?</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-footer">
+                          <a href="{{url_for('delete_stock', stock_id = item.id, doc_id=item.get_document().id)}}"><button type="button" class="btn btn-danger">Удалить</button></a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              </td>
+            </tr>
+          {%endfor%}
+          </tbody>
+      </table>
+      <div class="row px-0"><button type="button" class="btn btn-success btn offset-8 mb-3" data-toggle="modal" data-target="#append">Добавить документ</button></div>
+</div>
+
+</div>
+
+
+                
+<div class="modal fade" id='append' tabindex="-1" role="dialog" aria-labelledby="append" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h5 class="modal-title">Добавление документа</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form class='form' action = "" method = post>
+      <div class="col pl-3 py-0 mt-1 mb-1">
+        Комментарий:
+      </div>
+      <div class="col py-0">
+          {{form1.text()}}
+      </div>
+      {{form.id(value='comment', type="hidden")}}
+      {{form1.hidden_type(value=doc_type, type="hidden")}}
+      <div class="modal-footer">
+        {{form.submit( class_="btn btn-success")}}
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+<script>
+  if($('.disabled').text()=='Списание'){
+      $('#count').attr("value", '0');
+      $('.modal-body').hide();
+      }
+      else{
+        $('.count_div').show();}
+ 
+  </script>
+
+<script>
+    $('#message').show(200, function(){
+      setTimeout(function(){
+        $('#message').hide(500);
+      }, 2000);
+    });
+   
+    </script>
+{% endblock %}
