@@ -111,20 +111,12 @@
     </thead>
     <tbody style="overflow: auto; height:400px;">
         {% for item in stock%}
-<<<<<<< HEAD
         {%if item.get_component().stock_count!=0%}
-=======
-        {%if item.get_count()[0]!=0%}
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
           <tr>
             <td class="py-0" >{{item.get_component().component_name}}</td>
             <td class="py-0" >{{item.get_component().component_unit}}</td>
             <td class="py-0">{{item.get_component().component_item}}</td>
-<<<<<<< HEAD
             <td class="py-0">{{item.get_component().stock_count}}</td>
-=======
-            <td class="py-0">{{item.get_count()[0]}}</td>
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
         <td class="py-0">
                 <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#del'+item.get_component().get_name()}}">+</button>
                 

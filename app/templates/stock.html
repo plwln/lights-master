@@ -11,7 +11,6 @@
     {% endif %}
 {% endwith %}
 {% endblock %}
-
 <div class="row">
     <div class="col"><a href="{{url_for('stock_adding', doc_type='Приход', doc='False')}}"><button class="mt-4 btn btn-primary mr-2">Новый документ</button></a></div> 
    
@@ -37,17 +36,10 @@
           <td class="py-0" >{{item.get_component().component_name}}</td>
           <td class="py-0" >{{item.get_component().component_unit}}</td>
           <td class="py-0">{{item.get_component().component_item}}</td>
-<<<<<<< HEAD
           {%if item.get_component().stock_count==0%}
           <td class="py-0">Списан</td>
           {%else%}
           <td class="py-0">{{item.get_component().stock_count}}</td>
-=======
-          {%if item.get_count()[0]==0%}
-          <td class="py-0">Списан</td>
-          {%else%}
-          <td class="py-0">{{item.get_count()[0]}}</td>
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
           {%endif%}
           <td>
             <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">      

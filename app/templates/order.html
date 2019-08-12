@@ -73,7 +73,6 @@
                 </div>
         </td>
       </tr>
-     {% endif%}
     {%endfor%}
     </tbody>
 </table>
@@ -91,28 +90,13 @@
             </tr>
           </thead>
           <tbody style="overflow: auto; height:400px;">
-          {% for item in current_user.added_products%}
+          {% for item in added%}
             <tr>
-              <td class="py-0" >{{item.get_name()}}</td>
-              <td class="py-0" >{{item.count}}</td>
-              <td class="py-0">{{item.get_unit()}}</td>
+              <td class="py-0" >{{item[0]}}</td>
+              <td class="py-0" >{{item[1]}}</td>
+              <td class="py-0">{{item[2]}}</td>
               <td class="py-0">
-                  <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#delete'+item.get_component().get_name()}}">&times;</button>
-                  <div class="modal fade" id='{{"delete"+item.get_component().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{'delete'+item.get_component().get_name()+'Label'}}" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header text-center">
-                          <h5 class="modal-title">Удалить?</h5>
-                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                        </div>
-                        <div class="modal-footer">
-                          <a href="{{url_for('delete_stock', stock_id = item.id, doc_id=item.get_document().id)}}"><button type="button" class="btn btn-danger">Удалить</button></a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                 
               </td>
             </tr>
           {%endfor%}

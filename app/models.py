@@ -17,7 +17,7 @@ class User(db.Model, UserMixin):
     # Define the relationship to Role via UserRoles
     roles = db.relationship('Role', secondary='user_roles')
     added = db.relationship('Stock', secondary='user_stock')
-    
+    order = []
     # Define the Role data-model
     def delete_role(self, del_role):
         for role in self.roles:
@@ -63,6 +63,7 @@ class UserStock(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     stock_id = db.Column(db.Integer(), db.ForeignKey('stock.id', ondelete='CASCADE'))
 
+
 class Product(db.Model):
     __tablename__ = 'product'
     id = db.Column(db.Integer(), primary_key=True)
@@ -88,16 +89,45 @@ class Product(db.Model):
         db.session.commit()
 
     def get_name(self):
-<<<<<<< HEAD
         liters = [' ', '"',".","(",")","/","\\","*", "_","-",","]
-=======
-        liters = [' ', '"']
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
         name = self.product_name
         for liter in liters:
             name = name.replace(liter, '')
         return name
 
+    def get_det(self):
+        det = {}
+        specifications=Specification.query.filter(Specification.product_id==self.id).all()
+        report = Product.get_details_report(specifications, det)
+        return report
+
+    @staticmethod
+    def get_details_report(spec,det, count=1):
+        component_name = ''
+    
+        for item in spec:
+            if type(item)==Specification: 
+                item_id = item.component_id
+            else: item_id = item.child_id
+            if item.get_children(item_id):
+                count *= item.count
+                Product.get_details_report(ModalComponent.query.filter(ModalComponent.parrent_id==item_id).all(),det, count)
+                
+            else:
+                if type(item)==Specification: 
+                    component_name = Component.query.filter(Component.id==item.component_id).first().component_name
+                    if component_name in det.keys():
+                        det[component_name] += item.count
+                else:
+                    component_name = Component.query.filter(Component.id==item.child_id).first().component_name
+                    if component_name in det.keys():
+                        det[component_name] += item.count*count
+                if component_name not in det.keys() and component_name!='':
+                    det[component_name] = item.count*count
+    
+            
+            
+        return det
 
 
 class Component(db.Model):
@@ -107,11 +137,7 @@ class Component(db.Model):
     component_unit = db.Column(db.String(255, collation='NOCASE'))
     component_item = db.Column(db.Integer(), unique=True)
     unfired = db.Column(db.Float())
-<<<<<<< HEAD
     stock_count = db.Column(db.Float())
-=======
-
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
     def __init__(self, component_name, component_unit, component_item):
         self.component_name = component_name
         self.component_unit = component_unit
@@ -146,11 +172,7 @@ class Component(db.Model):
         return count
     
     def get_name(self):
-<<<<<<< HEAD
         liters = [' ', '"',".","(",")","/","\\","*", "_","-",",", ":", ";"]
-=======
-        liters = [' ', '"']
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
         name = self.component_name
         for liter in liters:
             name = name.replace(liter, '')
@@ -221,7 +243,6 @@ class Document(db.Model):
     maker_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     document_type = db.Column(db.String())
     comment = db.Column(db.String())
-
     def __init__(self, date, maker_id, document_type, comment):
         self.date = date
         self.maker_id = maker_id
@@ -231,12 +252,9 @@ class Document(db.Model):
     def get_maker(self):
         return User.query.filter(User.id==self.maker_id).first()
 
-<<<<<<< HEAD
     def get_name(self):
         return "Document{}".format(self.id)
 
-=======
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
 class Stock(db.Model):
     __tablename__ = 'stock'
     id = db.Column(db.Integer(), primary_key=True)
@@ -257,10 +275,6 @@ class Stock(db.Model):
         return unit
 
     def get_count(self):
-<<<<<<< HEAD
-=======
-        msg=''
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
         count=0
         for item in Stock.query.filter(Stock.component_id==self.component_id).all():
             if item.get_document().document_type=='Приход':
@@ -274,13 +288,9 @@ class Stock(db.Model):
 
             else:
                 count=0
-<<<<<<< HEAD
 
         Component.query.filter(Component.id==self.component_id).first().stock_count=count
         db.session.commit()
-=======
-        return [count, msg]
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
 
     def get_component(self):
         return Component.query.filter(Component.id==self.component_id).first()

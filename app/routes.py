@@ -210,13 +210,10 @@ def stock():
     print(stock_db)
     for item in stock_db:
         stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
-<<<<<<< HEAD
     for item in stock:
         if item.get_component().stock_count is None:
             item.get_count()
-=======
     print(stock)
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
     form = SpecificationForm()
     if request.method == 'POST':
         if form.count.data is None:
@@ -225,17 +222,10 @@ def stock():
         document = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, form.document_type.data, form.text.data)
         db.session.add(document)
         db.session.commit()
-<<<<<<< HEAD
         stock = Stock(document.id, form.id.data, form.count.data)
         db.session.add(stock)
         db.session.commit()
         stock.get_count()
-=======
-        last_count = Stock.query.filter(Stock.component_id==form.id.data).first().get_count()
-        stock = Stock(document.id, form.id.data, form.count.data)
-        db.session.add(stock)
-        db.session.commit()
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
         if form.document_type.data=='Приход':
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
         elif form.document_type.data=='Расход':
@@ -251,10 +241,6 @@ def stock():
 @app.route('/stock_adding/<doc_type>/<doc>', methods = ['GET', 'POST'])
 @login_required
 def stock_adding(doc_type, doc):
-<<<<<<< HEAD
-=======
-    all_stock=Stock.query.all()
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
     today = datetime.today()
     form = SpecificationForm()
     form1 = DocumentForm()
@@ -279,10 +265,7 @@ def stock_adding(doc_type, doc):
                 item.get_document().comment=form1.text.data
                 db.session.commit()
                 current_user.added.remove(item)
-<<<<<<< HEAD
                 item.get_count()
-=======
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
                 db.session.commit()
             flash('Склад обновлён', 'message')
         else:
@@ -311,23 +294,52 @@ def document(component_id):
 
 @app.route('/delete_document/<document_id>')
 @login_required
-<<<<<<< HEAD
 def delete_document(document_id):
     stock = Stock.query.filter(Stock.document_id==document_id)
     component_id = stock.first().component_id
     stock.delete()
     db.session.commit()
     Stock.query.filter(Stock.component_id==component_id).first().get_count()
-=======
-def delete_document(id):
-    document = Document.query.filter(Document.id==id).first()
-    stock = Stock.query.filter(Stock.document_id==Document.id).first()
-    component_id = stock.component_id
-    document.delete()
-    stock.delete()
-    db.session.commit()
->>>>>>> 080e86274ffcd7ae21113dba7614d5639d6c245b
     return redirect(url_for('document', component_id = component_id))
+
+@app.route('/order/<doc>', methods = ['GET', 'POST'])
+@login_required
+def order(doc):
+    today = datetime.today()
+    form = SpecificationForm()
+    form1 = DocumentForm()
+    added = current_user.order
+    product = Product.query.order_by(Product.product_name).all()
+    document = Document(today.strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход',' ')
+    if doc!='False':
+        document= Document.query.filter(Document.id==doc).first()
+    db.session.add(document)
+    db.session.commit()
+    if request.method == 'POST':
+        if form.id.data=='comment':
+            document.comment=form1.text.data
+            db.session.commit()
+            current_user.order=[]
+            db.session.commit()
+            flash('Заказ произведён', 'message')
+        else:
+            if form.count.data is None:
+                flash('Используйте "." вместо ","')
+                return redirect(url_for('order', doc=doc,  form1=form1, added = added, form = form, products=product ))
+            product = Product.query.filter(Product.id==form.id.data).first()
+            added.append([product.product_name, product.product_item, form.count.data])
+            details = product.get_det()
+            for det in details.keys():
+                stock = Stock(document.id, Component.query.filter(Component.component_name==det).first().id, (details[det]*form.count.data))
+                db.session.add(stock)
+                db.session.commit()
+                stock.get_count()
+                print(stock.count)
+            flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
+        return redirect(url_for('order', doc=doc, form1=form1, added = added, form = form, products=product))
+    
+    return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product)
+
 
 @app.route('/fork/<doc_type>')
 @login_required
