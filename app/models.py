@@ -17,7 +17,8 @@ class User(db.Model, UserMixin):
     # Define the relationship to Role via UserRoles
     roles = db.relationship('Role', secondary='user_roles')
     added = db.relationship('Stock', secondary='user_stock')
-    order = []
+    order = db.relationship('Product', secondary='user_product')
+    
     # Define the Role data-model
     def delete_role(self, del_role):
         for role in self.roles:
@@ -26,6 +27,7 @@ class User(db.Model, UserMixin):
     def append_role(self, del_role):
             self.roles.append(Role.query.filter(Role.name==del_role).first())
             db.session.commit()
+
     def append_stock(self, del_stock):
         self.added.append(Stock.query.filter(Stock.id==del_stock).first())
         db.session.commit()
@@ -33,6 +35,7 @@ class User(db.Model, UserMixin):
         for item in self.added:
             self.added.remove(Stock.query.filter(Stock.id==item.id).first())
             db.session.commit()
+
     def delete_stock(self, id):
         stock = Stock.query.filter(Stock.id==id).first()
         self.added.remove(stock)
@@ -44,6 +47,15 @@ class User(db.Model, UserMixin):
         for item in self.added:
             added.append(item)
         return added
+    
+    def append_order(self, del_stock):
+        self.order.append(del_stock)
+        db.session.commit()
+    def delete_order(self):
+        for item in self.order:
+            self.order.remove(Product.query.filter(Product.id==item.id).first())
+            db.session.commit()
+            
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -63,6 +75,11 @@ class UserStock(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     stock_id = db.Column(db.Integer(), db.ForeignKey('stock.id', ondelete='CASCADE'))
 
+class UserProduct(db.Model):
+    __tablename__ = 'user_product'
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
+    product_id = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
 
 class Product(db.Model):
     __tablename__ = 'product'
@@ -89,12 +106,12 @@ class Product(db.Model):
         db.session.commit()
 
     def get_name(self):
-        liters = [' ', '"',".","(",")","/","\\","*", "_","-",","]
+        liters = [' ', '"',".","(",")","/","\\","*", "_","-",",", ":", ";"]
         name = self.product_name
         for liter in liters:
             name = name.replace(liter, '')
         return name
-
+    
     def get_det(self):
         det = {}
         specifications=Specification.query.filter(Specification.product_id==self.id).all()
@@ -130,6 +147,7 @@ class Product(db.Model):
         return det
 
 
+
 class Component(db.Model):
     __tablename__ = 'component'
     id = db.Column(db.Integer(), primary_key=True)
@@ -160,7 +178,6 @@ class Component(db.Model):
         while stock:
             Stock.query.filter(Stock.component_id==id).delete()
             stock = Stock.query.filter(Stock.component_id==id).first()
-        
         Component.query.filter(Component.id==id).delete()
         db.session.commit()  
     
@@ -243,6 +260,7 @@ class Document(db.Model):
     maker_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     document_type = db.Column(db.String())
     comment = db.Column(db.String())
+
     def __init__(self, date, maker_id, document_type, comment):
         self.date = date
         self.maker_id = maker_id
@@ -251,9 +269,8 @@ class Document(db.Model):
     
     def get_maker(self):
         return User.query.filter(User.id==self.maker_id).first()
-
     def get_name(self):
-        return "Document{}".format(self.id)
+        return 'Document{}'.format(self.id)
 
 class Stock(db.Model):
     __tablename__ = 'stock'

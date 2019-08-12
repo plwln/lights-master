@@ -310,33 +310,36 @@ def order(doc):
     form1 = DocumentForm()
     added = current_user.order
     product = Product.query.order_by(Product.product_name).all()
-    document = Document(today.strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход',' ')
-    if doc!='False':
+    document=''
+    if doc=='False':
+        document = Document(today.strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход',' ')
+        db.session.add(document)
+        db.session.commit()
+    else:
         document= Document.query.filter(Document.id==doc).first()
-    db.session.add(document)
-    db.session.commit()
     if request.method == 'POST':
         if form.id.data=='comment':
-            document.comment=form1.text.data
+            for item in current_user.order:
+                current_user.order.remove(item)
             db.session.commit()
-            current_user.order=[]
+            document.comment=form1.text.data
             db.session.commit()
             flash('Заказ произведён', 'message')
         else:
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
-                return redirect(url_for('order', doc=doc,  form1=form1, added = added, form = form, products=product ))
+                return redirect(url_for('order', doc=document.id,  form1=form1, added = added, form = form, products=product ))
             product = Product.query.filter(Product.id==form.id.data).first()
-            added.append([product.product_name, product.product_item, form.count.data])
             details = product.get_det()
+            current_user.append_order(product)
             for det in details.keys():
+                print(det)
                 stock = Stock(document.id, Component.query.filter(Component.component_name==det).first().id, (details[det]*form.count.data))
                 db.session.add(stock)
                 db.session.commit()
                 stock.get_count()
-                print(stock.count)
             flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
-        return redirect(url_for('order', doc=doc, form1=form1, added = added, form = form, products=product))
+        return redirect(url_for('order', doc=document.id, form1=form1, added = added, form = form, products=product))
     
     return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product)
 
