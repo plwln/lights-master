@@ -210,8 +210,10 @@ def stock():
     print(stock_db)
     for item in stock_db:
         stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
+
     for item in stock:
-        if item.get_component().stock_count is None:
+        print(item)
+        if item.get_component() is not None and item.get_component().stock_count is None:
             item.get_count()
     print(stock)
     form = SpecificationForm()
@@ -342,6 +344,17 @@ def order(doc):
         return redirect(url_for('order', doc=document.id, form1=form1, added = added, form = form, products=product))
     
     return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product)
+
+@app.route('/check_order/<product_id>')
+@login_required
+def check_order(product_id):
+    product = Product.query.filter(Product.id==product_id).first()
+    details = product.get_det()
+    stock = []
+    for name in details.keys():
+        component_id = Component.query.filter(Component.component_name==name).first().id
+        stock.append(Stock.query.filter(Stock.component_id==component_id).first())
+    return render_template('check_order.html', product=product, details=details, stock=stock)
 
 
 @app.route('/fork/<doc_type>')

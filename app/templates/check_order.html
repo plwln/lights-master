@@ -1,0 +1,79 @@
+{%extends "base.html" %}
+{% block content %}
+{% block flash_messages %}
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            {%if 'success' not in message and 'must' not in message%}
+            <div id=message class="alert alert-success">{{ message|safe }}</div>
+            {%endif%}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock %}
+<div class="row">
+  </div>
+  <div class="row">
+  <div class="col">
+  <table  id=mytable class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <td>Наименование</td>
+          <td>Единицы измерения</td>
+          <td>Артикул</td>
+          <td>Требуется/Склад</td>
+        </tr>
+      </thead>
+      <tbody style="overflow: auto; height:400px;">
+      {% for item in stock%}
+        <tr>
+          <td class="py-0" >{{item.get_component().component_name}}</td>
+          <td class="py-0" >{{item.get_component().component_unit}}</td>
+          <td class="py-0">{{item.get_component().component_item}}</td>
+          {%if details[item.get_component().component_name] <= item.count %}
+          <td class="py-0 bg-success">{{details[item.get_component().component_name]}}/{{item.count}}</td>
+          {%else%}
+          <td class="py-0 bg-danger">{{details[item.get_component().component_name]}}/{{item.count}}</td>
+          {%endif%}
+        </tr>
+      {%endfor%}
+      </tbody>
+  </table>
+  </div>
+
+<script>
+  $(function() {
+    $('.selectpicker').on('change', function(){
+      if($(this).val()=='Списание'){
+      $('#count').attr("value", '0');
+      $('.count_div').hide();
+      }
+      else{
+        $('.count_div').show();
+      }
+    });
+  });
+  </script>
+<script>
+   $(function() {
+    $('.close').on('click', function(){
+      $('.count_div').show();
+      $('.selectpicker').attr("value", 'Приход');
+    });
+  });
+</script>	
+<script>
+    $(function() {
+     $('#submit').on('click', function(){
+       $('#count').show();
+     });
+   });
+ </script>	
+<script>
+  $('.alert').show(200, function(){
+    setTimeout(function(){
+      $('.alert').hide(500);
+    }, 2000);
+  });
+  </script>
+{% endblock %}

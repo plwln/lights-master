@@ -65,7 +65,8 @@
                       </div>
                       
                       <div class="modal-footer">
-                        {{form.submit( class_="btn btn-success")}}
+                          <a href="{{url_for('check_order', product_id=product.id)}}"><button type="button" class="ml-1 mt-4 mb-2 btn btn-success">Далее</button></a>
+                        <!-- {{form.submit( class_="btn btn-success")}} -->
                       </div>
                     </form>
                     </div>
@@ -128,7 +129,8 @@
       {{form.id(value='comment', type="hidden")}}
       {{form1.hidden_type(value=doc_type, type="hidden")}}
       <div class="modal-footer">
-        {{form.submit( class_="btn btn-success")}}
+          
+        <!-- {{form.submit( class_="btn btn-success")}} -->
       </div>
     </form>
     </div>
