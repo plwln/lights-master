@@ -109,8 +109,9 @@ def component_table():
     return render_template('component_table.html', components=components, modal_component=modal_component)
 
 @app.route('/create_component', methods = ['GET', 'POST'])
+@app.route('/create_component/<cloned_component>', methods = ['GET', 'POST'])
 @login_required
-def create_component():
+def create_component(cloned_component=False):
     form = ComponentForm()
     if request.method == 'POST':
         if form.validate() == False:
@@ -124,6 +125,13 @@ def create_component():
                 component = Component(form.name.data, form.unit.data, form.item.data)
                 db.session.add(component)
                 db.session.commit()
+                if cloned_component:
+                    cloned_component = Component.query.filter(Component.id==cloned_component).first()
+                    modal_components = ModalComponent.query.filter(ModalComponent.parrent_id==cloned_component.id).all()
+                    for modal_component in modal_components:
+                        cloned_modal = ModalComponent(component.id, modal_component.child_id, modal_component.count)
+                        db.session.add(cloned_modal)
+                    db.session.commit()
                 return redirect(url_for('create_modal_component',  modal_component = component.id, det = 'hollow'))  
     return render_template('create_component.html', form=form)
 

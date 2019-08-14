@@ -12,12 +12,13 @@
     
 <div class = ' col-4'>
         <div class="col"><p>Наименование: <span>{{component.component_name}}</span></p></div>
-        <div class="col"><p>Артикул: <span>{{component.product_item}}</span></p></div>
+        <div class="col"><p>Артикул: <span>{{component.component_item}}</span></p></div>
         <div class="col"><p>Единицы измерения:  <span>{{component.component_unit}}</span></p></div>
         <div class="col">
             <div class="p-0 col"><a href="{{url_for('create_modal_component', modal_component = component.id, det = 'hollow')}}"><button type="button" class="btn btn-success btn-sm mr-3">Изменить сотавляющие</button></a></div>
+            <div class="p-0 col-2 mr-2 mt-2"><a href="{{url_for('create_component', cloned_component = component.id)}}"><button type="button" class="btn btn-info btn-sm mr-3">Клонировать</button></a></div>
             <div class="p-0 col mt-2"><a href="{{url_for('delete_component', id = component.id)}}"><button type="button" class="btn btn-danger btn-sm mr-3">Удалить</button></a></div>
-               
+            
          </div>
     </div>
 <div class=" m-0 col-8">
