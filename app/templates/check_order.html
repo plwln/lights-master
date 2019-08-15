@@ -30,17 +30,24 @@
           <td class="py-0" >{{item.get_component().component_name}}</td>
           <td class="py-0" >{{item.get_component().component_unit}}</td>
           <td class="py-0">{{item.get_component().component_item}}</td>
-          {%if details[item.get_component().component_name] <= item.count %}
-          <td class="py-0 bg-success">{{details[item.get_component().component_name]}}/{{item.count}}</td>
+          {%if details[item.get_component().component_name]*order.count <= item.count %}
+          <td class="py-0 bg-success">{{details[item.get_component().component_name]*order.count}}/{{item.count}}</td>
           {%else%}
-          <td class="py-0 bg-danger">{{details[item.get_component().component_name]}}/{{item.count}}</td>
+          <td class="py-0 bg-danger">{{details[item.get_component().component_name]*order.count}}/{{item.count}}</td>
           {%endif%}
         </tr>
       {%endfor%}
       </tbody>
   </table>
   </div>
-
+  </div>
+<form class='form' action = "" method = post>
+  <div class="row">
+    <div class="col">
+      {{form.submit( class_="btn btn-success")}}
+    </div>
+  </div>
+</form>
 <script>
   $(function() {
     $('.selectpicker').on('change', function(){

@@ -5,8 +5,8 @@ from flask import render_template, flash, redirect, url_for, request, send_from_
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from werkzeug.utils import secure_filename
 from werkzeug.urls import url_parse
-from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock
-from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm
+from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order
+from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm
 from datetime import datetime, date, time
 
 
@@ -319,6 +319,8 @@ def order(doc):
     form = SpecificationForm()
     form1 = DocumentForm()
     added = current_user.order
+    orders = [Order.query.filter(Order.prod_id==item.id).first() for item in added]
+    print(orders)
     product = Product.query.order_by(Product.product_name).all()
     document=''
     if doc=='False':
@@ -335,34 +337,40 @@ def order(doc):
             document.comment=form1.text.data
             db.session.commit()
             flash('Заказ произведён', 'message')
+            return redirect(url_for('order', doc=document.id, form1=form1, added = added, form = form, products=product))
         else:
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
                 return redirect(url_for('order', doc=document.id,  form1=form1, added = added, form = form, products=product ))
-            product = Product.query.filter(Product.id==form.id.data).first()
-            details = product.get_det()
-            current_user.append_order(product)
-            for det in details.keys():
-                print(det)
-                stock = Stock(document.id, Component.query.filter(Component.component_name==det).first().id, (details[det]*form.count.data))
-                db.session.add(stock)
-                db.session.commit()
-                stock.get_count()
-            flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
-        return redirect(url_for('order', doc=document.id, form1=form1, added = added, form = form, products=product))
-    
-    return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product)
+            order = Order(document.id, form.id.data, form.count.data)
+            db.session.add(order)
+            db.session.commit()
+            return redirect(url_for('check_order', order=order.id))
+    return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product, orders=orders)
 
-@app.route('/check_order/<product_id>')
+@app.route('/check_order/<order>', methods = ['GET', 'POST'])
 @login_required
-def check_order(product_id):
-    product = Product.query.filter(Product.id==product_id).first()
+def check_order(order):
+    order = Order.query.filter(Order.id==order).first()
+    print(Document.query.filter(Document.id==order.doc_id).first())
+    product = Product.query.filter(Product.id==order.prod_id).first()
+    form = SubmitForm()
     details = product.get_det()
     stock = []
     for name in details.keys():
         component_id = Component.query.filter(Component.component_name==name).first().id
         stock.append(Stock.query.filter(Stock.component_id==component_id).first())
-    return render_template('check_order.html', product=product, details=details, stock=stock)
+    if request.method=='POST':
+        current_user.append_order(product)
+        for det in details.keys():
+            print(det)
+            stock = Stock(order.doc_id, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
+            db.session.add(stock)
+            db.session.commit()
+            stock.get_count()
+        flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
+        return redirect(url_for('order', doc=order.doc_id))
+    return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock)
 
 
 @app.route('/fork/<doc_type>')

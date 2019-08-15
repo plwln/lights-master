@@ -28,6 +28,9 @@ class DocumentForm(Form):
 def choise_query():
     return Component.query.all()
 
+class SubmitForm(Form):
+    submit = SubmitField("Добавить")
+
 class SpecificationForm(Form):
     det = 'hollow'
 

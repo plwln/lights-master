@@ -65,8 +65,7 @@
                       </div>
                       
                       <div class="modal-footer">
-                          <a href="{{url_for('check_order', product_id=product.id)}}"><button type="button" class="ml-1 mt-4 mb-2 btn btn-success">Далее</button></a>
-                        <!-- {{form.submit( class_="btn btn-success")}} -->
+                          {{form.submit( class_="btn btn-success")}}
                       </div>
                     </form>
                     </div>
@@ -91,11 +90,11 @@
             </tr>
           </thead>
           <tbody style="overflow: auto; height:400px;">
-          {% for item in added%}
+          {% for item in orders%}
             <tr>
-              <td class="py-0" >{{item.product_name}}</td>
-              <td class="py-0" >{{item.product_item}}</td>
-              <td class="py-0">{{item}}</td>
+              <td class="py-0" >{{item.get_product().product_name}}</td>
+              <td class="py-0" >{{item.get_product().product_item}}</td>
+              <td class="py-0">{{item.count}}</td>
               <td class="py-0">
                  
               </td>

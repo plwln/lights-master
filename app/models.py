@@ -315,5 +315,19 @@ class Stock(db.Model):
     def get_document(self):
         return Document.query.filter(Document.id==self.document_id).first()
 
+class Order(db.Model):
+    __tablename__ = 'product_order'
+    id = db.Column(db.Integer(), primary_key=True)
+    doc_id = db.Column(db.Integer(), db.ForeignKey('document.id', ondelete='CASCADE'))
+    prod_id = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
+    count =  db.Column(db.Float())
+
+    def __init__(self, doc_id, prod_id, count):
+        self.doc_id = doc_id
+        self.prod_id = prod_id
+        self.count = count
+    
+    def get_product(self):
+        return Product.query.filter(Product.id==self.prod_id).first()
 
 
