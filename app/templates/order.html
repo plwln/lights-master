@@ -90,15 +90,15 @@
             </tr>
           </thead>
           <tbody style="overflow: auto; height:400px;">
+          
           {% for item in orders%}
+          {%if item%}
             <tr>
               <td class="py-0" >{{item.get_product().product_name}}</td>
               <td class="py-0" >{{item.get_product().product_item}}</td>
               <td class="py-0">{{item.count}}</td>
-              <td class="py-0">
-                 
-              </td>
             </tr>
+            {%endif%}
           {%endfor%}
           </tbody>
       </table>
@@ -129,7 +129,7 @@
       {{form1.hidden_type(value=doc_type, type="hidden")}}
       <div class="modal-footer">
           
-        <!-- {{form.submit( class_="btn btn-success")}} -->
+        {{form.submit( class_="btn btn-success")}}
       </div>
     </form>
     </div>

@@ -51,10 +51,12 @@ class User(db.Model, UserMixin):
     def append_order(self, del_stock):
         self.order.append(del_stock)
         db.session.commit()
-    def delete_order(self):
-        for item in self.order:
-            self.order.remove(Product.query.filter(Product.id==item.id).first())
-            db.session.commit()
+    def get_order(self):
+        order=[]
+        for item in self.added:
+            order.append(item)
+        print(order)
+        return order
             
 
 class Role(db.Model):
@@ -260,6 +262,7 @@ class Document(db.Model):
     maker_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     document_type = db.Column(db.String())
     comment = db.Column(db.String())
+    product_orders = db.relationship('Order', secondary='document_order')
 
     def __init__(self, date, maker_id, document_type, comment):
         self.date = date
@@ -271,6 +274,16 @@ class Document(db.Model):
         return User.query.filter(User.id==self.maker_id).first()
     def get_name(self):
         return 'Document{}'.format(self.id)
+    
+    def append_doc_order(self, del_stock):
+        self.product_orders.append(Order.query.filter(Order.id==del_stock).first())
+        db.session.commit()
+
+class DocumentOrder(db.Model):
+    __tablename__ = 'document_order'
+    id = db.Column(db.Integer(), primary_key=True)
+    document_id = db.Column(db.Integer(), db.ForeignKey('document.id', ondelete='CASCADE'))
+    order_id = db.Column(db.Integer(), db.ForeignKey('product_order.id', ondelete='CASCADE'))
 
 class Stock(db.Model):
     __tablename__ = 'stock'
@@ -294,16 +307,17 @@ class Stock(db.Model):
     def get_count(self):
         count=0
         for item in Stock.query.filter(Stock.component_id==self.component_id).all():
-            if item.get_document().document_type=='Приход':
+            print(item)
+            if item.get_document() and item.get_document().document_type=='Приход':
                 count+=item.count
-            elif item.get_document().document_type=='Расход':
+            elif item.get_document() and item.get_document().document_type=='Расход':
                 if count>=item.count:
                     count-=item.count
                 else:
                     db.session.delete(item)
                     db.session.commit()
 
-            else:
+            elif item.get_document():
                 count=0
 
         Component.query.filter(Component.id==self.component_id).first().stock_count=count
@@ -329,5 +343,8 @@ class Order(db.Model):
     
     def get_product(self):
         return Product.query.filter(Product.id==self.prod_id).first()
+    
+    def get_document(self):
+        return Document.query.filter(Document.id==self.doc_id).first()
 
 

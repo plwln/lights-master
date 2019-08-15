@@ -14,8 +14,9 @@ from datetime import datetime, date, time
 @app.route('/')
 @login_required
 def home_page():
-    
-    return render_template('index.html')
+    docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
+    print(docs)
+    return render_template('index.html', orders=docs)
 
 @app.route('/users_table')
 @roles_required('Admin')
@@ -235,6 +236,7 @@ def stock():
         stock = Stock(document.id, form.id.data, form.count.data)
         db.session.add(stock)
         db.session.commit()
+        last_count = Component.query.filter(Component.id==stock.component_id).first().stock_count
         stock.get_count()
         if form.document_type.data=='Приход':
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
@@ -319,8 +321,8 @@ def order(doc):
     form = SpecificationForm()
     form1 = DocumentForm()
     added = current_user.order
-    orders = [Order.query.filter(Order.prod_id==item.id).first() for item in added]
-    print(orders)
+    orders = [Order.query.filter(Order.prod_id==item.id).first() for item in current_user.order]
+    print(current_user.order)
     product = Product.query.order_by(Product.product_name).all()
     document=''
     if doc=='False':
@@ -329,22 +331,27 @@ def order(doc):
         db.session.commit()
     else:
         document= Document.query.filter(Document.id==doc).first()
+    print(document.date)
     if request.method == 'POST':
         if form.id.data=='comment':
-            for item in current_user.order:
-                current_user.order.remove(item)
+            for order in current_user.order:
+                document.append_doc_order(order.id)
+            current_user.order=[]
+            db.session.commit()
+            orders=[]
             db.session.commit()
             document.comment=form1.text.data
             db.session.commit()
             flash('Заказ произведён', 'message')
-            return redirect(url_for('order', doc=document.id, form1=form1, added = added, form = form, products=product))
+            return redirect(url_for('order', doc='False', form1=form1, added = added, form = form, products=product))
         else:
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
-                return redirect(url_for('order', doc=document.id,  form1=form1, added = added, form = form, products=product ))
+                return redirect(url_for('order', doc=document.id,  form1=form1, added = added, form = form, products=product ))   
             order = Order(document.id, form.id.data, form.count.data)
             db.session.add(order)
             db.session.commit()
+            print(order.count)
             return redirect(url_for('check_order', order=order.id))
     return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product, orders=orders)
 
@@ -356,18 +363,22 @@ def check_order(order):
     product = Product.query.filter(Product.id==order.prod_id).first()
     form = SubmitForm()
     details = product.get_det()
+    print(details.keys())
     stock = []
     for name in details.keys():
         component_id = Component.query.filter(Component.component_name==name).first().id
         stock.append(Stock.query.filter(Stock.component_id==component_id).first())
     if request.method=='POST':
         current_user.append_order(product)
-        for det in details.keys():
+        print(current_user.order)
+        for det in list(details.keys()):
             print(det)
             stock = Stock(order.doc_id, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
             db.session.add(stock)
             db.session.commit()
+            print(stock.get_document())
             stock.get_count()
+        print(order.doc_id)
         flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
     return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock)
