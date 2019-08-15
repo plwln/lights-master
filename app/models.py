@@ -270,6 +270,9 @@ class Document(db.Model):
         self.document_type = document_type
         self.comment = comment
     
+    def __repr__(self):
+        return str(self.id)
+
     def get_maker(self):
         return User.query.filter(User.id==self.maker_id).first()
     def get_name(self):
@@ -307,7 +310,6 @@ class Stock(db.Model):
     def get_count(self):
         count=0
         for item in Stock.query.filter(Stock.component_id==self.component_id).all():
-            print(item)
             if item.get_document() and item.get_document().document_type=='Приход':
                 count+=item.count
             elif item.get_document() and item.get_document().document_type=='Расход':
@@ -341,6 +343,8 @@ class Order(db.Model):
         self.prod_id = prod_id
         self.count = count
     
+    def __repr__(self):
+        return '{} {} {} {}'.format(self.id, self.doc_id, self.prod_id, self.count)
     def get_product(self):
         return Product.query.filter(Product.id==self.prod_id).first()
     

@@ -14,9 +14,12 @@ from datetime import datetime, date, time
 @app.route('/')
 @login_required
 def home_page():
+    # for order in Order.query.all():
+    #     Order.query.filter(Order.id==order.id).delete()
+    #     db.session.commit()
     docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
     print(docs)
-    return render_template('index.html', orders=docs)
+    return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
 
 @app.route('/users_table')
 @roles_required('Admin')
@@ -321,8 +324,6 @@ def order(doc):
     form = SpecificationForm()
     form1 = DocumentForm()
     added = current_user.order
-    orders = [Order.query.filter(Order.prod_id==item.id).first() for item in current_user.order]
-    print(current_user.order)
     product = Product.query.order_by(Product.product_name).all()
     document=''
     if doc=='False':
@@ -331,11 +332,10 @@ def order(doc):
         db.session.commit()
     else:
         document= Document.query.filter(Document.id==doc).first()
+    orders = document.product_orders
     print(document.date)
     if request.method == 'POST':
         if form.id.data=='comment':
-            for order in current_user.order:
-                document.append_doc_order(order.id)
             current_user.order=[]
             db.session.commit()
             orders=[]
@@ -351,7 +351,8 @@ def order(doc):
             order = Order(document.id, form.id.data, form.count.data)
             db.session.add(order)
             db.session.commit()
-            print(order.count)
+            document.append_doc_order(order.id)
+            print(order)
             return redirect(url_for('check_order', order=order.id))
     return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product, orders=orders)
 
@@ -359,11 +360,10 @@ def order(doc):
 @login_required
 def check_order(order):
     order = Order.query.filter(Order.id==order).first()
-    print(Document.query.filter(Document.id==order.doc_id).first())
+    print(order)
     product = Product.query.filter(Product.id==order.prod_id).first()
     form = SubmitForm()
     details = product.get_det()
-    print(details.keys())
     stock = []
     for name in details.keys():
         component_id = Component.query.filter(Component.component_name==name).first().id
@@ -372,11 +372,9 @@ def check_order(order):
         current_user.append_order(product)
         print(current_user.order)
         for det in list(details.keys()):
-            print(det)
             stock = Stock(order.doc_id, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
             db.session.add(stock)
             db.session.commit()
-            print(stock.get_document())
             stock.get_count()
         print(order.doc_id)
         flash('Товар {} добавлен в список'.format(Product.product_name), 'message')

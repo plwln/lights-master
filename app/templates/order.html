@@ -93,6 +93,7 @@
           
           {% for item in orders%}
           {%if item%}
+          {{item.id}}
             <tr>
               <td class="py-0" >{{item.get_product().product_name}}</td>
               <td class="py-0" >{{item.get_product().product_item}}</td>
