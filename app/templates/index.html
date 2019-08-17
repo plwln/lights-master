@@ -6,14 +6,15 @@
                           <h1>Светильники</h1>
                           <p class="lead">Просто заглушка.<br> Потом решить что здесь будет.</p>
                         </div>
-                        {%if orders!=[]%}
+                        <div class="container">
                         {%for order in orders%}
+                        {%if order.product_orders!=[]%}
                         <div class="card gedf-card">
                           <div class="card-header">
                               <div class="d-flex justify-content-between align-items-center">
                                   <div class="d-flex justify-content-between align-items-center">
                                       <div class="ml-2">
-                                          <div class="h5 m-0">Заказ №</div>
+                                          <div class="h5 m-0">Заказ №{{order.product_orders[0].id}}</div>
                                           <div class="h7 text-muted">{{order.date}}</div>
                                       </div>
                                   </div>
@@ -26,16 +27,28 @@
       
                           </div>
                           <div class="card-body">
+                              <table class="table table-condensed">
+                                  <thead>
+                                  <tr>
+                                      <th>Наименование</th>
+                                      <th>Артикул</th>
+                                      <th>Кол-во</th>                                   
+                                  </tr>
+                              </thead>   
+                              <tbody>
                             {%for item in order.product_orders%}
-                              <div class="text-muted h5 mb-2">{{item.get_product().product_name}}</div>
-      
-                              <p class="card-text">
-                                  {{item.get_document().comment}}
-                              </p>
-                            {%endfor%}
+                            <tr>
+                                <td>{{item.get_product().product_name}}</td>
+                                <td>{{item.get_product().product_item}}</td>
+                                <td>{{item.count}}</td>                                     
+                            </tr>
+                            {%endfor%}                                   
+                          </tbody>
+                        </table>
                           </div>
                       </div>
-                      {%endfor%}
                       {%endif%}
+                      {%endfor%}
+                    </div>
                       </main>
             {% endblock %}
