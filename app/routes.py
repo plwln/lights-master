@@ -239,12 +239,13 @@ def stock():
         stock = Stock(document.id, form.id.data, form.count.data)
         db.session.add(stock)
         db.session.commit()
-        last_count = Component.query.filter(Component.id==stock.component_id).first().stock_count
+        compon = Component.query.filter(Component.id==stock.component_id).first()
+        last_count = compon.stock_count
         stock.get_count()
         if form.document_type.data=='Приход':
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
         elif form.document_type.data=='Расход':
-            if stock.get_count()!=0 and stock.get_count()==last_count:
+            if compon.stock_count!=0 and compon.stock_count==last_count:
                 flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(stock.get_name()), 'message')
             else:
                 flash('Расход детали {} со склада'.format(stock.get_name()), 'message')
@@ -381,6 +382,14 @@ def check_order(order):
         return redirect(url_for('order', doc=order.doc_id))
     return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock)
 
+@app.route('/delete_order/<id>')
+@login_required
+def delete_order(id):
+    stock = Stock.query.filter(Stock.document_id==id).first()
+    stock1 = Stock.query.filter(Stock.component_id==stock.component_id).first()
+    Document.delete(id)
+    stock1.get_count()
+    return redirect(url_for('home_page'))
 
 @app.route('/fork/<doc_type>')
 @login_required

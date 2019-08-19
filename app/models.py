@@ -281,6 +281,21 @@ class Document(db.Model):
     def append_doc_order(self, del_stock):
         self.product_orders.append(Order.query.filter(Order.id==del_stock).first())
         db.session.commit()
+    
+
+    @staticmethod
+    def delete(id):
+        order = Order.query.filter(Order.doc_id==id).first()
+        stock = Stock.query.filter(Stock.document_id==id).first()
+        while order:
+            order = Order.query.filter(Order.doc_id==id).delete()
+            order = Order.query.filter(Order.doc_id==id).first()
+        while stock:
+            Stock.query.filter(Stock.component_id==stock.component_id).first().get_count()
+            Stock.query.filter(Stock.document_id==id).delete()
+            stock = Stock.query.filter(Stock.document_id==id).first()
+        Document.query.filter(Document.id==id).delete()
+        db.session.commit()  
 
 class DocumentOrder(db.Model):
     __tablename__ = 'document_order'

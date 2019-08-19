@@ -6,25 +6,38 @@
                           <h1>Светильники</h1>
                           <p class="lead">Просто заглушка.<br> Потом решить что здесь будет.</p>
                         </div>
-                        <div class="container">
+                          <div class="col-7" style="overflow: auto; height:400px;">
                         {%for order in orders%}
                         {%if order.product_orders!=[]%}
-                        <div class="card gedf-card">
-                          <div class="card-header">
+                        <div class="card gedf-card mb-3">
+                          <div class="card-header py-1 pr-1">
                               <div class="d-flex justify-content-between align-items-center">
                                   <div class="d-flex justify-content-between align-items-center">
-                                      <div class="ml-2">
+                                      <div class=" row ml-2">
                                           <div class="h5 m-0">Заказ №{{order.product_orders[0].id}}</div>
-                                          <div class="h7 text-muted">{{order.date}}</div>
+                                          <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
+                                          <div class="h7 text-muted ml-2">{{order.date}}</div>
                                       </div>
                                   </div>
-                                  <div>
-                                    <button type="button" class="close" aria-label="Close">
-                                      <span aria-hidden="true">&times;</span>
-                                    </button>
-                                  </div>
+                                      <button type="button" class="btn py-0" data-toggle="modal" data-target="{{'#'+order.get_name()}}">&times;</button>
+                                      <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                          <div class="modal-content">
+                                            <div class="modal-header text-center">
+                                              <h5 class="modal-title">Удалить заказ??</h5>
+                                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                              </button>
+                                            </div>
+                                            <div class="modal-footer">
+                                              <a href="{{url_for('delete_order', id = order.id)}}"><button type="button" class="btn btn-danger">Удалить</button></a>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                               </div>
-      
+                              
+
                           </div>
                           <div class="card-body">
                               <table class="table table-condensed">
