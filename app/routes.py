@@ -17,6 +17,11 @@ def home_page():
     # for order in Order.query.all():
     #     Order.query.filter(Order.id==order.id).delete()
     #     db.session.commit()
+    # for item in Stock.query.all():
+    #     if item.component_id is None and item.id_product is None:
+    #         Stock.query.filter(Stock.id==stock.id).delete()
+    Stock.query.filter(Stock.component_id==' ').delete()
+    db.session.commit()
     docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
     print(docs)
     return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
@@ -221,10 +226,11 @@ def stock():
     stock = []
     print(stock_db)
     for item in stock_db:
-        stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
+        if item[0] is not None:
+            stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
 
     for item in stock:
-        print(item)
+        print(item.component_id)
         if item.get_component() is not None and item.get_component().stock_count is None:
             item.get_count()
     print(stock)
@@ -299,12 +305,113 @@ def stock_adding(doc_type, doc):
     
     return render_template('stock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added = added, form = form, last_stocked = last_stocked,  components = components, modal_component=modal_component)
 
+@app.route('/stock_product', methods = ['GET', 'POST'])
+@login_required
+def stock_product():
+    for item in current_user.get_added():
+        current_user.added.remove(item)
+        db.session.delete(item)
+        db.session.commit()
+    stock_db = list(set(db.session.query(Stock.id_product).all()))
+    stock = []
+    print(stock_db)
+    for item in stock_db:
+        if item[0] is not None:
+            stock.append(Stock.query.filter(Stock.id_product==item[0]).first())
+
+    for item in stock:
+        print(item.component_id)
+        if item.get_product() is not None and item.get_product().pstock_count is None:
+            item.get_count()
+    print(stock)
+    form = SpecificationForm()
+    if request.method == 'POST':
+        if form.count.data is None:
+            flash('Используйте "." вместо ","')
+            return redirect(url_for('stock', form=form, stock=stock))
+        document = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, form.document_type.data, form.text.data)
+        db.session.add(document)
+        db.session.commit()
+        stock = Stock(document.id, form.id.data, None, form.count.data)
+        db.session.add(stock)
+        db.session.commit()
+        prod = Product.query.filter(Product.id==stock.id_product).first()
+        last_count = prod.pstock_count
+        stock.get_count()
+        if form.document_type.data=='Приход':
+            flash('Приход {} на склад'.format(stock.get_name()), 'message')
+        elif form.document_type.data=='Расход':
+            if prod.pstock_count!=0 and prod.pstock_count==last_count:
+                flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(stock.get_name()), 'message')
+            else:
+                flash('Расход детали {} со склада'.format(stock.get_name()), 'message')
+        else:
+            flash('Деталь {} списана'.format(stock.get_name()), 'message')
+        return redirect(url_for('stock_product', form=form, stock=stock))
+    return render_template('product_stock.html', form=form, stock=stock)
+
+
+@app.route('/pstock_adding/<doc_type>/<doc>', methods = ['GET', 'POST'])
+@login_required
+def pstock_adding(doc_type, doc):
+    today = datetime.today()
+    form = SpecificationForm()
+    form1 = DocumentForm()
+    modal_component = ModalComponent.query.first()
+    last_stocked = Stock.query.first()
+    added = current_user.added
+    products = Product.query.order_by(Product.product_name).all()
+    document = Document(' ', current_user.id, doc_type,' ')
+    if doc!='False':
+        document= Document.query.filter(Document.id==doc).first()
+    db.session.add(document)
+    db.session.commit()
+    stock_db = list(set(db.session.query(Stock.id_product).all()))
+    stock = []
+    for item in stock_db:
+        if item[0] is not None:
+            stock.append(Stock.query.filter(Stock.id_product==item[0]).first())
+
+    if request.method == 'POST':
+        if form.id.data=='comment':
+            for item in current_user.get_added():
+                item.get_document().date=today.strftime("%Y/%m/%d %H:%M")
+                item.get_document().comment=form1.text.data
+                db.session.commit()
+                current_user.added.remove(item)
+                item.get_count()
+                db.session.commit()
+            flash('Склад обновлён', 'message')
+        else:
+            if form.count.data is None:
+                flash('Используйте "." вместо ","')
+                return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, last_stocked = last_stocked, form = form, component = components, modal_component=modal_component ))
+            print(document.id)
+            stock = Stock(document.id, form.id.data, None, form.count.data)
+            
+            db.session.add(stock)
+            db.session.commit()
+            current_user.append_stock(stock.id)
+            flash('Товар {} добавлен в список'.format(stock.get_name()), 'message')
+        return redirect(url_for('pstock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products))
+    
+    return render_template('pstock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products)
+
+
 
 @app.route('/document/<component_id>')
 @login_required
 def document(component_id):
     form = SpecificationForm()
     stocks = Stock.query.filter(Stock.component_id==component_id).all()
+    documents = [Document.query.filter(Document.id==stock.document_id).first() for stock in stocks]
+    return render_template('document.html', form=form, stocks = stocks, documents = documents)
+
+@app.route('/pdocument/<product_id>')
+@login_required
+def pdocument(product_id):
+    form = SpecificationForm()
+    stocks = Stock.query.filter(Stock.id_product==product_id).all()
     documents = [Document.query.filter(Document.id==stock.document_id).first() for stock in stocks]
     return render_template('document.html', form=form, stocks = stocks, documents = documents)
 
@@ -400,12 +507,28 @@ def fork(doc_type):
         db.session.commit()
     return redirect(url_for('stock_adding', doc_type=doc_type, doc='False'))
 
+@app.route('/prod_fork/<doc_type>')
+@login_required
+def prod_fork(doc_type):
+    for item in current_user.get_added():
+        db.session.delete(item)
+        current_user.added.remove(item)
+        db.session.commit()
+    return redirect(url_for('pstock_adding', doc_type=doc_type, doc='False'))
+
 @app.route('/delete_stock/<stock_id>/<doc_id>')
 @login_required
 def delete_stock(stock_id, doc_id):
     current_user.delete_stock(stock_id)
     doc = Document.query.filter(Document.id==doc_id).first()
     return redirect(url_for('stock_adding', doc_type=doc.document_type, doc=doc.id))
+
+@app.route('/delete_pstock/<stock_id>/<doc_id>')
+@login_required
+def delete_pstock(stock_id, doc_id):
+    current_user.delete_stock(stock_id)
+    doc = Document.query.filter(Document.id==doc_id).first()
+    return redirect(url_for('pstock_adding', doc_type=doc.document_type, doc=doc.id))
 
 
 @app.route('/remove_stock/<component_id>')

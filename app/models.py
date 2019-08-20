@@ -55,7 +55,6 @@ class User(db.Model, UserMixin):
         order=[]
         for item in self.added:
             order.append(item)
-        print(order)
         return order
             
 
@@ -91,6 +90,7 @@ class Product(db.Model):
     product_item = db.Column(db.Integer(), unique=True)
     product_weight = db.Column(db.Integer(), nullable=False)
     product_material = db.Column(db.String(255, collation='NOCASE'))
+    pstock_count = db.Column(db.Float())
 
     def __init__(self, product_name, product_power, product_item, product_weight, product_material):
         self.product_name = product_name
@@ -308,15 +308,20 @@ class Stock(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     document_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'))
     component_id = db.Column(db.Integer(), db.ForeignKey('component.id', ondelete='CASCADE'))
+    id_product = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
     count =  db.Column(db.Float())
 
-    def __init__(self, document_id, component_id, count):
+    def __init__(self, document_id, id_product, component_id, count):
         self.document_id = document_id
         self.component_id = component_id
         self.count = count
+        self.id_product = id_product
 
     def get_name(self):
-        name = Component.query.filter(Component.id==self.component_id).first().component_name
+        name = Product.query.filter(Product.id==self.id_product).first().product_name
+        if self.component_id:
+            name = Component.query.filter(Component.id==self.component_id).first().component_name
+        
         return name
     def get_unit(self):
         unit = Component.query.filter(Component.id==self.component_id).first().component_unit
@@ -324,7 +329,10 @@ class Stock(db.Model):
 
     def get_count(self):
         count=0
-        for item in Stock.query.filter(Stock.component_id==self.component_id).all():
+        stocks = Stock.query.filter(Stock.id_product==self.id_product).all()
+        if self.component_id:
+            stocks = Stock.query.filter(Stock.component_id==self.component_id).all()
+        for item in stocks:
             if item.get_document() and item.get_document().document_type=='Приход':
                 count+=item.count
             elif item.get_document() and item.get_document().document_type=='Расход':
@@ -336,13 +344,17 @@ class Stock(db.Model):
 
             elif item.get_document():
                 count=0
-
-        Component.query.filter(Component.id==self.component_id).first().stock_count=count
+        if self.id_product:
+            Product.query.filter(Product.id==self.id_product).first().pstock_count=count
+        else: Component.query.filter(Component.id==self.component_id).first().stock_count=count
         db.session.commit()
 
     def get_component(self):
         return Component.query.filter(Component.id==self.component_id).first()
     
+    def get_product(self):
+        return Product.query.filter(Product.id==self.id_product).first()
+
     def get_document(self):
         return Document.query.filter(Document.id==self.document_id).first()
 
