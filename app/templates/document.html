@@ -2,7 +2,11 @@
 {%block content%}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{url_for('stock')}}">Склад</a></li>
+    {%if stocks[0].id_product%}
+    <li class="breadcrumb-item"><a href="{{url_for('stock_product')}}">Склад товаров</a></li>
+    {%else%}
+    <li class="breadcrumb-item"><a href="{{url_for('stock')}}">Склад деталей</a></li>
+    {%endif%}
     <li class="breadcrumb-item active" aria-current="page">Документы</li>
   </ol>
 </nav>

@@ -19,11 +19,12 @@ def home_page():
     #     db.session.commit()
     # for item in Stock.query.all():
     #     if item.component_id is None and item.id_product is None:
-    #         Stock.query.filter(Stock.id==stock.id).delete()
-    Stock.query.filter(Stock.component_id==' ').delete()
-    db.session.commit()
-    docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
-    print(docs)
+    # #         Stock.query.filter(Stock.id==stock.id).delete()
+    # Stock.query.filter(Stock.component_id==' ').delete()
+    # db.session.commit()
+    # docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
+    # print(docs)
+    docs = []
     return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
 
 @app.route('/users_table')
@@ -420,10 +421,13 @@ def pdocument(product_id):
 def delete_document(document_id):
     stock = Stock.query.filter(Stock.document_id==document_id)
     component_id = stock.first().component_id
+    product_id = stock.first().id_product
     stock.delete()
     db.session.commit()
     Stock.query.filter(Stock.component_id==component_id).first().get_count()
-    return redirect(url_for('document', component_id = component_id))
+    if component_id:
+        return redirect(url_for('document', component_id = component_id))
+    return redirect(url_for('pdocument', product_id = product_id))
 
 @app.route('/order/<doc>', methods = ['GET', 'POST'])
 @login_required
