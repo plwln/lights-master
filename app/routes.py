@@ -243,7 +243,7 @@ def stock():
         document = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, form.document_type.data, form.text.data)
         db.session.add(document)
         db.session.commit()
-        stock = Stock(document.id, form.id.data, form.count.data)
+        stock = Stock(document.id, None, form.id.data, form.count.data)
         db.session.add(stock)
         db.session.commit()
         compon = Component.query.filter(Component.id==stock.component_id).first()
@@ -296,7 +296,7 @@ def stock_adding(doc_type, doc):
                 flash('Используйте "." вместо ","')
                 return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added = added, last_stocked = last_stocked, form = form, component = components, modal_component=modal_component ))
             print(document.id)
-            stock = Stock(document.id, form.id.data, form.count.data)
+            stock = Stock(document.id, None, form.id.data, form.count.data)
             
             db.session.add(stock)
             db.session.commit()
