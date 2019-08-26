@@ -22,10 +22,13 @@ def home_page():
     # #         Stock.query.filter(Stock.id==stock.id).delete()
     # Stock.query.filter(Stock.component_id==' ').delete()
     # db.session.commit()
-    # docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
-    # print(docs)
-    docs = []
-    return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
+    role_names = [x.name for x in current_user.roles]
+    print(role_names)
+    if 'Admin' in role_names:
+        docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
+        return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
+    else: return redirect(url_for('order', doc='False'))
+
 
 @app.route('/users_table')
 @roles_required('Admin')
@@ -225,16 +228,13 @@ def stock():
         db.session.commit()
     stock_db = list(set(db.session.query(Stock.component_id).all()))
     stock = []
-    print(stock_db)
     for item in stock_db:
         if item[0] is not None:
             stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
 
     for item in stock:
-        print(item.component_id)
         if item.get_component() is not None and item.get_component().stock_count is None:
             item.get_count()
-    print(stock)
     form = SpecificationForm()
     if request.method == 'POST':
         if form.count.data is None:
@@ -295,7 +295,6 @@ def stock_adding(doc_type, doc):
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
                 return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added = added, last_stocked = last_stocked, form = form, component = components, modal_component=modal_component ))
-            print(document.id)
             stock = Stock(document.id, None, form.id.data, form.count.data)
             
             db.session.add(stock)
@@ -315,16 +314,13 @@ def stock_product():
         db.session.commit()
     stock_db = list(set(db.session.query(Stock.id_product).all()))
     stock = []
-    print(stock_db)
     for item in stock_db:
         if item[0] is not None:
             stock.append(Stock.query.filter(Stock.id_product==item[0]).first())
 
     for item in stock:
-        print(item.component_id)
         if item.get_product() is not None and item.get_product().pstock_count is None:
             item.get_count()
-    print(stock)
     form = SpecificationForm()
     if request.method == 'POST':
         if form.count.data is None:
@@ -386,8 +382,6 @@ def pstock_adding(doc_type, doc):
         else:
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
-                return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, last_stocked = last_stocked, form = form, component = components, modal_component=modal_component ))
-            print(document.id)
             stock = Stock(document.id, form.id.data, None, form.count.data)
             
             db.session.add(stock)
@@ -445,7 +439,6 @@ def order(doc):
     else:
         document= Document.query.filter(Document.id==doc).first()
     orders = document.product_orders
-    print(document.date)
     if request.method == 'POST':
         if form.id.data=='comment':
             current_user.order=[]
@@ -464,7 +457,6 @@ def order(doc):
             db.session.add(order)
             db.session.commit()
             document.append_doc_order(order.id)
-            print(order)
             return redirect(url_for('check_order', order=order.id))
     return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product, orders=orders)
 
@@ -472,7 +464,6 @@ def order(doc):
 @login_required
 def check_order(order):
     order = Order.query.filter(Order.id==order).first()
-    print(order)
     product = Product.query.filter(Product.id==order.prod_id).first()
     form = SubmitForm()
     details = product.get_det()
@@ -482,13 +473,11 @@ def check_order(order):
         stock.append(Stock.query.filter(Stock.component_id==component_id).first())
     if request.method=='POST':
         current_user.append_order(product)
-        print(current_user.order)
         for det in list(details.keys()):
-            stock = Stock(order.doc_id, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
+            stock = Stock(order.doc_id, None, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
             db.session.add(stock)
             db.session.commit()
             stock.get_count()
-        print(order.doc_id)
         flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
     return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock)
@@ -496,10 +485,7 @@ def check_order(order):
 @app.route('/delete_order/<id>')
 @login_required
 def delete_order(id):
-    stock = Stock.query.filter(Stock.document_id==id).first()
-    stock1 = Stock.query.filter(Stock.component_id==stock.component_id).first()
     Document.delete(id)
-    stock1.get_count()
     return redirect(url_for('home_page'))
 
 @app.route('/fork/<doc_type>')

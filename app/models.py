@@ -287,13 +287,19 @@ class Document(db.Model):
     def delete(id):
         order = Order.query.filter(Order.doc_id==id).first()
         stock = Stock.query.filter(Stock.document_id==id).first()
+        update = []
+        for stck in Stock.query.filter(Stock.document_id==id).all():
+            update.append(Stock.query.filter(Stock.component_id == stck.component_id and Stock.document_id!=id).first())
         while order:
             order = Order.query.filter(Order.doc_id==id).delete()
             order = Order.query.filter(Order.doc_id==id).first()
         while stock:
+            print(stock.component_id)
             Stock.query.filter(Stock.component_id==stock.component_id).first().get_count()
             Stock.query.filter(Stock.document_id==id).delete()
             stock = Stock.query.filter(Stock.document_id==id).first()
+        for item in update:
+            item.get_count()
         Document.query.filter(Document.id==id).delete()
         db.session.commit()  
 
@@ -316,9 +322,9 @@ class Stock(db.Model):
         self.component_id = component_id
         self.count = count
         self.id_product = id_product
-
     def get_name(self):
-        name = Product.query.filter(Product.id==self.id_product).first().product_name
+        if self.id_product:
+            name = Product.query.filter(Product.id==self.id_product).first().product_name
         if self.component_id:
             name = Component.query.filter(Component.id==self.component_id).first().component_name
         
