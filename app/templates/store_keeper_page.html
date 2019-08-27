@@ -19,48 +19,26 @@
       <thead>
         <tr>
           <td>Наименование</td>
-          <td>Единицы измерения</td>
           <td>Артикул</td>
-          <td>Требуется/Склад</td>
+          <td>Единицы измерения</td>
+          <td>Требуется</td>
+          <td>Дата поставки</td>
         </tr>
       </thead>
       <tbody style="overflow: auto; height:400px;">
-      {% for item in stock%}
-        {%if item[1]%}
+      {% for item in notes%}
         <tr>
-          <td class="py-0" >{{item[1].get_component().component_name}}</td>
-          <td class="py-0" >{{item[1].get_component().component_unit}}</td>
-          <td class="py-0">{{item[1].get_component().component_item}}</td>
-          {%if details[item[1].get_component().component_name]*order.count <= item[1].get_component().stock_count %}
-          <td class="py-0 bg-success">{{details[item[1].get_component().component_name]*order.count}}/{{item[1].get_component().stock_count}}</td>
-          {%else%}
-          <td class="py-0 bg-danger">{{details[item[1].get_component().component_name]*order.count}}/{{item[1].get_component().stock_count}}</td>
-          {%endif%}
+          <td class="py-0" >{{item.get_component().component_name}}</td>
+          <td class="py-0">{{item.get_component().component_item}}</td>
+          <td class="py-0" >{{item.get_component().component_unit}}</td>
+          <td class="py-0"> {{item.n_count}}</td>
+          <td class="py-0"></td>
         </tr>
-        {%else%}
-        <tr>
-            <td class="py-0" >{{item[0].component_name}}</td>
-            <td class="py-0" >{{item[0].component_unit}}</td>
-            <td class="py-0">{{item[0].component_item}}</td>
-            <td class="py-0 bg-danger">{{details[item[0].component_name]*order.count}}/Нет на складе</td>
-          </tr>
-        {%endif%}
       {%endfor%}
       </tbody>
   </table>
   </div>
   </div>
-<form class='form' action = "" method = post>
-  <div class="row">
-    <div class="col">
-      {%if doc_type=='Заказ'%}
-      {{form.submit( class_="btn btn-success")}}
-      {%else%}
-      {{form.order( class_="btn btn-info")}}
-      {%endif%}
-    </div>
-  </div>
-</form>
 <script>
   $(function() {
     $('.selectpicker').on('change', function(){

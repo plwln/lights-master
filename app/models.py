@@ -91,6 +91,7 @@ class Product(db.Model):
     product_weight = db.Column(db.Integer(), nullable=False)
     product_material = db.Column(db.String(255, collation='NOCASE'))
     pstock_count = db.Column(db.Float())
+    p_unfired = db.Column(db.Float())
 
     def __init__(self, product_name, product_power, product_item, product_weight, product_material):
         self.product_name = product_name
@@ -189,14 +190,15 @@ class Component(db.Model):
     def get_count(self, parent_id):
         count = ModalComponent.query.filter(ModalComponent.parrent_id==parent_id, ModalComponent.child_id==self.id).first().count
         return count
-    
     def get_name(self):
         liters = [' ', '"',".","(",")","/","\\","*", "_","-",",", ":", ";"]
         name = self.component_name
         for liter in liters:
             name = name.replace(liter, '')
         return name
-    
+    def __repr__(self):
+        representation = '{}, {}'.format(str(self.id), str(self.unfired))
+        return representation
 
 class Specification(db.Model):
     __tablename__ = 'specification'
@@ -287,11 +289,15 @@ class Document(db.Model):
     def delete(id):
         order = Order.query.filter(Order.doc_id==id).first()
         stock = Stock.query.filter(Stock.document_id==id).first()
+        note = Note.query.filter(Note.order_id==order.id).first()
         update = []
         for stck in Stock.query.filter(Stock.document_id==id).all():
             update.append(Stock.query.filter(Stock.component_id == stck.component_id and Stock.document_id!=id).first())
         while order:
-            order = Order.query.filter(Order.doc_id==id).delete()
+            while note:
+                Note.query.filter(Note.order_id==order.id).delete()
+                note = Note.query.filter(Note.order_id==order.id).first()
+            Order.query.filter(Order.doc_id==id).delete()
             order = Order.query.filter(Order.doc_id==id).first()
         while stock:
             print(stock.component_id)
@@ -335,9 +341,14 @@ class Stock(db.Model):
 
     def get_count(self):
         count=0
-        stocks = Stock.query.filter(Stock.id_product==self.id_product).all()
+        reserved = 0
+        stock_count = 0
+        if self.id_product:
+            stocks = Stock.query.filter(Stock.id_product==self.id_product).all()
+            stock_count = Product.query.filter(Product.id==self.id_product).first().pstock_count 
         if self.component_id:
             stocks = Stock.query.filter(Stock.component_id==self.component_id).all()
+            stock_count = Component.query.filter(Component.id==self.component_id).first().stock_count
         for item in stocks:
             if item.get_document() and item.get_document().document_type=='Приход':
                 count+=item.count
@@ -347,12 +358,20 @@ class Stock(db.Model):
                 else:
                     db.session.delete(item)
                     db.session.commit()
-
+            elif item.get_document().document_type=='Резерв':
+                count -= item.count
+                if reserved is None:
+                    reserved = item.count
+                else:
+                    reserved += item.count
             elif item.get_document():
                 count=0
         if self.id_product:
+            Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
             Product.query.filter(Product.id==self.id_product).first().pstock_count=count
-        else: Component.query.filter(Component.id==self.component_id).first().stock_count=count
+        else: 
+            Component.query.filter(Component.id==self.component_id).first().unfired = reserved
+            Component.query.filter(Component.id==self.component_id).first().stock_count=count
         db.session.commit()
 
     def get_component(self):
@@ -370,6 +389,7 @@ class Order(db.Model):
     doc_id = db.Column(db.Integer(), db.ForeignKey('document.id', ondelete='CASCADE'))
     prod_id = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
     count =  db.Column(db.Float())
+    status = db.Column(db.String())
 
     def __init__(self, doc_id, prod_id, count):
         self.doc_id = doc_id
@@ -383,5 +403,23 @@ class Order(db.Model):
     
     def get_document(self):
         return Document.query.filter(Document.id==self.doc_id).first()
+
+class Note(db.Model):
+    __tablename__ = 'note'
+    id = db.Column(db.Integer(), primary_key=True)
+    na_component = db.Column(db.Integer(), db.ForeignKey('component.id', ondelete='CASCADE'))
+    na_product = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
+    order_id = db.Column(db.Integer(), db.ForeignKey('product_order.id', ondelete='CASCADE'))
+    arrival_date = db.Column(db.String())
+    n_count = db.Column(db.Float())
+    def __init__(self, na_component, na_product, order_id, n_count, arrival_date):
+        self.na_component = na_component
+        self.na_product = na_product
+        self.order_id = order_id
+        self.arrival_date = arrival_date
+        self.n_count = n_count
+    
+    def get_component(self):
+        return Component.query.filter(Component.id==self.na_component).first()
 
 

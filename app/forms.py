@@ -29,7 +29,8 @@ def choise_query():
     return Component.query.all()
 
 class SubmitForm(Form):
-    submit = SubmitField("Добавить")
+    submit = SubmitField("Заказать")
+    order = SubmitField('Резерв')
 
 class SpecificationForm(Form):
     det = 'hollow'
