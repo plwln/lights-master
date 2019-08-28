@@ -354,9 +354,6 @@ def pstock_adding(doc_type, doc):
     today = datetime.today()
     form = SpecificationForm()
     form1 = DocumentForm()
-    modal_component = ModalComponent.query.first()
-    last_stocked = Stock.query.first()
-    added = current_user.added
     products = Product.query.order_by(Product.product_name).all()
     document = Document(' ', current_user.id, doc_type,' ')
     if doc!='False':
@@ -463,36 +460,44 @@ def order(doc):
 @app.route('/check_order/<order>', methods = ['GET', 'POST'])
 @login_required
 def check_order(order):
-    print(Note.query.all())
     doc_type = 'Заказ'
     order = Order.query.filter(Order.id==order).first()
     product = Product.query.filter(Product.id==order.prod_id).first()
     form = SubmitForm()
     details = product.get_det()
     stock = []
-    for name in details.keys():
-        component = Component.query.filter(Component.component_name==name).first()
-        item = Stock.query.filter(Stock.component_id==component.id).first()
-        if item is None:
-            if doc_type=='Заказ':
-                doc_type = 'Резерв'
-            note = Note(component.id, None, order.id, (details[name]*order.count), '')
-            db.session.add(note)
-            db.session.commit()
-        elif item.get_component().stock_count <(details[name]*order.count):
-            note = Note(component.id, None, order.id, (details[name]*order.count), '')
-            db.session.add(note)
-            db.session.commit()
-        stock.append([component, item])
+    if product.pstock_count is not None:
+        stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
+    if product.pstock_count<(order.count):
+        for name in details.keys():
+            component = Component.query.filter(Component.component_name==name).first()
+            item = Stock.query.filter(Stock.component_id==component.id).first()
+            if item is None or component.stock_count<(details[name]*(order.count-product.pstock_count)):
+                if doc_type=='Заказ':
+                    doc_type = 'Резерв'
+                note = Note(component.id, None, order.id, (details[name]*order.count), '')
+                db.session.add(note)
+                db.session.commit()
+            elif item.get_component().stock_count <(details[name]*order.count):
+                note = Note(component.id, None, order.id, (details[name]*order.count), '')
+                db.session.add(note)
+                db.session.commit()
+            stock.append([component, item])
     if request.method=='POST':
         current_user.append_order(product)
         order.get_document().document_type = doc_type
         db.session.commit()
-        for det in list(details.keys()):
-            stock = Stock(order.doc_id, None, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
-            db.session.add(stock)
-            db.session.commit()
-            stock.get_count()
+        if product.pstock_count<order.count:
+            for det in list(details.keys()):
+                stock = Stock(order.doc_id, None, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
+                db.session.add(stock)
+                db.session.commit()
+                stock.get_count()
+        stock = Stock(order.doc_id, product.id, None, order.count)
+        db.session.add(stock)
+        db.session.commit()
+        stock.get_count()
+
         flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
     return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock, doc_type = doc_type)

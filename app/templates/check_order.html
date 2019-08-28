@@ -28,6 +28,7 @@
       {% for item in stock%}
         {%if item[1]%}
         <tr>
+        {%if item[1].component_id%}
           <td class="py-0" >{{item[1].get_component().component_name}}</td>
           <td class="py-0" >{{item[1].get_component().component_unit}}</td>
           <td class="py-0">{{item[1].get_component().component_item}}</td>
@@ -36,6 +37,16 @@
           {%else%}
           <td class="py-0 bg-danger">{{details[item[1].get_component().component_name]*order.count}}/{{item[1].get_component().stock_count}}</td>
           {%endif%}
+        {%else%}
+          <td class="py-0" >{{item[1].get_product().product_name}}</td>
+          <td class="py-0" >&mdash;</td>
+          <td class="py-0">{{item[1].get_product().product_item}}</td>
+          {%if order.count <= item[1].get_product().pstock_count %}
+          <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          {%else%}
+          <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          {%endif%}
+        {%endif%}
         </tr>
         {%else%}
         <tr>

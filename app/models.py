@@ -100,6 +100,7 @@ class Product(db.Model):
         self.product_weight = product_weight
         self.product_material = product_material
 
+
     def delete_product(id):
         specification = Specification.query.filter(Specification.product_id==id).first()
         while specification:
@@ -292,7 +293,10 @@ class Document(db.Model):
         note = Note.query.filter(Note.order_id==order.id).first()
         update = []
         for stck in Stock.query.filter(Stock.document_id==id).all():
-            update.append(Stock.query.filter(Stock.component_id == stck.component_id and Stock.document_id!=id).first())
+            if stck.component_id:
+                update.append(Stock.query.filter(Stock.component_id == stck.component_id and Stock.document_id!=id).first())
+            else:
+                update.append(Stock.query.filter(Stock.id_product == stck.id_product and Stock.document_id!=id).first())
         while order:
             while note:
                 Note.query.filter(Note.order_id==order.id).delete()
@@ -300,12 +304,18 @@ class Document(db.Model):
             Order.query.filter(Order.doc_id==id).delete()
             order = Order.query.filter(Order.doc_id==id).first()
         while stock:
-            print(stock.component_id)
-            Stock.query.filter(Stock.component_id==stock.component_id).first().get_count()
+            if stck.component_id:
+                Stock.query.filter(Stock.component_id==stock.component_id).first().get_count()
+            else:
+                Stock.query.filter(Stock.id_product==stock.id_product).first().get_count()
+
             Stock.query.filter(Stock.document_id==id).delete()
             stock = Stock.query.filter(Stock.document_id==id).first()
+            
+        print(update)
         for item in update:
-            item.get_count()
+            if Stock.query.filter(Stock.id==item.id).first():
+                item.get_count()
         Document.query.filter(Document.id==id).delete()
         db.session.commit()  
 
@@ -358,7 +368,7 @@ class Stock(db.Model):
                 else:
                     db.session.delete(item)
                     db.session.commit()
-            elif item.get_document().document_type=='Резерв':
+            elif item.get_document().document_type=='Резерв' or  item.get_document().document_type=='Заказ':
                 count -= item.count
                 if reserved is None:
                     reserved = item.count
