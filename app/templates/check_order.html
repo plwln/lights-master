@@ -70,6 +70,7 @@
       {{form.order( class_="btn btn-info")}}
       {%endif%}
     </div>
+    <div class='col-2 px-0 ml-3 my-3'><a href="{{url_for('delete_and_back',id=order.id)}}"><button type="button" class="btn btn-success">Отменить</button></a></div>
   </div>
 </form>
 <script>

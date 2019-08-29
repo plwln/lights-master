@@ -6,7 +6,7 @@ from flask_user import current_user, login_required, roles_required, UserManager
 from werkzeug.utils import secure_filename
 from werkzeug.urls import url_parse
 from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note
-from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm
+from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm, NoteForm
 from datetime import datetime, date, time
 
 
@@ -22,6 +22,9 @@ def home_page():
     # #         Stock.query.filter(Stock.id==stock.id).delete()
     # Stock.query.filter(Stock.component_id==' ').delete()
     # db.session.commit()
+    # for note in Note.query.all():
+    #     Note.query.delete()
+    #     db.session.commit()
     role_names = [x.name for x in current_user.roles]
     print(role_names)
     if 'Admin' in role_names:
@@ -466,28 +469,29 @@ def check_order(order):
     form = SubmitForm()
     details = product.get_det()
     stock = []
-    if product.pstock_count is not None:
-        stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
-    if product.pstock_count<(order.count):
-        for name in details.keys():
-            component = Component.query.filter(Component.component_name==name).first()
-            item = Stock.query.filter(Stock.component_id==component.id).first()
-            if item is None or component.stock_count<(details[name]*(order.count-product.pstock_count)):
-                if doc_type=='Заказ':
-                    doc_type = 'Резерв'
-                note = Note(component.id, None, order.id, (details[name]*order.count), '')
-                db.session.add(note)
-                db.session.commit()
-            elif item.get_component().stock_count <(details[name]*order.count):
-                note = Note(component.id, None, order.id, (details[name]*order.count), '')
-                db.session.add(note)
-                db.session.commit()
-            stock.append([component, item])
+    if request.method=='GET':
+        print(product.pstock_count)
+        if product.pstock_count is not None and product.pstock_count>0:
+            stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
+        if product.pstock_count is None or product.pstock_count<(order.count):
+            for name in details.keys():
+                component = Component.query.filter(Component.component_name==name).first()
+                item = Stock.query.filter(Stock.component_id==component.id).first()
+                pstock = lambda x: x if x else 0
+                if item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
+                    if doc_type=='Заказ':
+                        doc_type = 'Резерв'
+                        order.get_document().document_type = doc_type
+                        db.session.commit()
+                    note = Note(component.id, None, order.id, (details[name]*order.count), '')
+                    db.session.add(note)
+                    db.session.commit()
+                stock.append([component, item])
+        print(Note.query.all())
     if request.method=='POST':
         current_user.append_order(product)
-        order.get_document().document_type = doc_type
         db.session.commit()
-        if product.pstock_count<order.count:
+        if product.pstock_count is None or product.pstock_count<order.count:
             for det in list(details.keys()):
                 stock = Stock(order.doc_id, None, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
                 db.session.add(stock)
@@ -501,6 +505,16 @@ def check_order(order):
         flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
     return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock, doc_type = doc_type)
+
+@app.route('/delete_and_back/<id>')
+@login_required
+def delete_and_back(id):
+    doc = Order.query.filter(Order.id==id).first().doc_id
+    order = Order.query.filter(Order.id==id).first()
+    print(doc)
+    order.delete()
+    return redirect(url_for('order', doc=doc))
+
 
 @app.route('/delete_order/<id>')
 @login_required
@@ -552,11 +566,17 @@ def remove_stock(component_id, comment):
     db.session.commit()
     return redirect(url_for('stock'))
 
-@app.route('/storekeeper_page')
+@app.route('/storekeeper_page', methods = ['GET', 'POST'])
 @login_required
 def storekeeper_page():
     notes = Note.query.all()
-    return render_template('store_keeper_page.html', notes = notes)
+    form = NoteForm()
+    if request.method=='POST':
+        print(form.entrydate.data)
+        Note.query.filter(Note.id==form.id.data).first().arrival_date = form.entrydate.data
+        db.session.commit()
+        return redirect(url_for('storekeeper_page'))
+    return render_template('store_keeper_page.html', notes = notes, form = form)
 
 def get_details_report(spec,det, count=1):
     component_name = ''

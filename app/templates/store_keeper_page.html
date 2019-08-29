@@ -32,8 +32,38 @@
           <td class="py-0">{{item.get_component().component_item}}</td>
           <td class="py-0" >{{item.get_component().component_unit}}</td>
           <td class="py-0"> {{item.n_count}}</td>
-          <td class="py-0"></td>
+          <td class="py-0">
+            {{item.arrival_date}}
+          <button type="button" class="btn btn-success btn-sm ml-2 mr-3 py-0" data-toggle="modal" data-target="{{'#'+item.get_name()}}">+</button></td>
         </tr>
+            <div class="modal fade" id='{{item.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{item.get_name()+'Label'}}" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header text-center">
+                    <h5 class="modal-title">Дата поставки</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <form class='form' action = "" method = post>
+                    <div class="modal-body">
+                      <div class="row px-3 py-2">
+                          
+                      </div>
+                      <div class="row px-3 py-2">
+                          <div class="col mt-2"> Дата поставки:</div>
+                      <div class="col"> {{form.entrydate( class_="mr-2 mb-2 form-control", placeholder="ДД-ММ-ГГГГ")}}</div>
+                      </div>
+                      {{form.id(value=item.id, type="hidden")}}
+                    </div>
+                    
+                    <div class="modal-footer">
+                        {{form.submit( class_="btn btn-success")}}
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
       {%endfor%}
       </tbody>
   </table>

@@ -4,6 +4,7 @@ from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from app.models import Component
 
 from wtforms import validators, ValidationError
+from wtforms.fields import DateField
 
 class ProductForm(Form):
     name = TextField("Наименование изделия",[validators.Required("Введите наименование изделия")])
@@ -46,3 +47,8 @@ class SpecificationForm(Form):
     submit = SubmitField("Добавить")
     text = TextAreaField('Комментарий', render_kw={'class': 'form-control', 'rows': 5})
     id = HiddenField()
+
+class NoteForm(Form):
+    id = HiddenField()
+    entrydate = DateField('Дата поступления', format='%d-%m-%Y')
+    submit = SubmitField("Добавить")

@@ -1,6 +1,6 @@
 from app import db
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
-from sqlalchemy import Table, MetaData
+from sqlalchemy import Table, MetaData, exists
 from sqlalchemy.sql import text
 from flask import flash
 
@@ -197,9 +197,6 @@ class Component(db.Model):
         for liter in liters:
             name = name.replace(liter, '')
         return name
-    def __repr__(self):
-        representation = '{}, {}'.format(str(self.id), str(self.unfired))
-        return representation
 
 class Specification(db.Model):
     __tablename__ = 'specification'
@@ -267,14 +264,14 @@ class Document(db.Model):
     comment = db.Column(db.String())
     product_orders = db.relationship('Order', secondary='document_order')
 
+    def remove(self, order):
+        self.product_orders.remove(order)
+        db.session.commit()
     def __init__(self, date, maker_id, document_type, comment):
         self.date = date
         self.maker_id = maker_id
         self.document_type = document_type
         self.comment = comment
-    
-    def __repr__(self):
-        return str(self.id)
 
     def get_maker(self):
         return User.query.filter(User.id==self.maker_id).first()
@@ -294,9 +291,9 @@ class Document(db.Model):
         update = []
         for stck in Stock.query.filter(Stock.document_id==id).all():
             if stck.component_id:
-                update.append(Stock.query.filter(Stock.component_id == stck.component_id and Stock.document_id!=id).first())
+                update.append([Stock.query.filter(Stock.component_id == stck.component_id and Stock.document_id!=id).first().id, current_user.username])
             else:
-                update.append(Stock.query.filter(Stock.id_product == stck.id_product and Stock.document_id!=id).first())
+                update.append([Stock.query.filter(Stock.id_product == stck.id_product and Stock.document_id!=id).first().id, current_user.username])
         while order:
             while note:
                 Note.query.filter(Note.order_id==order.id).delete()
@@ -314,8 +311,9 @@ class Document(db.Model):
             
         print(update)
         for item in update:
-            if Stock.query.filter(Stock.id==item.id).first():
-                item.get_count()
+            stock = Stock.query.filter(Stock.id==item[0]).first()
+            if stock and current_user.username==item[1]:
+                stock.get_count()
         Document.query.filter(Document.id==id).delete()
         db.session.commit()  
 
@@ -406,13 +404,42 @@ class Order(db.Model):
         self.prod_id = prod_id
         self.count = count
     
-    def __repr__(self):
-        return '{} {} {} {}'.format(self.id, self.doc_id, self.prod_id, self.count)
     def get_product(self):
         return Product.query.filter(Product.id==self.prod_id).first()
     
     def get_document(self):
         return Document.query.filter(Document.id==self.doc_id).first()
+    
+    def delete(self):
+        note = Note.query.filter(Note.order_id==self.id).first()
+        stock = Stock.query.filter(Stock.document_id==self.doc_id).first()
+        update = []
+        for stck in Stock.query.filter(Stock.document_id==self.doc_id).all():
+            if stck.component_id:
+                update.append([Stock.query.filter(Stock.component_id == stck.component_id and Stock.get_document().id!=self.doc_id).first().id, current_user.username])
+            else:
+                update.append([Stock.query.filter(Stock.id_product == stck.id_product and Stock.get_document().id!=self.doc_id).first().id, current_user.username])
+        while note:
+                Note.query.filter(Note.order_id==self.id).delete()
+                note = Note.query.filter(Note.order_id==self.id).first()
+        while stock:
+            if stck.component_id:
+                Stock.query.filter(Stock.component_id==stock.component_id).first().get_count()
+            else:
+                Stock.query.filter(Stock.id_product==stock.id_product).first().get_count()
+
+            Stock.query.filter(Stock.document_id==self.doc_id).delete()
+            stock = Stock.query.filter(Stock.document_id==self.doc_id).first()
+            
+        print(update)
+        for item in update:
+            stock = Stock.query.filter(Stock.id==item[0]).first()
+            if stock and current_user.username==item[1]:
+                stock.get_count()
+        Document.query.filter(Document.id==self.doc_id).first().remove(Order.query.filter(Order.id==self.id).first())
+        Order.query.filter(Order.doc_id==self.id).delete()
+        db.session.commit()  
+
 
 class Note(db.Model):
     __tablename__ = 'note'
@@ -428,7 +455,9 @@ class Note(db.Model):
         self.order_id = order_id
         self.arrival_date = arrival_date
         self.n_count = n_count
-    
+    def get_name(self):
+        retstr = 'note{}{}{}'.format(self.na_component, self.na_product, str(self.n_count).replace('.', ''))
+        return retstr
     def get_component(self):
         return Component.query.filter(Component.id==self.na_component).first()
 
