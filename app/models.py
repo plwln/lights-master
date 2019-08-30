@@ -308,8 +308,7 @@ class Document(db.Model):
 
             Stock.query.filter(Stock.document_id==id).delete()
             stock = Stock.query.filter(Stock.document_id==id).first()
-            
-        print(update)
+        
         for item in update:
             stock = Stock.query.filter(Stock.id==item[0]).first()
             if stock and current_user.username==item[1]:
@@ -430,8 +429,7 @@ class Order(db.Model):
 
             Stock.query.filter(Stock.document_id==self.doc_id).delete()
             stock = Stock.query.filter(Stock.document_id==self.doc_id).first()
-            
-        print(update)
+        
         for item in update:
             stock = Stock.query.filter(Stock.id==item[0]).first()
             if stock and current_user.username==item[1]:
