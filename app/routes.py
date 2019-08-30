@@ -29,6 +29,9 @@ def home_page():
     #     if doc.document_type == 'Резерв':
     #         db.session.delete(doc)
     #         db.session.commit()
+    product = Product.query.first()
+    print(product.product_name)
+    print(product.new_get_det())
     role_names = [x.name for x in current_user.roles]
     if 'Admin' in role_names:
         docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
@@ -607,33 +610,6 @@ def storekeeper_page():
         db.session.commit()
         return redirect(url_for('storekeeper_page'))
     return render_template('store_keeper_page.html', notes = notes, form = form)
-
-def get_details_report(spec,det, count=1):
-    component_name = ''
-
-    for item in spec:
-        if type(item)==Specification: 
-            item_id = item.component_id
-        else: item_id = item.child_id
-        if item.get_children(item_id):
-            count *= item.count
-            get_details_report(ModalComponent.query.filter(ModalComponent.parrent_id==item_id).all(),det, count)
-            
-        else:
-            if type(item)==Specification: 
-                component_name = Component.query.filter(Component.id==item.component_id).first().component_name
-                if component_name in det.keys():
-                    det[component_name] += item.count
-            else:
-                component_name = Component.query.filter(Component.id==item.child_id).first().component_name
-                if component_name in det.keys():
-                    det[component_name] += item.count*count
-            if component_name not in det.keys() and component_name!='':
-                det[component_name] = item.count*count
-
-        
-        
-    return det
 
 # def rec_html(specification):
 #     for item in specification.get_children(specification.get_component().id):

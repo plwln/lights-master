@@ -49,7 +49,6 @@
     </thead>
     <tbody style="overflow: auto; height:400px;">
     {% for component in components%}
-     {% if modal_component.get_children(component.id)==[]%}
       <tr>
         <td class="py-0" >{{component.component_name}}</td>
         <td class="py-0" >{{component.component_unit}}</td>
@@ -94,7 +93,6 @@
                 </div>
         </td>
       </tr>
-     {% endif%}
     {%endfor%}
     </tbody>
 </table>

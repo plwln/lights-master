@@ -121,7 +121,42 @@ class Product(db.Model):
         specifications=Specification.query.filter(Specification.product_id==self.id).all()
         report = Product.get_details_report(specifications, det)
         return report
+    
+    def new_get_det(self):
+        det = {}
+        specifications=Specification.query.filter(Specification.product_id==self.id).all()
+        report = Product.new_get_details_report(specifications, det)
+        return report
 
+    @staticmethod
+    def new_get_details_report(spec,det, count=1):
+        component_name = ''
+    
+        for item in spec:
+            if type(item)==Specification: 
+                item_id = item.component_id
+            else: item_id = item.child_id
+            if item.get_children(item_id):
+                count *= item.count
+                component_name = Component.query.filter(Component.id==item.component_id).first().component_name
+                det[component_name] = dict()
+                Product.get_details_report(ModalComponent.query.filter(ModalComponent.parrent_id==item_id).all(), det[component_name], count)
+                
+            else:
+                if type(item)==Specification: 
+                    component_name = Component.query.filter(Component.id==item.component_id).first().component_name
+                    if component_name in det.keys():
+                        det[component_name] += item.count
+                else:
+                    component_name = Component.query.filter(Component.id==item.child_id).first().component_name
+                    if component_name in det.keys():
+                        det[component_name] += item.count*count
+                if component_name not in det.keys() and component_name!='':
+                    det[component_name] = item.count*count
+    
+            
+            
+        return det
     @staticmethod
     def get_details_report(spec,det, count=1):
         component_name = ''
