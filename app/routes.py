@@ -418,16 +418,6 @@ def pstock_adding(doc_type, doc):
             
             db.session.add(stock)
             db.session.commit()
-        if doc_type == 'Приход':
-            note = Note.query.filter(Note.na_product==stock.productid_product_id).first()
-            if note:
-                count = Note.n_count-stock.get_product().pstock_count
-                if count<=0:
-                    Note.query.filter(Note.na_product==stock.id_product).delete()
-                    db.session.commit()
-                else:
-                    note.n_stock=count
-                    db.session.commit
         current_user.append_stock(stock.id)
         flash('Товар {} добавлен в список'.format(stock.get_name()), 'message')
         return redirect(url_for('pstock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products))
