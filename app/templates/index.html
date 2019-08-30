@@ -52,13 +52,13 @@
                                 <td>{{item.count}}</td>
                                 <td>
                                   <h6>
-                                  {%if item.get_document().document_type=='Резерв'%}
+                                  {%if item.status=='Резерв'%}
                                   <span class="badge badge-warning">
-                                    {{item.get_document().document_type}}
+                                    {{item.status}}
                                   </span>
                                   {%else%}
                                   <span class="badge badge-success">
-                                      {{item.get_document().document_type}}
+                                      {{item.status}}
                                   </span>
                                   {%endif%}
                                   </h6>

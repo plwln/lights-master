@@ -25,8 +25,11 @@ def home_page():
     # for note in Note.query.all():
     #     Note.query.delete()
     #     db.session.commit()
+    # for doc in Document.query.all():
+    #     if doc.document_type == 'Резерв':
+    #         db.session.delete(doc)
+    #         db.session.commit()
     role_names = [x.name for x in current_user.roles]
-    print(role_names)
     if 'Admin' in role_names:
         docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
         return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
@@ -235,7 +238,6 @@ def stock():
         if item[0] is not None:
             stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
     for item in stock:
-        print(item.get_component())
         if item.get_component() is not None and item.get_component().stock_count is None:
             item.get_count()
     form = SpecificationForm()
@@ -253,6 +255,17 @@ def stock():
         last_count = compon.stock_count
         stock.get_count()
         if form.document_type.data=='Приход':
+            note = Note.query.filter(Note.na_component==stock.component_id).first()
+            if note:
+                n_count = note.n_count
+                stck_count = stock.get_component().stock_count
+                count = n_count-stck_count
+                if count<=0:
+                    Note.query.filter(Note.na_component==stock.component_id).delete()
+                    db.session.commit()
+                else:
+                    note.n_stock=count
+                    db.session.commit
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
         elif form.document_type.data=='Расход':
             if compon.stock_count!=0 and compon.stock_count==last_count:
@@ -302,6 +315,16 @@ def stock_adding(doc_type, doc):
             
             db.session.add(stock)
             db.session.commit()
+            if doc_type == 'Приход':
+                note = Note.query.filter(Note.na_component==stock.component_id).first()
+                if note:
+                    count = Note.n_count-stock.get_component().stock_count
+                    if count<=0:
+                        Note.query.filter(Note.na_component==stock.component_id).delete()
+                        db.session.commit()
+                    else:
+                        note.n_stock=count
+                        db.session.commit
             current_user.append_stock(stock.id)
             flash('Деталь {} добавлена в список'.format(stock.get_name()), 'message')
         return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added = added, form = form, last_stocked = last_stocked,  component = components, modal_component=modal_component))
@@ -340,6 +363,15 @@ def stock_product():
         stock.get_count()
         if form.document_type.data=='Приход':
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
+            note = Note.query.filter(Note.na_product==stock.id_product).first()
+            if note:
+                count = Note.n_count-stock.get_product().pstock_count
+                if count<=0:
+                    Note.query.filter(Note.na_product==stock.id_product).delete()
+                    db.session.commit()
+                else:
+                    note.n_stock=count
+                    db.session.commit
         elif form.document_type.data=='Расход':
             if prod.pstock_count!=0 and prod.pstock_count==last_count:
                 flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(stock.get_name()), 'message')
@@ -386,8 +418,18 @@ def pstock_adding(doc_type, doc):
             
             db.session.add(stock)
             db.session.commit()
-            current_user.append_stock(stock.id)
-            flash('Товар {} добавлен в список'.format(stock.get_name()), 'message')
+        if doc_type == 'Приход':
+            note = Note.query.filter(Note.na_product==stock.productid_product_id).first()
+            if note:
+                count = Note.n_count-stock.get_product().pstock_count
+                if count<=0:
+                    Note.query.filter(Note.na_product==stock.id_product).delete()
+                    db.session.commit()
+                else:
+                    note.n_stock=count
+                    db.session.commit
+        current_user.append_stock(stock.id)
+        flash('Товар {} добавлен в список'.format(stock.get_name()), 'message')
         return redirect(url_for('pstock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products))
     
     return render_template('pstock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products)
@@ -470,7 +512,6 @@ def check_order(order):
     details = product.get_det()
     stock = []
     if request.method=='GET':
-        print(product.pstock_count)
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
         if product.pstock_count is None or product.pstock_count<(order.count):
@@ -481,13 +522,13 @@ def check_order(order):
                 if item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
                     if doc_type=='Заказ':
                         doc_type = 'Резерв'
-                        order.get_document().document_type = doc_type
-                        db.session.commit()
                     note = Note(component.id, None, order.id, (details[name]*order.count), '')
                     db.session.add(note)
                     db.session.commit()
                 stock.append([component, item])
-        print(Note.query.all())
+        order.status = doc_type
+        order.get_document().document_type = 'Резерв'
+        db.session.commit()
     if request.method=='POST':
         current_user.append_order(product)
         db.session.commit()
@@ -497,10 +538,11 @@ def check_order(order):
                 db.session.add(stock)
                 db.session.commit()
                 stock.get_count()
-        stock = Stock(order.doc_id, product.id, None, order.count)
-        db.session.add(stock)
-        db.session.commit()
-        stock.get_count()
+        else:
+            stock = Stock(order.doc_id, product.id, None, order.count)
+            db.session.add(stock)
+            db.session.commit()
+            stock.get_count()
 
         flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
@@ -511,7 +553,6 @@ def check_order(order):
 def delete_and_back(id):
     doc = Order.query.filter(Order.id==id).first().doc_id
     order = Order.query.filter(Order.id==id).first()
-    print(doc)
     order.delete()
     return redirect(url_for('order', doc=doc))
 
@@ -572,7 +613,6 @@ def storekeeper_page():
     notes = Note.query.all()
     form = NoteForm()
     if request.method=='POST':
-        print(form.entrydate.data)
         Note.query.filter(Note.id==form.id.data).first().arrival_date = form.entrydate.data
         db.session.commit()
         return redirect(url_for('storekeeper_page'))
