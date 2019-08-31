@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, datetime
+import os, datetime, json
 from app import app, db
 from flask import render_template, flash, redirect, url_for, request, send_from_directory,render_template_string
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
@@ -8,6 +8,7 @@ from werkzeug.urls import url_parse
 from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note
 from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm, NoteForm
 from datetime import datetime, date, time
+
 
 
 
@@ -31,7 +32,7 @@ def home_page():
     #         db.session.commit()
     product = Product.query.first()
     print(product.product_name)
-    print(product.new_get_det())
+    print(product.get_det())
     role_names = [x.name for x in current_user.roles]
     if 'Admin' in role_names:
         docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
@@ -502,31 +503,16 @@ def check_order(order):
     order = Order.query.filter(Order.id==order).first()
     product = Product.query.filter(Product.id==order.prod_id).first()
     form = SubmitForm()
-    details = product.get_det()
-    stock = []
-    if request.method=='GET':
-        if product.pstock_count is not None and product.pstock_count>0:
-            stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
-        if product.pstock_count is None or product.pstock_count<(order.count):
-            for name in details.keys():
-                component = Component.query.filter(Component.component_name==name).first()
-                item = Stock.query.filter(Stock.component_id==component.id).first()
-                pstock = lambda x: x if x else 0
-                if item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
-                    if doc_type=='Заказ':
-                        doc_type = 'Резерв'
-                    note = Note(component.id, None, order.id, (details[name]*order.count), '')
-                    db.session.add(note)
-                    db.session.commit()
-                stock.append([component, item])
-        order.status = doc_type
-        order.get_document().document_type = 'Резерв'
-        db.session.commit()
+    mod_details = dict()
     if request.method=='POST':
+        details = dict()
+        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
+            details = json.load(fh)
         current_user.append_order(product)
         db.session.commit()
         if product.pstock_count is None or product.pstock_count<order.count:
             for det in list(details.keys()):
+                print(det)
                 stock = Stock(order.doc_id, None, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
                 db.session.add(stock)
                 db.session.commit()
@@ -537,9 +523,94 @@ def check_order(order):
             db.session.commit()
             stock.get_count()
 
-        flash('Товар {} добавлен в список'.format(Product.product_name), 'message')
+        flash('Товар {} добавлен в список'.format(product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
+    if request.method=='GET':
+        details = product.get_det()
+        stock = []
+        if product.pstock_count is not None and product.pstock_count>0:
+            stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
+        if product.pstock_count is None or product.pstock_count<(order.count):
+            for name in details.keys():
+                component = Component.query.filter(Component.component_name==name).first()
+                item = Stock.query.filter(Stock.component_id==component.id).first()
+                pstock = lambda x: x if x else 0
+                if type(details[name])==dict:
+                    if item is not None and component.stock_count>=details[name]['count']*(order.count-pstock(product.pstock_count)):
+                        details[name]=details[name]['count']
+                        stock.append([component, item])
+                    else:
+                        for key in details[name]:
+                            if details[name]['count']>1:
+                                details[name][key]*=details[name]['count']
+                        details[name].pop('count')
+                        mod_details.update({name: details[name]})
+                elif item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
+                    check = lambda x: 'Резерв' if x=='Заказ' else x
+                    doc_type = check(doc_type)
+                    if type(details[name])==float:
+                        note = Note(component.id, None, order.id, (details[name]*order.count), '')
+                        db.session.add(note)
+                        db.session.commit()
+                        stock.append([component, item])
+                    else:
+                        for key in details[name]:
+                            if details[name]['count']>1:
+                                details[name][key]*=details[name]['count']
+                        details[name].pop('count')
+                        mod_details.update({name: details[name]})
+                else: stock.append([component, item])
+        for key in mod_details:
+            if key in details.keys():
+                details.pop(key)
+                details.update(mod_details[key])
+                for name in mod_details[key]:
+                    component = Component.query.filter(Component.component_name==name).first()
+                    item = Stock.query.filter(Stock.component_id==component.id).first()
+                    stock.append([component, item])
+        new_details = dict.copy(details)
+        order.status = doc_type
+        order.get_document().document_type = 'Резерв'
+        db.session.commit()
+    print(details)
+    with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
+        fh.write(json.dumps(details, ensure_ascii=False))
     return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock, doc_type = doc_type)
+
+
+def all_details(details, order, product, stock, doc_type):
+    for name in details.keys():
+        component = Component.query.filter(Component.component_name==name).first()
+        item = Stock.query.filter(Stock.component_id==component.id).first()
+        pstock = lambda x: x if x else 0
+        if type(details[name])==dict:
+            if item is not None and component.stock_count>=details[name]['count']*(order.count-pstock(product.pstock_count)):
+                details[name]=details[name]['count']
+                stock.append([component, item])
+            else:
+                for key in details[name]:
+                    if details[name]['count']>1:
+                        details[name][key]*=details[name]['count']
+                details[name].pop('count')
+                details.update(all_details(details[name], order, product, stock, doc_type))
+        elif item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
+            check = lambda x: 'Резерв' if x=='Заказ' else x
+            doc_type = check(doc_type)
+            if type(details[name])==float:
+                note = Note(component.id, None, order.id, (details[name]*order.count), '')
+                db.session.add(note)
+                db.session.commit()
+                stock.append([component, item])
+            else:
+                for key in details[name]:
+                    if details[name]['count']>1:
+                        details[name][key]*=details[name]['count']
+                details[name].pop('count')
+                all_details(details[name], order, product, stock, doc_type)
+        else: stock.append([component, item])
+        print(details)
+    return details, doc_type
+
 
 @app.route('/delete_and_back/<id>')
 @login_required

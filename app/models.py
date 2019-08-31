@@ -92,7 +92,6 @@ class Product(db.Model):
     product_material = db.Column(db.String(255, collation='NOCASE'))
     pstock_count = db.Column(db.Float())
     p_unfired = db.Column(db.Float())
-
     def __init__(self, product_name, product_power, product_item, product_weight, product_material):
         self.product_name = product_name
         self.product_power = product_power
@@ -122,14 +121,14 @@ class Product(db.Model):
         report = Product.get_details_report(specifications, det)
         return report
     
-    def new_get_det(self):
+    def old_get_det(self):
         det = {}
         specifications=Specification.query.filter(Specification.product_id==self.id).all()
-        report = Product.new_get_details_report(specifications, det)
+        report = Product.old_get_details_report(specifications, det)
         return report
 
     @staticmethod
-    def new_get_details_report(spec,det, count=1):
+    def get_details_report(spec,det, count=1):
         component_name = ''
     
         for item in spec:
@@ -137,9 +136,9 @@ class Product(db.Model):
                 item_id = item.component_id
             else: item_id = item.child_id
             if item.get_children(item_id):
-                count *= item.count
-                component_name = Component.query.filter(Component.id==item.component_id).first().component_name
+                component_name = Component.query.filter(Component.id==item_id).first().component_name
                 det[component_name] = dict()
+                det[component_name]['count'] = item.count
                 Product.get_details_report(ModalComponent.query.filter(ModalComponent.parrent_id==item_id).all(), det[component_name], count)
                 
             else:
@@ -158,7 +157,7 @@ class Product(db.Model):
             
         return det
     @staticmethod
-    def get_details_report(spec,det, count=1):
+    def old_get_details_report(spec,det, count=1):
         component_name = ''
     
         for item in spec:
@@ -167,7 +166,7 @@ class Product(db.Model):
             else: item_id = item.child_id
             if item.get_children(item_id):
                 count *= item.count
-                Product.get_details_report(ModalComponent.query.filter(ModalComponent.parrent_id==item_id).all(),det, count)
+                Product.old_get_details_report(ModalComponent.query.filter(ModalComponent.parrent_id==item_id).all(),det, count)
                 
             else:
                 if type(item)==Specification: 
@@ -494,4 +493,6 @@ class Note(db.Model):
     def get_component(self):
         return Component.query.filter(Component.id==self.na_component).first()
 
+class Details():
+    details = dict()
 
