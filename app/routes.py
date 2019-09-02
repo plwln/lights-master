@@ -536,15 +536,8 @@ def check_order(order):
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 pstock = lambda x: x if x else 0
                 if type(details[name])==dict:
-                    if item is not None and component.stock_count>=details[name]['count']*(order.count-pstock(product.pstock_count)):
-                        details[name]=details[name]['count']
-                        stock.append([component, item])
-                    else:
-                        for key in details[name]:
-                            if details[name]['count']>1:
-                                details[name][key]*=details[name]['count']
-                        details[name].pop('count')
-                        mod_details.update({name: details[name]})
+                    get_modals(details, name, item, component, order, pstock, product, stock, mod_details)
+                    print(mod_details)
                 elif item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
                     check = lambda x: 'Резерв' if x=='Заказ' else x
                     doc_type = check(doc_type)
@@ -568,7 +561,6 @@ def check_order(order):
                     component = Component.query.filter(Component.component_name==name).first()
                     item = Stock.query.filter(Stock.component_id==component.id).first()
                     stock.append([component, item])
-        new_details = dict.copy(details)
         order.status = doc_type
         order.get_document().document_type = 'Резерв'
         db.session.commit()
@@ -576,6 +568,19 @@ def check_order(order):
     with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
         fh.write(json.dumps(details, ensure_ascii=False))
     return render_template('check_order.html', form=form, order=order, product=product, details=details, stock=stock, doc_type = doc_type)
+
+def get_modals(details, name, item, component, order, pstock, product, stock, mod_details):
+    if item is not None and component.stock_count>=details['count']*(order.count-pstock(product.pstock_count)):
+        details=details['count']
+        stock.append([component, item])
+    else:
+        for key in details:
+            if details['count']>1:
+                details[key]*=details['count']
+            if type(details[key]) == dict:
+                get_modals(details[key], item, component, order, pstock, product, stock, mod_details)
+        details.pop('count')
+        mod_details.update({name: details})
 
 
 def all_details(details, order, product, stock, doc_type):
