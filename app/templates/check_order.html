@@ -14,6 +14,54 @@
 <div class="row">
   </div>
   <div class="row">
+    {%if mod_stock!=[]%}
+      <div class="col">
+          <table  id=mytable class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <td>Наименование</td>
+                  <td>Единицы измерения</td>
+                  <td>Артикул</td>
+                  <td>Требуется/Склад</td>
+                </tr>
+              </thead>
+              <tbody style="overflow: auto; height:400px;">
+              {% for item in mod_stock%}
+                {%if item[1]%}
+                <tr>
+                {%if item[1].component_id%}
+                  <td class="py-0" >{{item[1].get_component().component_name}}</td>
+                  <td class="py-0" >{{item[1].get_component().component_unit}}</td>
+                  <td class="py-0">{{item[1].get_component().component_item}}</td>
+                  {%if modules[item[1].get_component().component_name]*order.count <= item[1].get_component().stock_count %}
+                  <td class="py-0 bg-success">{{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
+                  {%else%}
+                  <td class="py-0 bg-danger">{{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
+                  {%endif%}
+                {%else%}
+                  <td class="py-0" >{{item[1].get_product().product_name}}</td>
+                  <td class="py-0" >&mdash;</td>
+                  <td class="py-0">{{item[1].get_product().product_item}}</td>
+                  {%if order.count <= item[1].get_product().pstock_count %}
+                  <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+                  {%else%}
+                  <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+                  {%endif%}
+                {%endif%}
+                </tr>
+                {%else%}
+                <tr>
+                    <td class="py-0" >{{item[0].component_name}}</td>
+                    <td class="py-0" >{{item[0].component_unit}}</td>
+                    <td class="py-0">{{item[0].component_item}}</td>
+                    <td class="py-0 bg-danger">{{modules[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
+                  </tr>
+                {%endif%}
+              {%endfor%}
+              </tbody>
+          </table>
+          </div>
+          {%endif%}
   <div class="col">
   <table  id=mytable class="table table-sm table-hover">
       <thead>
@@ -32,10 +80,10 @@
           <td class="py-0" >{{item[1].get_component().component_name}}</td>
           <td class="py-0" >{{item[1].get_component().component_unit}}</td>
           <td class="py-0">{{item[1].get_component().component_item}}</td>
-          {%if details[item[1].get_component().component_name]*order.count <= item[1].get_component().stock_count %}
-          <td class="py-0 bg-success">{{details[item[1].get_component().component_name]*order.count}}/{{item[1].get_component().stock_count}}</td>
+          {%if details[item[1].get_component().component_name]*(order.count-pstock) <= item[1].get_component().stock_count %}
+          <td class="py-0 bg-success">{{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
           {%else%}
-          <td class="py-0 bg-danger">{{details[item[1].get_component().component_name]*order.count}}/{{item[1].get_component().stock_count}}</td>
+          <td class="py-0 bg-danger">{{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
           {%endif%}
         {%else%}
           <td class="py-0" >{{item[1].get_product().product_name}}</td>
@@ -53,7 +101,7 @@
             <td class="py-0" >{{item[0].component_name}}</td>
             <td class="py-0" >{{item[0].component_unit}}</td>
             <td class="py-0">{{item[0].component_item}}</td>
-            <td class="py-0 bg-danger">{{details[item[0].component_name]*order.count}}/Нет на складе</td>
+            <td class="py-0 bg-danger">{{details[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
           </tr>
         {%endif%}
       {%endfor%}

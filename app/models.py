@@ -230,6 +230,7 @@ class Component(db.Model):
         name = self.component_name
         for liter in liters:
             name = name.replace(liter, '')
+        name = name.lstrip().strip()
         return name
 
 class Specification(db.Model):
