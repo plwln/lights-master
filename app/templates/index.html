@@ -1,7 +1,18 @@
 {% extends "base.html" %}
             {% block content %}
                 <main role="main" class="container">
-                        <div class="col-8" style="overflow: auto; height:400px;">
+                  
+                  <div class="row">    
+                        <div class="col-6 card gedf-card mb-3 px-0">
+                            <div class="card-header py-1 pr-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class=" row ml-2">
+                                        <div class="h5 m-0">Заказы в обработке</div>
+                                    </div>    
+                                </div>
+                              </div>
+                              <div class="card-body px-0 py-0">
+                        <div style="overflow: auto; height:400px;">
                         {%for order in orders%}
                         {%if order.product_orders!=[]%}
                         <div class="card gedf-card mb-3">
@@ -34,7 +45,7 @@
                               
 
                           </div>
-                          <div class="card-body">
+                          <div class="card-body px-0 pt-0">
                               <table class="table table-condensed">
                                   <thead>
                                   <tr>
@@ -73,5 +84,26 @@
                       {%endif%}
                       {%endfor%}
                     </div>
-                      </main>
+                  </div>
+            </div>
+            
+            <div class="col-6 card gedf-card mb-3 px-0 mr-0">
+                <div class="card-header py-1 pr-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class=" row ml-2">
+                            <div class="h5 m-0">Принятые заказы</div>
+                        </div>    
+                    </div>
+                  </div>
+                  <div class="card-body">
+                  
+                  
+                  </div>
+            </div>
+          </div>
+          <div class="row">
+              <button type="button" class="btn btn-outline-primary">Обновить статус</button>
+              <button type="button" class="btn btn-outline-success ml-2">Принять все готовые заказы</button>
+          </div>
+</main>
             {% endblock %}

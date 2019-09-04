@@ -528,7 +528,7 @@ def check_order(order):
         return redirect(url_for('order', doc=order.doc_id))
     if request.method=='GET':
         details = product.get_det()
-        pstock = lambda x: x if x>0 else 0
+        pstock = lambda x: x if x and x>0 else 0
         stock = []
         mod_stock = []
         print(product.pstock_count)
@@ -558,10 +558,7 @@ def check_order(order):
                     db.session.commit()
                     stock.append([component, item])
                 else: stock.append([component, item])
-        
-        print(stock)
         for item in stock:
-            print(f'{item[0]}{type(item[0])}')
             if type(item[0])=='String':
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
                 db.session.add(Stock(order.doc_id, None, component.id, (details[name]*(order.count-pstock(product.pstock_count)))))
