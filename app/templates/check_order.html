@@ -111,14 +111,16 @@
   </div>
 <form class='form' action = "" method = post>
   <div class="row">
-    <div class="col">
+    <div class="col-2 px-0">
       {%if doc_type=='Заказ'%}
       {{form.submit( class_="btn btn-success")}}
       {%else%}
       {{form.order( class_="btn btn-info")}}
       {%endif%}
     </div>
-    <div class='col-2 px-0 ml-3 my-3'><a href="{{url_for('delete_and_back',id=order.id)}}"><button type="button" class="btn btn-success">Отменить</button></a></div>
+  </div>
+  <div class="row">
+    <div class='col-2 mt-2 px-0'><a href="{{url_for('delete_and_back',id=order.id)}}"><button type="button" class="btn btn-danger">Отменить</button></a></div>
   </div>
 </form>
 <script>

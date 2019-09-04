@@ -298,7 +298,7 @@ class Document(db.Model):
     document_type = db.Column(db.String())
     comment = db.Column(db.String())
     product_orders = db.relationship('Order', secondary='document_order')
-
+    order_status = db.Column(db.String())
     def remove(self, order):
         self.product_orders.remove(order)
         db.session.commit()
@@ -320,21 +320,19 @@ class Document(db.Model):
 
     @staticmethod
     def delete(id):
-        order = Order.query.filter(Order.doc_id==id).first()
+        print()
+        orders = Order.query.filter(Order.doc_id==id).all()
         stock = Stock.query.filter(Stock.document_id==id).first()
-        note = Note.query.filter(Note.order_id==order.id).first()
         update = []
         for stck in Stock.query.filter(Stock.document_id==id).all():
             if stck.component_id:
                 update.append([Stock.query.filter(Stock.component_id == stck.component_id and Stock.document_id!=id).first().id, current_user.username])
             else:
                 update.append([Stock.query.filter(Stock.id_product == stck.id_product and Stock.document_id!=id).first().id, current_user.username])
-        while order:
-            while note:
-                Note.query.filter(Note.order_id==order.id).delete()
-                note = Note.query.filter(Note.order_id==order.id).first()
-            Order.query.filter(Order.doc_id==id).delete()
-            order = Order.query.filter(Order.doc_id==id).first()
+        for order in orders:
+            for note in Note.query.filter(Note.order_id==order.id).all():
+                Note.query.filter(Note.id==note.id).delete()
+            Order.query.filter(Order.id==order.id).delete()
         while stock:
             if stck.component_id:
                 Stock.query.filter(Stock.component_id==stock.component_id).first().get_count()

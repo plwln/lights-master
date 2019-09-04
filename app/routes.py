@@ -36,6 +36,7 @@ def home_page():
     role_names = [x.name for x in current_user.roles]
     if 'Admin' in role_names:
         docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
+        print(docs)
         return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
     else: return redirect(url_for('order', doc='False'))
 
@@ -527,7 +528,7 @@ def check_order(order):
         return redirect(url_for('order', doc=order.doc_id))
     if request.method=='GET':
         details = product.get_det()
-        pstock = lambda x: x if x else 0
+        pstock = lambda x: x if x>0 else 0
         stock = []
         mod_stock = []
         print(product.pstock_count)
@@ -541,7 +542,7 @@ def check_order(order):
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 mod_stock.append([component, item])
                 if item is None or component.stock_count<(new_md[name]*(order.count-pstock(product.pstock_count))):
-                    note = Note(component.id, None, order.id, (new_md[name]*(order.count-pstock)), '')
+                    note = Note(component.id, None, order.id, (new_md[name]*(order.count-pstock(product.pstock_count))), '')
                     db.session.add(note)
                     db.session.commit()
                 if name in details.keys():
@@ -552,14 +553,26 @@ def check_order(order):
                 if item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
                     check = lambda x: 'Резерв' if x=='Заказ' else x
                     doc_type = check(doc_type)
-                    note = Note(component.id, None, order.id, (details[name]*(order.count-pstock)), '')
+                    note = Note(component.id, None, order.id, (details[name]*(order.count-pstock(product.pstock_count))), '')
                     db.session.add(note)
                     db.session.commit()
                     stock.append([component, item])
                 else: stock.append([component, item])
         
-        
-        
+        print(stock)
+        for item in stock:
+            print(f'{item[0]}{type(item[0])}')
+            if type(item[0])=='String':
+                component = Component.query.filter(Component.component_name==item[0].component_name).first()
+                db.session.add(Stock(order.doc_id, None, component.id, (details[name]*(order.count-pstock(product.pstock_count)))))
+                db.session.commit()
+                Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
+        for item in new_md:
+            if type(item[0])=='String':
+                component = Component.query.filter(Component.component_name==item[0].component_name).first()
+                db.session.add(Stock(order.doc_id, None, component.id, (details[name]*(order.count-pstock(product.pstock_count)))))
+                db.session.commit()
+                Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
         order.status = doc_type
         order.get_document().document_type = 'Резерв'
         db.session.commit()
