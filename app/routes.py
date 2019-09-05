@@ -571,8 +571,10 @@ def get_report_order():
     details_new=details.copy()
     new_md=dict()
     for doc in docs:
+        print(doc)
         flag=True
         for order in doc.product_orders:
+            print(order)
             if order.status!='Заказ':
                 with open(str(order.prod_id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
                     details = json.load(fh)
@@ -586,11 +588,19 @@ def get_report_order():
                         Note.query.filter(Note.id==note.id).delete()
                         order.status = 'Заказ'
                         db.session.commit()
+                for name in details_new:
+                    component = Component.query.filter(Component.component_name==name).first()
+                    note = Note.query.filter(Note.order_id==order.id and Note.na_component==component.id)
+                    if component.stock_count<note.n_count:
+                        flag=False
+                    else:
+                        Note.query.filter(Note.id==note.id).delete()
+                        order.status = 'Заказ'
+                        db.session.commit()
         if flag:
             doc.order_status ='Принято'
             db.session.commit()    
     order = Document.query.filter(Document.product_orders).all()
-    print(order)
     return render_template('orders_in_process.html',  orders=sorted(order, key = lambda x: x.id)[::-1])
 
 def get_mods_rec( details_new, new_md):
