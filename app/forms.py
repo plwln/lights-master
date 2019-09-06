@@ -23,6 +23,7 @@ class ComponentForm(Form):
 
 class DocumentForm(Form):
     text = TextAreaField('Комментарий', render_kw={'class': 'form-control', 'rows': 5})
+    number = IntegerField("Артикул",[validators.Optional()])
     submit = SubmitField("Добавить")
     hidden_type = HiddenField()
 

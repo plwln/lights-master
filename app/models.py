@@ -299,6 +299,7 @@ class Document(db.Model):
     comment = db.Column(db.String())
     product_orders = db.relationship('Order', secondary='document_order')
     order_status = db.Column(db.String())
+    order_item = db.Column(db.Integer(), unique=True)
     def remove(self, order):
         self.product_orders.remove(order)
         db.session.commit()

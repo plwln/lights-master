@@ -472,6 +472,8 @@ def order(doc):
             db.session.commit()
             document.comment=form1.text.data
             db.session.commit()
+            document.order_item = form1.number.data
+            db.session.commit()
             flash('Заказ произведён', 'message')
             return redirect(url_for('order', doc='False', form1=form1, added = added, form = form, products=product))
         else:

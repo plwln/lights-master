@@ -119,12 +119,22 @@
         </button>
       </div>
       <form class='form' action = "" method = post>
-      <div class="col pl-3 py-0 mt-1 mb-1">
-        Комментарий:
-      </div>
-      <div class="col py-0">
-          {{form1.text()}}
-      </div>
+          <div class="row mx-1 my-1">
+              <div class="col pl-3 py-0 mt-1 mb-1">
+                Номер заказа:
+              </div>
+              <div class="col py-0">
+                  {{form1.number()}}
+              </div>
+            </div>
+        <div class="row mx-1 mb-1">
+          <div class="col pl-3 py-0 mt-1 mb-1">
+            Комментарий:
+          </div>
+          <div class="col py-0">
+              {{form1.text()}}
+          </div>
+        </div>
       {{form.id(value='comment', type="hidden")}}
       {{form1.hidden_type(value=doc_type, type="hidden")}}
       <div class="modal-footer">
