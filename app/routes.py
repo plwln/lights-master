@@ -516,30 +516,22 @@ def check_order(order):
     if request.method=='GET':
         details = product.get_det()
         pstock = lambda x: x if x and x>0 else 0
+        details_new = details.copy()
         stock = []
         mod_stock = []
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
         if product.pstock_count is None or product.pstock_count<(order.count):
             print('details - {} '.format(details))
-            get_mods_rec(details.copy(), new_md)
-            for name in new_md:
+            get_mods_rec(details_new, new_md, product, pstock, order)
+                    
+            for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
-                mod_stock.append([component, item])
-                if item is None or component.stock_count<(new_md[name]*(order.count-pstock(product.pstock_count))):
-                    note = Note(component.id, None, order.id, (new_md[name]*(order.count-pstock(product.pstock_count))), '')
-                    db.session.add(note)
-                    db.session.commit()
-                if name in details.keys():
-                    details.pop(name)
-            for name in details.keys():
-                component = Component.query.filter(Component.component_name==name).first()
-                item = Stock.query.filter(Stock.component_id==component.id).first()
-                if item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
+                if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
                     check = lambda x: 'Резерв' if x=='Заказ' else x
                     doc_type = check(doc_type)
-                    note = Note(component.id, None, order.id, (details[name]*(order.count-pstock(product.pstock_count))), '')
+                    note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
                     db.session.add(note)
                     db.session.commit()
                     stock.append([component, item])
@@ -547,13 +539,13 @@ def check_order(order):
         for item in stock:
             if type(item[0])=='String':
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
-                db.session.add(Stock(order.doc_id, None, component.id, (details[name]*(order.count-pstock(product.pstock_count)))))
+                db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
                 Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
         for item in new_md:
             if type(item[0])=='String':
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
-                db.session.add(Stock(order.doc_id, None, component.id, (details[name]*(order.count-pstock(product.pstock_count)))))
+                db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
                 Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
         order.status = doc_type
@@ -561,12 +553,16 @@ def check_order(order):
         db.session.commit()
         print(pstock(product.pstock_count))
     with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
-        fh.write(json.dumps(details, ensure_ascii=False))
-    return render_template('check_order.html', form=form, order=order, pstock=pstock(product.pstock_count), product=product, modules=new_md, details=details, stock=stock, mod_stock=mod_stock, doc_type = doc_type)
+        dets=dict()
+        dets.update(details_new)
+        dets.update(new_md)
+        fh.write(json.dumps(dets, ensure_ascii=False))
+    return render_template('check_order.html', form=form, order=order, pstock=pstock(product.pstock_count), product=product, modules=new_md, details=details_new, stock=stock, mod_stock=mod_stock, doc_type = doc_type)
 
-@app.route('/update', methods=['POST'])
+@app.route('/update', methods=['POST', 'GET'])
 def get_report_order():
-    docs = Document.query.filter(Document.product_orders and Document.order_status!='Принято').all()
+    docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
+    print(docs)
     details=dict()
     details_new=details.copy()
     new_md=dict()
@@ -578,32 +574,33 @@ def get_report_order():
             if order.status!='Заказ':
                 with open(str(order.prod_id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
                     details = json.load(fh)
-                get_mods_rec(details_new, new_md)
-                for name in new_md:
-                    component = Component.query.filter(Component.component_name==name).first()
-                    note = Note.query.filter(Note.order_id==order.id and Note.na_component==component.id)
-                    if component.stock_count<note.n_count:
-                        flag=False
-                    else:
-                        Note.query.filter(Note.id==note.id).delete()
-                        order.status = 'Заказ'
-                        db.session.commit()
-                for name in details_new:
-                    component = Component.query.filter(Component.component_name==name).first()
-                    note = Note.query.filter(Note.order_id==order.id and Note.na_component==component.id)
-                    if component.stock_count<note.n_count:
-                        flag=False
-                    else:
-                        Note.query.filter(Note.id==note.id).delete()
-                        order.status = 'Заказ'
-                        db.session.commit()
+                get_mods_rec(details_new, new_md, Product.query.filter(Product.id==order.prod_id).first(), lambda x: x if x and x>0 else 0, order)
+
+                notes = Note.query.filter(Note.order_id==order.id).all()
+                print(notes)
+                if notes:
+                    for note in notes:    
+                        component = Component.query.filter(Component.id==note.na_component).first()
+                        item = Stock.query.filter(Stock.component_id==component.id).first()
+                        item.get_count()
+                        if component.stock_count<0:
+                            flag=False
+                        else:
+                            print("туть")
+                            Note.query.filter(Note.id==note.id).delete()
+                            db.session.commit()
+                            order.status = 'Заказ'
+                            db.session.commit()
+                else:
+                    order.status = 'Заказ'
+                    db.session.commit()
         if flag:
             doc.order_status ='Принято'
             db.session.commit()    
-    order = Document.query.filter(Document.product_orders).all()
-    return render_template('orders_in_process.html',  orders=sorted(order, key = lambda x: x.id)[::-1])
+    docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
+    return render_template('orders_in_process.html',  orders=sorted(docs, key = lambda x: x.id)[::-1])
 
-def get_mods_rec( details_new, new_md):
+def get_mods_rec( details_new, new_md, product, pstock, order):
         names=[]
         for name in details_new.keys():
             if type(details_new[name])==dict:
@@ -611,17 +608,24 @@ def get_mods_rec( details_new, new_md):
         if names == []:
             return
         for name in names:
-            print(f"{name} {details_new[name]['count']}")
             for det in details_new[name]:
                 if type(details_new[name][det])==dict and details_new[name]['count']>1:
                     details_new[name][det]['count'] *= details_new[name]['count']
             print(f"{name} {details_new[name]['count']}")
-            new_md.update({name:details_new[name]['count']})
+            component = Component.query.filter(Component.component_name==name).first()
+            item = Stock.query.filter(Stock.component_id==component.id).first()
+            if item and component.stock_count>=(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
+                new_md.update({name:details_new[name]['count']})
+            if 'count' in details_new[name]:
+                count = details_new[name].pop('count')
+                for det in details_new[name].keys():
+                    if type(details_new[name][det])!=dict:
+                        details_new[name][det]*=count
+            details_new.update(details_new[name])
             if name in details_new.keys():
-                details_new.update(details_new[name])
                 details_new.pop(name)
-        print(f'new md {new_md}')
-        get_mods_rec(details_new, new_md)
+        print(f'detnew {details_new}')
+        get_mods_rec(details_new, new_md, product, pstock, order)
         return
 
 def get_modals(details, name, item, component, order, pstock, product, stock, mod_details):
