@@ -574,28 +574,36 @@ def get_report_order():
         for order in doc.product_orders:
             print(order)
             if order.status!='Заказ':
-                with open(str(order.prod_id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-                    details = json.load(fh)
-                get_mods_rec(details_new, new_md, Product.query.filter(Product.id==order.prod_id).first(), lambda x: x if x and x>0 else 0, order)
-
                 notes = Note.query.filter(Note.order_id==order.id).all()
-                print(notes)
-                if notes:
-                    for note in notes:    
-                        component = Component.query.filter(Component.id==note.na_component).first()
-                        item = Stock.query.filter(Stock.component_id==component.id).first()
-                        item.get_count()
-                        if component.stock_count<0:
-                            flag=False
-                        else:
-                            print("туть")
-                            Note.query.filter(Note.id==note.id).delete()
-                            db.session.commit()
-                            order.status = 'Заказ'
-                            db.session.commit()
+                if order.get_product().pstock_count<order.count:
+                    with open(str(order.prod_id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
+                        details = json.load(fh)
+                    get_mods_rec(details_new, new_md, Product.query.filter(Product.id==order.prod_id).first(), lambda x: x if x and x>0 else 0, order)
+                    if notes:
+                        for note in notes:    
+                            component = Component.query.filter(Component.id==note.na_component).first()
+                            item = Stock.query.filter(Stock.component_id==component.id).first()
+                            item.get_count()
+                            if component.stock_count<0:
+                                flag=False
+                            else:
+                                Note.query.filter(Note.id==note.id).delete()
+                                db.session.commit()
+                                order.status = 'Заказ'
+                                db.session.commit()
+                    else:
+                        order.status = 'Заказ'
+                        db.session.commit()
                 else:
+
+                    for note in notes:
+                        Note.query.filter(Note.id==note.id).delete()
+                        db.session.commit()
+                    
                     order.status = 'Заказ'
                     db.session.commit()
+
+
         if flag:
             doc.order_status ='Принято'
             db.session.commit()    
