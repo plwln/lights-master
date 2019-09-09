@@ -1,15 +1,16 @@
 {% extends "base.html" %}
             {% block content %}
-                <main role="main" class="container">
+                <main role="main" class="container-fluid">
                   <div class="row my-2"><a href="{{url_for('order', doc='False')}}"><button type="button" class="btn btn-info">Новый заказ</button></a>
                     <a href="{{url_for('storekeeper_page')}}"><button type="button" class="btn btn-info ml-1">Список недостающих деталей</button></a>
                   </div>
                   <div class="row">    
                         <div class="col card gedf-card mb-3 px-0">
-                            <div class="card-header py-1 pr-1">
+                            <div class="card-header py-1 px-0">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div class=" row ml-2">
-                                        <div class="h5 m-0">Заказы в обработке</div>
+                                    <div class="px-0 row ml-2">
+                                        <span class="p-0 h5 m-0">Заказы в обработке</span>
+                                        <div class="col pl-5 m-0" ><button type="button" class="py-0 btn btn-sm btn-outline-primary updateButton">Обновить статус</button></div>
                                     </div>    
                                 </div>
                               </div>
@@ -48,7 +49,7 @@
                                 
   
                             </div>
-                            <div class="card-body px-0 pt-0">
+                            <div class="card-body px-0 py-0">
                                 <table class="table table-condensed custab">
                                     <thead class='m-0'>
                                     <tr>
@@ -90,9 +91,6 @@
                   </div>
             </div>
                   </div>
-          <div class="row">
-              <button type="button" class="btn btn-outline-primary updateButton">Обновить статус</button>
-          </div>
 </main>
 <script>
 $(document).ready(function() {
