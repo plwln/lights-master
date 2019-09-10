@@ -524,9 +524,8 @@ def check_order(order):
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
         if product.pstock_count is None or product.pstock_count<(order.count):
-            print('details - {} '.format(details))
             get_mods_rec(details_new, new_md, product, pstock, order)
-                    
+            print(new_md)
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
@@ -538,6 +537,11 @@ def check_order(order):
                     db.session.commit()
                     stock.append([component, item])
                 else: stock.append([component, item])
+            for name in new_md:
+                component = Component.query.filter(Component.component_name==name).first()
+                item = Stock.query.filter(Stock.component_id==component.id).first()
+                mod_stock.append([component,item])
+
         for item in stock:
             if type(item[0])=='String':
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
@@ -553,7 +557,6 @@ def check_order(order):
         order.status = doc_type
         order.get_document().document_type = 'Резерв'
         db.session.commit()
-        print(pstock(product.pstock_count))
     with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
         dets=dict()
         dets.update(details_new)
@@ -564,7 +567,6 @@ def check_order(order):
 @app.route('/update', methods=['POST', 'GET'])
 def get_report_order():
     docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
-    print(docs)
     details=dict()
     details_new=details.copy()
     new_md=dict()
@@ -587,7 +589,6 @@ def get_report_order():
                         if component.stock_count<0:
                             flag=False
                         else:
-                            print("туть")
                             Note.query.filter(Note.id==note.id).delete()
                             db.session.commit()
                             order.status = 'Заказ'
@@ -613,20 +614,24 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
             for det in details_new[name]:
                 if type(details_new[name][det])==dict and details_new[name]['count']>1:
                     details_new[name][det]['count'] *= details_new[name]['count']
-            print(f"{name} {details_new[name]['count']}")
+            print(f"{name} {details_new[name]}")
             component = Component.query.filter(Component.component_name==name).first()
             item = Stock.query.filter(Stock.component_id==component.id).first()
+            print(details_new)
             if item and component.stock_count>=(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
                 new_md.update({name:details_new[name]['count']})
-            if 'count' in details_new[name]:
-                count = details_new[name].pop('count')
-                for det in details_new[name].keys():
-                    if type(details_new[name][det])!=dict:
-                        details_new[name][det]*=count
-            details_new.update(details_new[name])
+                details_new.pop(name)
+            else:
+                if 'count' in details_new[name]:
+                    count = details_new[name].pop('count')
+                    for det in details_new[name].keys():
+                        if type(details_new[name][det])!=dict:
+                            details_new[name][det]*=count
+                details_new.update(details_new[name])
             if name in details_new.keys():
                 details_new.pop(name)
-        print(f'detnew {details_new}')
+        print(f'detnew {new_md}')
+        print(f"details {details_new}")
         get_mods_rec(details_new, new_md, product, pstock, order)
         return
 
