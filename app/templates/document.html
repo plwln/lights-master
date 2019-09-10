@@ -2,7 +2,7 @@
 {%block content%}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    {%if stocks[0].id_product%}
+    {%if product='1'%}
     <li class="breadcrumb-item"><a href="{{url_for('stock_product')}}">Склад товаров</a></li>
     {%else%}
     <li class="breadcrumb-item"><a href="{{url_for('stock')}}">Склад деталей</a></li>

@@ -425,7 +425,7 @@ def document(component_id):
     form = SpecificationForm()
     stocks = Stock.query.filter(Stock.component_id==component_id).all()
     documents = [Document.query.filter(Document.id==stock.document_id).first() for stock in stocks]
-    return render_template('document.html', form=form, stocks = stocks, documents = documents)
+    return render_template('document.html', form=form, stocks = stocks, documents = documents, product='0')
 
 @app.route('/pdocument/<product_id>')
 @login_required
@@ -433,7 +433,7 @@ def pdocument(product_id):
     form = SpecificationForm()
     stocks = Stock.query.filter(Stock.id_product==product_id).all()
     documents = [Document.query.filter(Document.id==stock.document_id).first() for stock in stocks]
-    return render_template('document.html', form=form, stocks = stocks, documents = documents)
+    return render_template('document.html', form=form, stocks = stocks, documents = documents, product='1')
 
 @app.route('/delete_document/<document_id>')
 @login_required
@@ -443,7 +443,9 @@ def delete_document(document_id):
     product_id = stock.first().id_product
     stock.delete()
     db.session.commit()
-    Stock.query.filter(Stock.component_id==component_id).first().get_count()
+    stck = Stock.query.filter(Stock.component_id==component_id).first()
+    if stck:
+        stck.get_count()
     if component_id:
         return redirect(url_for('document', component_id = component_id))
     return redirect(url_for('pdocument', product_id = product_id))
@@ -585,7 +587,8 @@ def get_report_order():
                     for note in notes:    
                         component = Component.query.filter(Component.id==note.na_component).first()
                         item = Stock.query.filter(Stock.component_id==component.id).first()
-                        item.get_count()
+                        if item:
+                            item.get_count()
                         if component.stock_count<0:
                             flag=False
                             order_flag=False
