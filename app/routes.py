@@ -411,8 +411,8 @@ def pstock_adding(doc_type, doc):
             
             db.session.add(stock)
             db.session.commit()
-        current_user.append_stock(stock.id)
-        flash('Товар {} добавлен в список'.format(stock.get_name()), 'message')
+            current_user.append_stock(stock.id)
+            flash('Товар {} добавлен в список'.format(stock.get_name()), 'message')
         return redirect(url_for('pstock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products))
     
     return render_template('pstock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products)
@@ -574,7 +574,7 @@ def get_report_order():
         print(doc)
         flag=True
         for order in doc.product_orders:
-            print(order)
+            order_flag=True
             if order.status!='Заказ':
                 with open(str(order.prod_id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
                     details = json.load(fh)
@@ -588,11 +588,13 @@ def get_report_order():
                         item.get_count()
                         if component.stock_count<0:
                             flag=False
+                            order_flag=False
                         else:
                             Note.query.filter(Note.id==note.id).delete()
                             db.session.commit()
-                            order.status = 'Заказ'
-                            db.session.commit()
+                    if order_flag:
+                        order.status = 'Заказ'
+                        db.session.commit()
                 else:
                     order.status = 'Заказ'
                     db.session.commit()
