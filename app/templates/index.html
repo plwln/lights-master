@@ -10,7 +10,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="px-0 row ml-2">
                                         <span class="p-0 h5 m-0">Заказы в обработке</span>
-                                        <div class="col pl-5 m-0" ><button type="button" class="py-0 btn btn-sm btn-outline-primary updateButton">Обновить статус</button></div>
+                                        
                                     </div>    
                                 </div>
                               </div>
@@ -18,7 +18,7 @@
                         <div id='orders'style="overflow: auto; height:400px;">
                           {%for order in orders%}
                           {%if order.product_orders!=[]%}
-                          <div class="card gedf-card mb-3">
+                          <div class="card gedf-card mb-3" id = 'order{{order.id}}'>
                             <div class="card-header py-1 pr-1">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="d-flex justify-content-between align-items-center">
@@ -26,10 +26,11 @@
                                             <div class="h5 m-0">Заказ №{{order.order_item}}</div>
                                             <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
                                             <div class="h7 text-muted ml-2">{{order.date}}</div>
+                                            <div class="col ml-3 " ><button type="button" class="py-0 btn btn-sm btn-outline-primary updateButton" order_id={{order.id}}>Обновить</button></div>
                                         </div>
                                     </div>
                                       
-                                      <button type="button" class="btn  p-0" data-toggle="modal" data-target="{{'#'+order.get_name()}}">&times;</button>
+                                      <button type="button" class="btn  py-0" data-toggle="modal" data-target="{{'#'+order.get_name()}}">&times;</button>
                                         <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
                                           <div class="modal-dialog" role="document">
                                             <div class="modal-content">
@@ -95,19 +96,21 @@
 <script>
 $(document).ready(function() {
 
-  $('.updateButton').on('click', function() {
+  $(document).on('click', '.updateButton', function() {
 
-      
+      let order_id = $(this).attr('order_id')
       req = $.ajax({
           url : '/update',
           type : 'POST',
-          'data':{}
+          'data':{
+            id : $(this).attr('order_id'),
+          }
       });
-      $('#orders').fadeOut(1000)
+      $('#order'+order_id).fadeOut(1000)
       req.done(function(data) {
 
-          $('#orders').fadeIn(1000);
-          $('#orders').html(data);
+          $('#order'+order_id).fadeIn(1000);
+          $('#order'+order_id).html(data);
 
       });
   
