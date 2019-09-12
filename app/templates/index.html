@@ -1,9 +1,12 @@
 {% extends "base.html" %}
             {% block content %}
                 <main role="main" class="container-fluid">
-                  <div class="row my-2"><a href="{{url_for('order', doc='False')}}"><button type="button" class="btn btn-info">Новый заказ</button></a>
-                    <a href="{{url_for('storekeeper_page')}}"><button type="button" class="btn btn-info ml-1">Список недостающих деталей</button></a>
-                  </div>
+                  <div class="row my-2">
+                  {%if 'Продажник' in roles or 'Admin' in roles%}
+                    <a href="{{url_for('order', doc='False')}}"><button type="button" class="btn btn-info">Новый заказ</button></a> 
+                  {%endif%}
+                  <a href="{{url_for('storekeeper_page')}}"><button type="button" class="btn btn-info ml-1">Список недостающих деталей</button></a>
+                </div>
                   <div class="row">    
                         <div class="col card gedf-card mb-3 px-0">
                             <div class="card-header py-1 px-0">
@@ -14,7 +17,8 @@
                                     </div>    
                                 </div>
                               </div>
-                              <div class="card-body px-0 py-0">
+                              <div class="card-body px-0 py-0 bbody">
+                              <div class="modal"></div>
                         <div id='orders'style="overflow: auto; height:400px;">
                           {%for order in orders%}
                           {%if order.product_orders!=[]%}
@@ -26,12 +30,16 @@
                                             <div class="h5 m-0">Заказ №{{order.order_item}}</div>
                                             <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
                                             <div class="h7 text-muted ml-2">{{order.date}}</div>
+                                            {%if 'Продажник' in roles or 'Admin' in roles%}
                                             <div class="col ml-3 " ><button type="button" class="py-0 btn btn-sm btn-outline-primary updateButton" order_id={{order.id}}>Обновить</button></div>
-                                        </div>
+                                            {%endif%}
+                                          </div>
                                     </div>
                                       
+                                      {%if 'Продажник' in roles or 'Admin' in roles%}
                                       <button type="button" class="btn  py-0" data-toggle="modal" data-target="{{'#'+order.get_name()}}">&times;</button>
-                                        <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
+                                    {%endif%} 
+                                      <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
                                           <div class="modal-dialog" role="document">
                                             <div class="modal-content">
                                               <div class="modal-header text-center">
@@ -97,7 +105,6 @@
 $(document).ready(function() {
 
   $(document).on('click', '.updateButton', function() {
-
       let order_id = $(this).attr('order_id')
       req = $.ajax({
           url : '/update',
@@ -106,16 +113,19 @@ $(document).ready(function() {
             id : $(this).attr('order_id'),
           }
       });
-      $('#order'+order_id).fadeOut(1000)
+      
+      $('#order'+order_id).fadeOut(1500);
+      $('.bbody').addClass("loading");
       req.done(function(data) {
-
-          $('#order'+order_id).fadeIn(1000);
+        $('.bbody').removeClass("loading");
+          $('#order'+order_id).fadeIn(500);
           $('#order'+order_id).html(data);
 
       });
-  
 
   });
 
 });</script>
+
+
             {% endblock %}

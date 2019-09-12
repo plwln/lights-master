@@ -30,13 +30,16 @@ def home_page():
     #     if doc.document_type == 'Резерв':
     #         db.session.delete(doc)
     #         db.session.commit()
-    product = Product.query.first()
-    print(product.product_name)
-    print(product.get_det())
-    role_names = [x.name for x in current_user.roles]
+    # for name in ['Склад', 'Снабжение', 'Продажники', 'Производство', 'Технолог']:
+    #     role = Role()
+    #     db.session.add(role)
+    #     db.session.commit()
+    #     role.name = name
+    #     db.session.commit()
+    roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
     print(docs)
-    return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1])
+    return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1], roles = roles)
 
 
 @app.route('/users_table')
@@ -70,8 +73,9 @@ def append_role(user, role):
 @app.route('/product_table')
 @login_required
 def product_table():
+    roles = [x.name for x in current_user.roles]
     products = Product.query.order_by(Product.product_name).all()
-    return render_template('product_table.html', products=products)
+    return render_template('product_table.html', roles=roles, products=products)
 
 @app.route('/create_product', methods = ['GET', 'POST'])
 @app.route('/clone_product/<cloned_product>', methods = ['GET', 'POST'])
@@ -126,9 +130,10 @@ def product_specification(product, det):
 @app.route('/component_table')
 @login_required
 def component_table():
+    roles = [x.name for x in current_user.roles]
     modal_component = ModalComponent.query.first()
     components = Component.query.order_by(Component.component_name).all()
-    return render_template('component_table.html', components=components, modal_component=modal_component)
+    return render_template('component_table.html', roles=roles, components=components, modal_component=modal_component)
 
 @app.route('/create_component', methods = ['GET', 'POST'])
 @app.route('/create_component/<cloned_component>', methods = ['GET', 'POST'])
@@ -160,15 +165,11 @@ def create_component(cloned_component=False):
 @app.route('/product_info/<product>')
 @login_required
 def product_info(product):
-    det = {}
+    roles = [x.name for x in current_user.roles]
     db_product = Product.query.filter(Product.id==product).first()
     specifications=Specification.query.filter(Specification.product_id==product).all()
-    # item = specifications[1].get_children(specifications[1].get_component().id)[0]
-    # print(item)
-    # print(specifications[1].get_children(item.id))
-    #report = get_details_report(specifications, det)
     modal = ModalComponent.query.first()
-    return render_template('product_info.html', product=db_product, modal=modal, specifications=specifications)
+    return render_template('product_info.html', roles=roles, product=db_product, modal=modal, specifications=specifications)
 
 @app.route('/delete_component/<id>')
 @login_required
@@ -224,13 +225,15 @@ def delete_modal_component(id):
 @app.route('/component_info/<component>')
 @login_required
 def component_info(component):
+    roles = [x.name for x in current_user.roles]
     db_component = Component.query.filter(Component.id==component).first()
     specifications=ModalComponent.query.filter(ModalComponent.parrent_id==component)
-    return render_template('component_info.html', component=db_component, specifications=specifications)
+    return render_template('component_info.html', roles=roles, component=db_component, specifications=specifications)
 
 @app.route('/stock', methods = ['GET', 'POST'])
 @login_required
 def stock():
+    roles = [x.name for x in current_user.roles]
     for item in current_user.get_added():
         db.session.delete(item)
         current_user.added.remove(item)
@@ -277,8 +280,8 @@ def stock():
                 flash('Расход детали {} со склада'.format(stock.get_name()), 'message')
         else:
             flash('Деталь {} списана'.format(stock.get_name()), 'message')
-        return redirect(url_for('stock', form=form, stock=stock))
-    return render_template('stock.html', form=form, stock=stock)
+        return redirect(url_for('stock', form=form, stock=stock, roles=roles))
+    return render_template('stock.html', form=form, stock=stock, roles=roles)
 
 @app.route('/stock_adding/<doc_type>/<doc>', methods = ['GET', 'POST'])
 @login_required
@@ -327,6 +330,7 @@ def stock_adding(doc_type, doc):
 @app.route('/stock_product', methods = ['GET', 'POST'])
 @login_required
 def stock_product():
+    roles = [x.name for x in current_user.roles]
     for item in current_user.get_added():
         current_user.added.remove(item)
         db.session.delete(item)
@@ -372,8 +376,8 @@ def stock_product():
                 flash('Расход детали {} со склада'.format(stock.get_name()), 'message')
         else:
             flash('Деталь {} списана'.format(stock.get_name()), 'message')
-        return redirect(url_for('stock_product', form=form, stock=stock))
-    return render_template('product_stock.html', form=form, stock=stock)
+        return redirect(url_for('stock_product', form=form, stock=stock, roles=roles))
+    return render_template('product_stock.html', form=form, stock=stock, roles=roles)
 
 
 @app.route('/pstock_adding/<doc_type>/<doc>', methods = ['GET', 'POST'])
@@ -825,13 +829,14 @@ def remove_stock(component_id, comment):
 @app.route('/storekeeper_page', methods = ['GET', 'POST'])
 @login_required
 def storekeeper_page():
+    roles = [x.name for x in current_user.roles]
     notes = Note.query.all()
     form = NoteForm()
     if request.method=='POST':
         Note.query.filter(Note.id==form.id.data).first().arrival_date = form.entrydate.data
         db.session.commit()
         return redirect(url_for('storekeeper_page'))
-    return render_template('store_keeper_page.html', notes = notes, form = form)
+    return render_template('store_keeper_page.html', notes = notes, form = form, roles = roles)
 
 # def rec_html(specification):
 #     for item in specification.get_children(specification.get_component().id):

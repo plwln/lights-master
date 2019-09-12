@@ -15,6 +15,7 @@
         <div class="col"><p>Материал <span>{{product.product_material}}</span></p></div>
         <div class="col"><p>Мощность: <span>{{product.product_power}}</span></p></div>
         <div class="col"><p>Вес: <span>{{product.product_weight}}</span></p></div>
+        {%if 'Технолог' in roles or 'Admin' in roles%}
         <div class="col p-0 pr-2">
             
             <div class="p-0 col"><a href="{{url_for('product_specification', product = product.id, det = 'hollow')}}"><button type="button" class="btn btn-success btn-sm mr-3">Изменить спецификацию</button></a></div>
@@ -26,6 +27,7 @@
                <div class="p-0 col ml-3 mr-2 mt-2"><button onClick="javascript:CallPrint('print-content');" type="button" class="btn btn-secondary btn-sm mr-3">Печать</button></div>
             </div>
          </div>
+         {%endif%}
 
     </div>
 <div id="print-content" class=" m-0 col-8">

@@ -21,12 +21,11 @@ class User(db.Model, UserMixin):
     
     # Define the Role data-model
     def delete_role(self, del_role):
-        for role in self.roles:
-            self.roles.remove(Role.query.filter(Role.name==del_role).first())
-            db.session.commit()
+        self.roles.remove(Role.query.filter(Role.name==del_role).first())
+        db.session.commit()
     def append_role(self, del_role):
-            self.roles.append(Role.query.filter(Role.name==del_role).first())
-            db.session.commit()
+        self.roles.append(Role.query.filter(Role.name==del_role).first())
+        db.session.commit()
 
     def append_stock(self, del_stock):
         self.added.append(Stock.query.filter(Stock.id==del_stock).first())

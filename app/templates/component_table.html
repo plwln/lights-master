@@ -1,7 +1,9 @@
 {%extends "base.html" %}
 {% block content %}
 <div class="row">
+  {%if 'Технолог' in roles or 'Admin' in roles%}
   <div class='col-2 px-0 ml-3 my-3'><a href="{{url_for('create_component')}}"><button type="button" class="btn btn-success">Добавить</button></a></div>
+  {%endif%}
   <div class="p-0 form-group mt-3">
       <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
   </div>
@@ -26,7 +28,10 @@
             <a href="{{url_for('component_info', component=component.id)}}"><button type="button" class="btn btn-success btn-sm mr-2  py-0">&#8230;</button></a>
             {%endif%}
             <!-- <a href="{{url_for('delete_component', id = component.id)}}"><button type="button" class="btn btn-sm btn-danger">Удалить</button></a> -->
+            
+            {%if 'Технолог' in roles or 'Admin' in roles%}
             <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#'+component.get_name()}}">&times;</button>
+            {%endif%}
             <div class="modal fade" id='{{component.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{component.get_name()+'Label'}}" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">

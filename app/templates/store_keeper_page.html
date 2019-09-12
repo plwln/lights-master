@@ -34,7 +34,9 @@
           <td class="py-0"> {{item.n_count}}</td>
           <td class="py-0">
             {{item.arrival_date}}
+            {%if 'Снабжение' in roles or 'Admin' in roles%}
           <button type="button" class="btn btn-success btn-sm ml-2 mr-3 py-0" data-toggle="modal" data-target="{{'#'+item.get_name()}}">+</button></td>
+            {%endif%}
         </tr>
             <div class="modal fade" id='{{item.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{item.get_name()+'Label'}}" aria-hidden="true">
               <div class="modal-dialog" role="document">
