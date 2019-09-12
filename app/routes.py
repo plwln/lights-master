@@ -585,15 +585,14 @@ def get_report_order():
         stock = []
         mod_stock = []
         new_md = dict()
-        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-            details= json.load(fh)
+        print(details_new)
         for name in details:
             component = Component.query.filter(Component.component_name==name).first()
             stck = Stock.query.filter(Stock.component_id==component.id and Stock.document_id==doc.id)
             for s in stck.all():
                 if s.document_id==doc.id:
                     items.append(s)
-        print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
+        # print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
         if product.pstock_count is None or product.pstock_count<(order.count):
@@ -631,21 +630,11 @@ def get_report_order():
             dets.update(details_new)
             dets.update(new_md)
             fh.write(json.dumps(dets, ensure_ascii=False))
-        
-        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-            details= json.load(fh)
-        current_user.append_order(product)
-        db.session.commit()
+
         for each in items:
             Stock.query.filter(Stock.id==each.id).delete()
             db.session.commit()
-        if product.pstock_count is None or product.pstock_count<order.count:
-            for det in list(details.keys()):
-                stock = Stock(order.doc_id, None, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
-                db.session.add(stock)
-                db.session.commit()
-                stock.get_count()
-        else:
+        if product.pstock_count is not None and product.pstock_count>=order.count:
             stock = Stock(order.doc_id, product.id, None, order.count)
             db.session.add(stock)
             db.session.commit()
@@ -680,54 +669,6 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
         get_mods_rec(details_new, new_md, product, pstock, order)
         return
 
-def get_modals(details, name, item, component, order, pstock, product, stock, mod_details):
-    print(details)
-    if item is not None and component.stock_count>=details['count']*(order.count-pstock(product.pstock_count)):
-        details=details['count']
-        stock.append([component, item])
-    else:
-        for key in details:
-            if details['count']>1:
-                details[key]*=details['count']
-            if type(details[key]) == dict:
-                get_modals(details[key], key, item, component, order, pstock, product, stock, mod_details)
-        if 'count' in details.keys():
-            details.pop('count')
-        mod_details.update({name: details})
-
-
-def all_details(details, order, product, stock, doc_type):
-    for name in details.keys():
-        component = Component.query.filter(Component.component_name==name).first()
-        item = Stock.query.filter(Stock.component_id==component.id).first()
-        pstock = lambda x: x if x else 0
-        if type(details[name])==dict:
-            if item is not None and component.stock_count>=details[name]['count']*(order.count-pstock(product.pstock_count)):
-                details[name]=details[name]['count']
-                stock.append([component, item])
-            else:
-                for key in details[name]:
-                    if details[name]['count']>1:
-                        details[name][key]*=details[name]['count']
-                details[name].pop('count')
-                details.update(all_details(details[name], order, product, stock, doc_type))
-        elif item is None or component.stock_count<(details[name]*(order.count-pstock(product.pstock_count))):
-            check = lambda x: 'Резерв' if x=='Заказ' else x
-            doc_type = check(doc_type)
-            if type(details[name])==float:
-                note = Note(component.id, None, order.id, (details[name]*order.count), '')
-                db.session.add(note)
-                db.session.commit()
-                stock.append([component, item])
-            else:
-                for key in details[name]:
-                    if details[name]['count']>1:
-                        details[name][key]*=details[name]['count']
-                details[name].pop('count')
-                all_details(details[name], order, product, stock, doc_type)
-        else: stock.append([component, item])
-        print(details)
-    return details, doc_type
 
 
 @app.route('/delete_and_back/<id>')

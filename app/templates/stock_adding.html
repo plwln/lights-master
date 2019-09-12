@@ -109,7 +109,7 @@
     </thead>
     <tbody style="overflow: auto; height:400px;">
         {% for item in stock%}
-        {%if item.get_component().stock_count!=0%}
+        {%if item.get_component() and item.get_component().stock_count!=0 %}
           <tr>
             <td class="py-0" >{{item.get_component().component_name}}</td>
             <td class="py-0" >{{item.get_component().component_unit}}</td>
