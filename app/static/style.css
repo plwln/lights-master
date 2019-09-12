@@ -39,7 +39,7 @@ h5 {
     transition: 0.5s;
     }
 
-.modal {
+.modalLoad {
     display:    none;
     position:   fixed;
     z-index:    1000;
@@ -55,12 +55,12 @@ h5 {
 
 /* When the body has the loading class, we turn
    the scrollbar off with overflow:hidden */
-.bbody.loading .modal {
+.bbody.loading .modalLoad {
     overflow: hidden;   
 }
 
 /* Anytime the body has the loading class, our
    modal element will be visible */
-.bbody.loading .modal {
+.bbody.loading .modalLoad {
     display: block;
 }

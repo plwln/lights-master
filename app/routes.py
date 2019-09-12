@@ -36,6 +36,8 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
+    Role.query.filter(Role.name=='Agent').delete()
+    db.session.commit()
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
     print(docs)
@@ -569,45 +571,6 @@ def check_order(order):
         fh.write(json.dumps(dets, ensure_ascii=False))
     return render_template('check_order.html', form=form, order=order, pstock=pstock(product.pstock_count), product=product, modules=new_md, details=details_new, stock=stock, mod_stock=mod_stock, doc_type = doc_type)
 
-# @app.route('/update', methods=['POST', 'GET'])
-# def get_report_order():
-#     details=dict()
-#     details_new=details.copy()
-#     new_md=dict()
-#     doc = Document.query.filter(Document.id==request.form['id']).first()
-#     flag=True
-#     for order in doc.product_orders:
-#         order_flag=True
-#         if order.status!='Заказ':
-#             with open(str(order.prod_id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-#                 details = json.load(fh)
-#             get_mods_rec(details_new, new_md, Product.query.filter(Product.id==order.prod_id).first(), lambda x: x if x and x>0 else 0, order)
-#             print(details_new)
-#             notes = Note.query.filter(Note.order_id==order.id).all()
-#             if notes:
-#                 for note in notes:    
-#                     component = Component.query.filter(Component.id==note.na_component).first()
-#                     item = Stock.query.filter(Stock.component_id==component.id).first()
-#                     if item:
-#                         item.get_count()
-#                     if component.stock_count<0:
-#                         flag=False
-#                         order_flag=False
-#                     else:
-#                         Note.query.filter(Note.id==note.id).delete()
-#                         db.session.commit()
-#                 if order_flag:
-#                     order.status = 'Заказ'
-#                     db.session.commit()
-#             else:
-#                 order.status = 'Заказ'
-#                 db.session.commit()
-
-#         if flag:
-#             doc.order_status ='Принято'
-#             db.session.commit()    
-#     docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
-#     return render_template('orders_in_process.html',  orders=sorted(docs, key = lambda x: x.id)[::-1])
 
 @app.route('/update', methods=['POST', 'GET'])
 def get_report_order():

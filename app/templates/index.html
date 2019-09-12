@@ -1,131 +1,138 @@
 {% extends "base.html" %}
-            {% block content %}
-                <main role="main" class="container-fluid">
-                  <div class="row my-2">
-                  {%if 'Продажник' in roles or 'Admin' in roles%}
-                    <a href="{{url_for('order', doc='False')}}"><button type="button" class="btn btn-info">Новый заказ</button></a> 
-                  {%endif%}
-                  <a href="{{url_for('storekeeper_page')}}"><button type="button" class="btn btn-info ml-1">Список недостающих деталей</button></a>
+{% block content %}
+<main role="main" class="container-fluid">
+  <div class="row my-2">
+    {%if 'Продажник' in roles or 'Admin' in roles%}
+    <a href="{{url_for('order', doc='False')}}"><button type="button" class="btn btn-info">Новый заказ</button></a>
+    {%endif%}
+    <a href="{{url_for('storekeeper_page')}}"><button type="button" class="btn btn-info ml-1">Список недостающих
+        деталей</button></a>
+  </div>
+  <div class="row">
+    <div class="col card gedf-card mb-3 px-0">
+      <div class="card-header py-1 px-0">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="px-0 row ml-2">
+            <span class="p-0 h5 m-0">Заказы в обработке</span>
+
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-0 py-0 bbody">
+        <div class="modalLoad"></div>
+        <div id='orders' style="overflow: auto; height:400px;">
+          {%for order in orders%}
+          {%if order.product_orders!=[]%}
+          <div class="card gedf-card mb-3" id='order{{order.id}}'>
+            <div class="card-header py-1 pr-1">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class=" row ">
+                    <div class="h5 m-0">Заказ №{{order.order_item}}</div>
+                    <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
+                    <div class="h7 text-muted ml-2">{{order.date}}</div>
+                    {%if 'Продажник' in roles or 'Admin' in roles%}
+                    <div class="col ml-3 "><button type="button"
+                        class="py-0 btn btn-sm btn-outline-primary updateButton" order_id={{order.id}}>Обновить</button>
+                    </div>
+                    {%endif%}
+                  </div>
                 </div>
-                  <div class="row">    
-                        <div class="col card gedf-card mb-3 px-0">
-                            <div class="card-header py-1 px-0">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="px-0 row ml-2">
-                                        <span class="p-0 h5 m-0">Заказы в обработке</span>
-                                        
-                                    </div>    
-                                </div>
-                              </div>
-                              <div class="card-body px-0 py-0 bbody">
-                              <div class="modal"></div>
-                        <div id='orders'style="overflow: auto; height:400px;">
-                          {%for order in orders%}
-                          {%if order.product_orders!=[]%}
-                          <div class="card gedf-card mb-3" id = 'order{{order.id}}'>
-                            <div class="card-header py-1 pr-1">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class=" row ">
-                                            <div class="h5 m-0">Заказ №{{order.order_item}}</div>
-                                            <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
-                                            <div class="h7 text-muted ml-2">{{order.date}}</div>
-                                            {%if 'Продажник' in roles or 'Admin' in roles%}
-                                            <div class="col ml-3 " ><button type="button" class="py-0 btn btn-sm btn-outline-primary updateButton" order_id={{order.id}}>Обновить</button></div>
-                                            {%endif%}
-                                          </div>
-                                    </div>
-                                      
-                                      {%if 'Продажник' in roles or 'Admin' in roles%}
-                                      <button type="button" class="btn  py-0" data-toggle="modal" data-target="{{'#'+order.get_name()}}">&times;</button>
-                                    {%endif%} 
-                                      <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
-                                          <div class="modal-dialog" role="document">
-                                            <div class="modal-content">
-                                              <div class="modal-header text-center">
-                                                <h5 class="modal-title">Удалить заказ??</h5>
-                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                  <span aria-hidden="true">&times;</span>
-                                                </button>
-                                              </div>
-                                              <div class="modal-footer">
-                                                <a href="{{url_for('delete_order', id = order.id)}}"><button type="button" class="btn btn-danger">Удалить</button></a>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                </div>
-                                
-  
-                            </div>
-                            <div class="card-body px-0 py-0">
-                                <table class="table table-condensed custab">
-                                    <thead class='m-0'>
-                                    <tr>
-                                        <th>Наименование</th>
-                                        <th>Артикул</th>
-                                        <th>Кол-во</th> 
-                                        <th>Статус</th>                                  
-                                    </tr>
-                                </thead>   
-                                <tbody>
-                              {%for item in order.product_orders%}
-                              <tr>
-                                  <td>{{item.get_product().product_name}}</td>
-                                  <td>{{item.get_product().product_item}}</td>
-                                  <td>{{item.count}}</td>
-                                  <td>
-                                    <h6>
-                                    {%if item.status=='Резерв'%}
-                                    <span class="badge badge-danger">
-                                      Резерв
-                                    </span>
-                                    {%else%}
-                                    <span class="badge badge-success">
-                                        Резерв
-                                    </span>
-                                    {%endif%}
-                                    </h6>
-                                  </td>
-                                                                      
-                              </tr>
-                              {%endfor%}                                   
-                            </tbody>
-                          </table>
-                            </div>
-                        </div>
-                        {%endif%}
-                        {%endfor%}
+
+                {%if 'Продажник' in roles or 'Admin' in roles%}
+                <button type="button" class="btn  py-0" data-toggle="modal"
+                  data-target="{{'#'+order.get_name()}}">&times;</button>
+                {%endif%}
+                <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog"
+                  aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header text-center">
+                        <h5 class="modal-title">Удалить заказ??</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-footer">
+                        <a href="{{url_for('delete_order', id = order.id)}}"><button type="button"
+                            class="btn btn-danger">Удалить</button></a>
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+
             </div>
-                  </div>
+            <div class="card-body px-0 py-0">
+              <table class="table table-condensed custab">
+                <thead class='m-0'>
+                  <tr>
+                    <th>Наименование</th>
+                    <th>Артикул</th>
+                    <th>Кол-во</th>
+                    <th>Статус</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {%for item in order.product_orders%}
+                  <tr>
+                    <td>{{item.get_product().product_name}}</td>
+                    <td>{{item.get_product().product_item}}</td>
+                    <td>{{item.count}}</td>
+                    <td>
+                      <h6>
+                        {%if item.status=='Резерв'%}
+                        <span class="badge badge-danger">
+                          Резерв
+                        </span>
+                        {%else%}
+                        <span class="badge badge-success">
+                          Резерв
+                        </span>
+                        {%endif%}
+                      </h6>
+                    </td>
+
+                  </tr>
+                  {%endfor%}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {%endif%}
+          {%endfor%}
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
 <script>
-$(document).ready(function() {
+  $(document).ready(function () {
 
-  $(document).on('click', '.updateButton', function() {
+    $(document).on('click', '.updateButton', function () {
       let order_id = $(this).attr('order_id')
+      $('#order' + order_id).fadeOut(1000);
+      $('.bbody').addClass('loading');
       req = $.ajax({
-          url : '/update',
-          type : 'POST',
-          'data':{
-            id : $(this).attr('order_id'),
-          }
+        url: '/update',
+        type: 'POST',
+        'data': {
+          id: $(this).attr('order_id'),
+        }
       });
-      
-      $('#order'+order_id).fadeOut(1500);
-      $('.bbody').addClass("loading");
-      req.done(function(data) {
-        $('.bbody').removeClass("loading");
-          $('#order'+order_id).fadeIn(500);
-          $('#order'+order_id).html(data);
 
+      req.done(function (data) {
+        $('#order' + order_id).html(data);
+        $('.bbody').removeClass('loading');
+        $('#order' + order_id).fadeIn(1000);
       });
+
+    });
 
   });
 
-});</script>
+</script>
 
 
-            {% endblock %}
+{% endblock %}
