@@ -193,6 +193,7 @@ class Component(db.Model):
     component_item = db.Column(db.Integer(), unique=True)
     unfired = db.Column(db.Float())
     stock_count = db.Column(db.Float())
+    note_count = db.Column(db.Float())
     def __init__(self, component_name, component_unit, component_item):
         self.component_name = component_name
         self.component_unit = component_unit
@@ -220,7 +221,13 @@ class Component(db.Model):
     
     def get_children(self, id):
         return False
-    
+
+    def get_note_count(self):
+        self.note_count=0
+        for note in Note.query.filter(Note.na_component==self.id):
+            self.note_count+=note.n_count
+        db.session.commit()
+
     def get_count(self, parent_id):
         count = ModalComponent.query.filter(ModalComponent.parrent_id==parent_id, ModalComponent.child_id==self.id).first().count
         return count
@@ -493,6 +500,5 @@ class Note(db.Model):
     def get_component(self):
         return Component.query.filter(Component.id==self.na_component).first()
 
-class Details():
-    details = dict()
+
 

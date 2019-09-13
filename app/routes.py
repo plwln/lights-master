@@ -551,6 +551,7 @@ def check_order(order):
                     note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
                     db.session.add(note)
                     db.session.commit()
+                    component.get_note_count()
                     stock.append([component, item])
                 else: stock.append([component, item])
             for name in new_md:
@@ -585,26 +586,33 @@ def check_order(order):
 def get_report_order():
     doc = Document.query.filter(Document.id==request.form['id']).first()
     doc_type = 'Заказ'
-    items = []
     for order in doc.product_orders:
+        items = []
+        n_items= []
         product = order.get_product()
-        details = product.get_det()
+        details = {}
         pstock = lambda x: x if x and x>0 else 0
-        details_new = details.copy()
+        details_new = product.get_det()
         stock = []
         mod_stock = []
         new_md = dict()
+        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
+            details= json.load(fh)
         for name in details:
             component = Component.query.filter(Component.component_name==name).first()
-            stck = Stock.query.filter(Stock.component_id==component.id and Stock.document_id==doc.id)
+            stck = Stock.query.filter(Stock.component_id==component.id).filter(Stock.document_id==doc.id)
+            nts = Note.query.filter(Note.na_component==component.id).filter(Note.order_id==order.id)
             for s in stck.all():
-                if s.document_id==doc.id:
-                    items.append(s)
+                items.append(s)
+            for n in nts.all():
+                n_items.append(n)
     
-        pstck = Stock.query.filter(Stock.id_product==product.id and Stock.document_id==doc.id)
+        pstck = Stock.query.filter(Stock.id_product==product.id).filter(Stock.document_id==doc.id)
         for p in pstck.all():
-                if p.document_id==doc.id:
-                    items.append(p)
+                items.append(p)
+        for each in n_items:
+            Note.query.filter(Note.id==each.id).delete()
+            db.session.commit()
         
         for each in items:
             Stock.query.filter(Stock.id==each.id).delete()
@@ -622,6 +630,10 @@ def get_report_order():
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
                     check = 'Резерв'
                     doc_type = check
+                    note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
+                    db.session.add(note)
+                    db.session.commit()
+                    component.get_note_count()
                     stock.append([component, item])
                 else:
                     stock.append([component, item])
@@ -650,7 +662,8 @@ def get_report_order():
             dets.update(new_md)
             fh.write(json.dumps(dets, ensure_ascii=False))
 
-        
+        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
+            details= json.load(fh)
         if product.pstock_count is not None and product.pstock_count>=order.count:
             stock = Stock(order.doc_id, product.id, None, order.count)
             db.session.add(stock)
@@ -751,9 +764,8 @@ def remove_stock(component_id, comment):
 @login_required
 def storekeeper_page():
     roles = [x.name for x in current_user.roles]
-    notes = Note.query.all()
-    new_notes = set(db.session.query(Note.na_component).all()[0])
-    print(new_notes)
+    notes = [Note.query.filter(Note.na_component==x[0]).first() for x in set(db.session.query(Note.na_component).all())]
+    print(notes)
     form = NoteForm()
     if request.method=='POST':
         Note.query.filter(Note.id==form.id.data).first().arrival_date = form.entrydate.data
