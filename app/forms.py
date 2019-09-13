@@ -23,7 +23,8 @@ class ComponentForm(Form):
 
 class DocumentForm(Form):
     text = TextAreaField('Комментарий', render_kw={'class': 'form-control', 'rows': 5})
-    number = IntegerField("Артикул",[validators.Optional()])
+    number = IntegerField("Артикул",[validators.Required('Введите номер заказа')])
+    entrydate = DateField('Дата', [validators.Required('Введите дату')], format='%d-%m-%Y')
     submit = SubmitField("Добавить")
     hidden_type = HiddenField()
 

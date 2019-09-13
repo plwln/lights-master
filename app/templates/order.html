@@ -2,13 +2,13 @@
 {% block content %}
 {% block flash_messages %}
 {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            {%if 'success' not in message and 'must' not in message%}
-            <div id=message class="alert alert-success">{{ message|safe }}</div>
-            {%endif%}
-        {% endfor %}
-    {% endif %}
+{% if messages %}
+{% for message in messages %}
+{%if 'success' not in message and 'must' not in message%}
+<div id=message class="alert alert-success">{{ message|safe }}</div>
+{%endif%}
+{% endfor %}
+{% endif %}
 {% endwith %}
 {% endblock %}
 <nav aria-label="breadcrumb">
@@ -19,112 +19,119 @@
 </nav>
 <div class="row ml-1 mt-2">
   <div class=" colp-0 form-group ml-3 mt-4 mb-2">
-      <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
+    <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
   </div>
 </div>
 <div class="row mb-3">
-<div class="col">
-<table  id=mytable class="table table-sm table-hover append_div " >
-    <thead>
-      <tr>
-        <td>Наименование</td>
-        <td>Единицы измерения</td>
-        <td>Артикул</td>
-        <td></td>
-      </tr>
-    </thead>
-    <tbody style="overflow: auto; height:400px;">
-    {% for product in products%}
-      <tr>
-        <td class="py-0" >{{product.product_name}}</td>
-        <td class="py-0" >{{product.product_weight}}</td>
-        <td class="py-0">{{product.product_item}}</td>
-        <td class="py-0">
-                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#'+product.get_name()}}">+</button>
-                
-                <div class="modal fade" id='{{product.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header text-center">
-                        <h5 class="modal-title">Добавление в заказ</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
+  <div class="col">
+    <table id=mytable class="table table-sm table-hover append_div ">
+      <thead>
+        <tr>
+          <td>Наименование</td>
+          <td>Единицы измерения</td>
+          <td>Артикул</td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody style="overflow: auto; height:400px;">
+        {% for product in products%}
+        <tr>
+          <td class="py-0">{{product.product_name}}</td>
+          <td class="py-0">{{product.product_weight}}</td>
+          <td class="py-0">{{product.product_item}}</td>
+          <td class="py-0">
+            <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal"
+              data-target="{{'#'+product.get_name()}}">+</button>
+
+            <div class="modal fade" id='{{product.get_name()}}' tabindex="-1" role="dialog"
+              aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header text-center">
+                    <h5 class="modal-title">Добавление в заказ</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <form class='form' action="" method=post>
+
+                    <div class="modal-body">
+                      <div class="row px-3 py-2">
+
                       </div>
-                      <form class='form' action = "" method = post>
-                      
-                      <div class="modal-body">
-                        <div class="row px-3 py-2">
-                            
-                        </div>
-                        <div class="row px-3 py-2">
-                            <div class="col mt-2"> Количество комплектующих:</div>
+                      <div class="row px-3 py-2">
+                        <div class="col mt-2"> Количество комплектующих:</div>
                         <div class="col"> {{form.count( class_="mr-2 mb-2 form-control", placeholder="Кол-во")}}</div>
-                        </div>
-                        {{form.id(value=product.id, type="hidden")}}
                       </div>
-                      
-                      <div class="modal-footer">
-                          {{form.submit( class_="btn btn-success")}}
-                      </div>
-                    </form>
+                      {{form.id(value=product.id, type="hidden")}}
                     </div>
+
+                    <div class="modal-footer">
+                      {{form.submit( class_="btn btn-success")}}
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+  </div>
+
+
+  <div class="col">
+    <table id=mytable class="table table-sm table-hover table-bordered">
+      <thead>
+        <tr>
+          <td>Наименование</td>
+          <td>Артикул</td>
+          <td>Количество</td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody style="overflow: auto; height:400px;">
+
+        {% for item in orders%}
+        {%if item%}
+        <tr>
+          <td class="py-0">{{item.get_product().product_name}}</td>
+          <td class="py-0">{{item.get_product().product_item}}</td>
+          <td class="py-0">{{item.count}}</td>
+          <td><button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal"
+              data-target="{{'#delete'+item.get_product().get_name()}}">&times;</button>
+            <div class="modal fade" id='delete{{item.get_product().get_name()}}' tabindex="-1" role="dialog"
+              aria-labelledby="delete{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header text-center">
+                    <h5 class="modal-title">Удалить товар?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-footer">
+                    <a href="{{url_for('delete_and_back',id=item.id)}}"><button type="button"
+                        class="btn btn-danger">Удалить</button></a>
                   </div>
                 </div>
-        </td>
-      </tr>
-    {%endfor%}
-    </tbody>
-</table>
-</div>
-
-
-<div class="col">        
-        <table  id=mytable class="table table-sm table-hover table-bordered">
-          <thead>
-            <tr>
-              <td>Наименование</td>
-              <td>Артикул</td>
-              <td>Количество</td>
-              <td></td>
-            </tr>
-          </thead>
-          <tbody style="overflow: auto; height:400px;">
-          
-          {% for item in orders%}
-          {%if item%}
-            <tr>
-              <td class="py-0" >{{item.get_product().product_name}}</td>
-              <td class="py-0" >{{item.get_product().product_item}}</td>
-              <td class="py-0">{{item.count}}</td>
-              <td><button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#delete'+item.get_product().get_name()}}">&times;</button>
-                <div class="modal fade" id='delete{{item.get_product().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="delete{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header text-center">
-                        <h5 class="modal-title">Удалить товар?</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>
-                      <div class="modal-footer">
-                        <a href="{{url_for('delete_and_back',id=item.id)}}"><button type="button" class="btn btn-danger">Удалить</button></a>
-                      </div>
-                    </div>
-                  </div>
-                </div></td>
-            </tr>
-            {%endif%}
-          {%endfor%}
-          </tbody>
-      </table>
-      <div class="row px-0"><button type="button" class="btn btn-success btn offset-8 mb-3" data-toggle="modal" data-target="#append">Добавить документ</button></div>
-</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {%endif%}
+        {%endfor%}
+      </tbody>
+    </table>
+    <div class="row px-0"><button type="button" class="btn btn-success btn offset-8 mb-3" data-toggle="modal"
+        data-target="#append">Добавить документ</button></div>
+  </div>
 
 </div>
 
 
-                
+
 <div class="modal fade" id='append' tabindex="-1" role="dialog" aria-labelledby="append" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -134,49 +141,58 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form class='form' action = "" method = post>
-          <div class="row mx-1 my-1">
-              <div class="col pl-3 py-0 mt-1 mb-1">
-                Номер заказа:
-              </div>
-              <div class="col py-0">
-                  {{form1.number()}}
-              </div>
+      <form class='form' action="" method=post>
+        <div class="row mx-1 my-1">
+          <div class="col pl-3 py-0 mt-1 mb-1">
+            Номер заказа:
+          </div>
+          <div class="col py-0">
+            {{form1.number(class_="mr-2 mb-2 form-control")}}
+          </div>
+        </div>
+        <div class="row mx-1 my-1">
+          <div class="col pl-3 py-0 mt-1 mb-1">
+            Дата выполнения заказа:
+            <div class="col py-0">
+              {{form1.entrydate( class_="mr-2 mb-2 form-control", placeholder="ДД-ММ-ГГГГ")}}
             </div>
+          </div>
+        </div>
         <div class="row mx-1 mb-1">
           <div class="col pl-3 py-0 mt-1 mb-1">
             Комментарий:
           </div>
           <div class="col py-0">
-              {{form1.text()}}
+            {{form1.text()}}
           </div>
         </div>
-      {{form.id(value='comment', type="hidden")}}
-      {{form1.hidden_type(value=doc_type, type="hidden")}}
-      <div class="modal-footer">
-          
-        {{form.submit( class_="btn btn-success")}}
-      </div>
-    </form>
+        {{form.id(value='comment', type="hidden")}}
+        {{form1.hidden_type(value=doc_type, type="hidden")}}
+        <div class="modal-footer">
+
+          {{form.submit( class_="btn btn-success")}}
+        </div>
+      </form>
     </div>
   </div>
 </div>
 <script>
-  if($('.disabled').text()=='Списание'){
-      $('#count').attr("value", '0');
-      $('.modal-body').hide();
-      }
-      else{
-        $('.count_div').show();}
- 
-  </script>
+  if ($('.disabled').text() == 'Списание') {
+    $('#count').attr("value", '0');
+    $('.modal-body').hide();
+  }
+  else {
+    $('.count_div').show();
+  }
+
+</script>
 
 <script>
-    $('#message').show(200, function(){
-      setTimeout(function(){
-        $('#message').hide(500);
-      }, 2000);
-    });
-   
-    </script>
+  $('#message').show(200, function () {
+    setTimeout(function () {
+      $('#message').hide(500);
+    }, 2000);
+  });
+
+</script>
 {% endblock %}

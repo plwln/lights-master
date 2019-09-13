@@ -8,7 +8,7 @@ from werkzeug.urls import url_parse
 from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note
 from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm, NoteForm
 from datetime import datetime, date, time
-
+import datetime as dt
 
 
 
@@ -474,6 +474,14 @@ def order(doc):
     orders = document.product_orders
     if request.method == 'POST':
         if form.id.data=='comment':
+            
+            startdate = document.date.split(' ')[0].split('/')
+            year,month,day=int(startdate[0]),int(startdate[1]),int(startdate[2])
+            if (form1.entrydate.data-date(year = year, month=month,day=day)).days<2:
+                flash('Срок слишком мал. Не менее двух дней!')
+                return redirect(url_for('order', doc=doc, form1=form1, added = added, form = form, products=product))
+            document.endtime = form1.entrydate.data
+            db.session.commit()
             current_user.order=[]
             db.session.commit()
             orders=[]
@@ -482,6 +490,7 @@ def order(doc):
             db.session.commit()
             document.order_item = form1.number.data
             db.session.commit()
+            
             flash('Заказ произведён', 'message')
             return redirect(url_for('order', doc='False', form1=form1, added = added, form = form, products=product))
         else:
@@ -585,24 +594,34 @@ def get_report_order():
         stock = []
         mod_stock = []
         new_md = dict()
-        print(details_new)
         for name in details:
             component = Component.query.filter(Component.component_name==name).first()
             stck = Stock.query.filter(Stock.component_id==component.id and Stock.document_id==doc.id)
             for s in stck.all():
                 if s.document_id==doc.id:
                     items.append(s)
+    
+        pstck = Stock.query.filter(Stock.id_product==product.id and Stock.document_id==doc.id)
+        for p in pstck.all():
+                if p.document_id==doc.id:
+                    items.append(p)
+        
+        for each in items:
+            Stock.query.filter(Stock.id==each.id).delete()
+            db.session.commit()
+
         # print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
-        if product.pstock_count is None or product.pstock_count<(order.count):
+        elif product.pstock_count is None or product.pstock_count<(order.count):
+            print('SHO')
             get_mods_rec(details_new, new_md, product, pstock, order)
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
-                    check = lambda x: 'Резерв' if x=='Заказ' else x
-                    doc_type = check(doc_type)
+                    check = 'Резерв'
+                    doc_type = check
                     stock.append([component, item])
                 else:
                     stock.append([component, item])
@@ -631,9 +650,7 @@ def get_report_order():
             dets.update(new_md)
             fh.write(json.dumps(dets, ensure_ascii=False))
 
-        for each in items:
-            Stock.query.filter(Stock.id==each.id).delete()
-            db.session.commit()
+        
         if product.pstock_count is not None and product.pstock_count>=order.count:
             stock = Stock(order.doc_id, product.id, None, order.count)
             db.session.add(stock)
@@ -735,6 +752,8 @@ def remove_stock(component_id, comment):
 def storekeeper_page():
     roles = [x.name for x in current_user.roles]
     notes = Note.query.all()
+    new_notes = set(db.session.query(Note.na_component).all()[0])
+    print(new_notes)
     form = NoteForm()
     if request.method=='POST':
         Note.query.filter(Note.id==form.id.data).first().arrival_date = form.entrydate.data

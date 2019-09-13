@@ -31,6 +31,8 @@
                     <div class="h5 m-0">Заказ №{{order.order_item}}</div>
                     <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
                     <div class="h7 text-muted ml-2">{{order.date}}</div>
+                    <div class="h7 text-muted ml-2">сделать до: {{order.endtime}}</div>
+
                     {%if 'Продажник' in roles or 'Admin' in roles%}
                     <div class="col ml-3 "><button type="button"
                         class="py-0 btn btn-sm btn-outline-primary updateButton" order_id={{order.id}}>Обновить</button>

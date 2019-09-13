@@ -299,6 +299,7 @@ class Document(db.Model):
     product_orders = db.relationship('Order', secondary='document_order')
     order_status = db.Column(db.String())
     order_item = db.Column(db.Integer(), unique=True)
+    endtime = db.Column(db.String())
     def remove(self, order):
         self.product_orders.remove(order)
         db.session.commit()
