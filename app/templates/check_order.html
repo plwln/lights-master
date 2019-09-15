@@ -2,68 +2,21 @@
 {% block content %}
 {% block flash_messages %}
 {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            {%if 'success' not in message and 'must' not in message%}
-            <div id=message class="alert alert-success">{{ message|safe }}</div>
-            {%endif%}
-        {% endfor %}
-    {% endif %}
+{% if messages %}
+{% for message in messages %}
+{%if 'success' not in message and 'must' not in message%}
+<div id=message class="alert alert-success">{{ message|safe }}</div>
+{%endif%}
+{% endfor %}
+{% endif %}
 {% endwith %}
 {% endblock %}
 <div class="row">
-  </div>
-  <div class="row">
-    {%if mod_stock!=[]%}
-      <div class="col">
-          <table  id=mytable class="table table-sm table-hover">
-              <thead>
-                <tr>
-                  <td>Наименование</td>
-                  <td>Единицы измерения</td>
-                  <td>Артикул</td>
-                  <td>Требуется/Склад</td>
-                </tr>
-              </thead>
-              <tbody style="overflow: auto; height:400px;">
-              {% for item in mod_stock%}
-                {%if item[1]%}
-                <tr>
-                {%if item[1].component_id%}
-                  <td class="py-0" >{{item[1].get_component().component_name}}</td>
-                  <td class="py-0" >{{item[1].get_component().component_unit}}</td>
-                  <td class="py-0">{{item[1].get_component().component_item}}</td>
-                  {%if modules[item[1].get_component().component_name]*order.count <= item[1].get_component().stock_count %}
-                  <td class="py-0 bg-success">{{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
-                  {%else%}
-                  <td class="py-0 bg-danger">{{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
-                  {%endif%}
-                {%else%}
-                  <td class="py-0" >{{item[1].get_product().product_name}}</td>
-                  <td class="py-0" >&mdash;</td>
-                  <td class="py-0">{{item[1].get_product().product_item}}</td>
-                  {%if order.count <= item[1].get_product().pstock_count %}
-                  <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
-                  {%else%}
-                  <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
-                  {%endif%}
-                {%endif%}
-                </tr>
-                {%else%}
-                <tr>
-                    <td class="py-0" >{{item[0].component_name}}</td>
-                    <td class="py-0" >{{item[0].component_unit}}</td>
-                    <td class="py-0">{{item[0].component_item}}</td>
-                    <td class="py-0 bg-danger">{{modules[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
-                  </tr>
-                {%endif%}
-              {%endfor%}
-              </tbody>
-          </table>
-          </div>
-          {%endif%}
+</div>
+<div class="row">
+  {%if mod_stock!=[]%}
   <div class="col">
-  <table  id=mytable class="table table-sm table-hover">
+    <table id=mytable class="table table-sm table-hover">
       <thead>
         <tr>
           <td>Наименование</td>
@@ -73,89 +26,145 @@
         </tr>
       </thead>
       <tbody style="overflow: auto; height:400px;">
-      {% for item in stock%}
+        {% for item in mod_stock%}
         {%if item[1]%}
         <tr>
-        {%if item[1].component_id%}
-          <td class="py-0" >{{item[1].get_component().component_name}}</td>
-          <td class="py-0" >{{item[1].get_component().component_unit}}</td>
+          {%if item[1].component_id%}
+          <td class="py-0">{{item[1].get_component().component_name}}</td>
+          <td class="py-0">{{item[1].get_component().component_unit}}</td>
           <td class="py-0">{{item[1].get_component().component_item}}</td>
-          {%if details[item[1].get_component().component_name]*(order.count-pstock) <= item[1].get_component().stock_count %}
-          <td class="py-0 bg-success">{{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
+          {%if modules[item[1].get_component().component_name]*order.count <= item[1].get_component().stock_count %}
+          <td class="py-0 bg-success">
+            {{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+          </td>
           {%else%}
-          <td class="py-0 bg-danger">{{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}</td>
+          <td class="py-0 bg-danger">
+            {{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+          </td>
           {%endif%}
-        {%else%}
-          <td class="py-0" >{{item[1].get_product().product_name}}</td>
-          <td class="py-0" >&mdash;</td>
+          {%else%}
+          <td class="py-0">{{item[1].get_product().product_name}}</td>
+          <td class="py-0">&mdash;</td>
           <td class="py-0">{{item[1].get_product().product_item}}</td>
           {%if order.count <= item[1].get_product().pstock_count %}
           <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
           {%else%}
           <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
           {%endif%}
-        {%endif%}
+          {%endif%}
         </tr>
         {%else%}
         <tr>
-            <td class="py-0" >{{item[0].component_name}}</td>
-            <td class="py-0" >{{item[0].component_unit}}</td>
-            <td class="py-0">{{item[0].component_item}}</td>
-            <td class="py-0 bg-danger">{{details[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
-          </tr>
+          <td class="py-0">{{item[0].component_name}}</td>
+          <td class="py-0">{{item[0].component_unit}}</td>
+          <td class="py-0">{{item[0].component_item}}</td>
+          <td class="py-0 bg-danger">{{modules[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
+        </tr>
         {%endif%}
-      {%endfor%}
+        {%endfor%}
       </tbody>
-  </table>
+    </table>
   </div>
+  {%endif%}
+  <div class="col">
+    <table id=mytable class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <td>Наименование</td>
+          <td>Единицы измерения</td>
+          <td>Артикул</td>
+          <td>Требуется/Склад</td>
+        </tr>
+      </thead>
+      <tbody style="overflow: auto; height:400px;">
+        {% for item in stock%}
+        {%if item[1]%}
+        <tr>
+          {%if item[1].component_id%}
+          <td class="py-0">{{item[1].get_component().component_name}}</td>
+          <td class="py-0">{{item[1].get_component().component_unit}}</td>
+          <td class="py-0">{{item[1].get_component().component_item}}</td>
+          {%if details[item[1].get_component().component_name]*(order.count-pstock) <= item[1].get_component().stock_count %}
+          <td class="py-0 bg-success">
+            {{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+          </td>
+          {%else%}
+          <td class="py-0 bg-danger">
+            {{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+          </td>
+          {%endif%}
+          {%else%}
+          <td class="py-0">{{item[1].get_product().product_name}}</td>
+          <td class="py-0">&mdash;</td>
+          <td class="py-0">{{item[1].get_product().product_item}}</td>
+          {%if order.count <= item[1].get_product().pstock_count %}
+          <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          {%else%}
+          <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          {%endif%}
+          {%endif%}
+        </tr>
+        {%else%}
+        <tr>
+          <td class="py-0">{{item[0].component_name}}</td>
+          <td class="py-0">{{item[0].component_unit}}</td>
+          <td class="py-0">{{item[0].component_item}}</td>
+          <td class="py-0 bg-danger">{{details[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
+        </tr>
+        {%endif%}
+        {%endfor%}
+      </tbody>
+    </table>
   </div>
-<form class='form' action = "" method = post>
-  <div class="row">
-    <div class="col-2 px-0">
+</div>
+<form class='form' action="" method=post>
+  <div class="row pl-2">
+    <div class="col-1  pr-0">
       {%if doc_type=='Заказ'%}
       {{form.submit( class_="btn btn-success")}}
       {%else%}
       {{form.order( class_="btn btn-info")}}
       {%endif%}
     </div>
-  </div>
-  <div class="row">
-    <div class='col-2 mt-2 px-0'><a href="{{url_for('delete_and_back',id=order.id)}}"><button type="button" class="btn btn-danger">Отменить</button></a></div>
+    <div class="col-1 mr-2  pr-0">
+      <a href="{{url_for('delete_and_back',id=order.id)}}">
+        <button type="button" class="btn btn-danger">Отменить</button></a>
+    </div>
   </div>
 </form>
 <script>
-  $(function() {
-    $('.selectpicker').on('change', function(){
-      if($(this).val()=='Списание'){
-      $('#count').attr("value", '0');
-      $('.count_div').hide();
+  $(function () {
+    $('.selectpicker').on('change', function () {
+      if ($(this).val() == 'Списание') {
+        $('#count').attr("value", '0');
+        $('.count_div').hide();
       }
-      else{
+      else {
         $('.count_div').show();
       }
     });
   });
-  </script>
+</script>
 <script>
-   $(function() {
-    $('.close').on('click', function(){
+  $(function () {
+    $('.close').on('click', function () {
       $('.count_div').show();
       $('.selectpicker').attr("value", 'Приход');
     });
   });
-</script>	
+</script>
 <script>
-    $(function() {
-     $('#submit').on('click', function(){
-       $('#count').show();
-     });
-   });
- </script>	
+  $(function () {
+    $('#submit').on('click', function () {
+      $('#count').show();
+    });
+  });
+</script>
 <script>
-  $('.alert').show(200, function(){
-    setTimeout(function(){
+  $('.alert').show(200, function () {
+    setTimeout(function () {
       $('.alert').hide(500);
     }, 2000);
   });
-  </script>
+</script>
 {% endblock %}

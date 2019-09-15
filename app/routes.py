@@ -36,6 +36,7 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
+    
     Role.query.filter(Role.name=='Agent').delete()
     db.session.commit()
     roles = [x.name for x in current_user.roles]
@@ -47,6 +48,9 @@ def home_page():
 @app.route('/users_table')
 @roles_required('Admin')
 def users_table():
+    # for c in Component.query.filter(Component.unfired is not None).all():
+    #     c.unfired = 0
+    #     db.session.commit()
     users = User.query.filter(User.username != current_user.username)
     return render_template('table.html', users=users)
 
@@ -560,12 +564,14 @@ def check_order(order):
                 mod_stock.append([component,item])
 
         for item in stock:
+            print(item[0])
             if type(item[0])=='String':
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
                 db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
                 Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
         for item in new_md:
+            print(item[0])
             if type(item[0])=='String':
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
                 db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
@@ -644,12 +650,14 @@ def get_report_order():
 
         for item in stock:
             if type(item[0])=='String':
+                print(item[0].component_name)
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
                 db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
                 Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
         for item in new_md:
             if type(item[0])=='String':
+                print(item[0].component_name)
                 component = Component.query.filter(Component.component_name==item[0].component_name).first()
                 db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()

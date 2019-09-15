@@ -419,7 +419,7 @@ class Stock(db.Model):
             Product.query.filter(Product.id==self.id_product).first().pstock_count=count
         else: 
             Component.query.filter(Component.id==self.component_id).first().unfired = reserved
-            Component.query.filter(Component.id==self.component_id).first().stock_count=count
+            Component.query.filter(Component.id==self.component_id).first().stock_count = count
         db.session.commit()
 
     def get_component(self):
