@@ -47,7 +47,7 @@
         <td></td>
       </tr>
     </thead>
-    <tbody style="overflow: auto; height:400px;">
+    <tbody style="overflow: auto; height:100%;">
     {% for component in components%}
       <tr>
         <td class="py-0" >{{component.component_name}}</td>
@@ -107,7 +107,7 @@
         <td></td>
       </tr>
     </thead>
-    <tbody style="overflow: auto; height:400px;">
+    <tbody style="overflow: auto; height:100%;">
         {% for item in stock%}
         {%if item.get_component() and item.get_component().stock_count!=0 %}
           <tr>
@@ -171,7 +171,7 @@
               <td colspan="2">Единицы измерения</td>
             </tr>
           </thead>
-          <tbody style="overflow: auto; height:400px;">
+          <tbody style="overflow: auto; height:100%;">
           {% for item in current_user.added%}
             <tr>
               <td class="py-0" >{{item.get_name()}}</td>

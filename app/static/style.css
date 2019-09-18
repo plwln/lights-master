@@ -64,3 +64,6 @@ h5 {
 .bbody.loading .modalLoad {
     display: block;
 }
+.newtabletab td, th, tr {
+    padding:2px;
+}
