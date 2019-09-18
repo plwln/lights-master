@@ -1,0 +1,47 @@
+{%extends "base.html" %}
+{% block content %}
+{% block flash_messages %}
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            {%if 'success' not in message and 'must' not in message%}
+            <div id=message class="alert alert-success">{{ message|safe }}</div>
+            {%endif%}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock %}
+
+<nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{url_for('home_page')}}">Заказы</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Недостающие детали</li>
+        </ol>
+      </nav>
+<div class="row">
+  </div>
+  <div class="row">
+  <div class="col">
+  <table  id=mytable class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <td>Наименование</td>
+          <td>Артикул</td>
+          <td>Единицы измерения</td>
+          <td>Требуется</td>
+        </tr>
+      </thead>
+      <tbody style="overflow: auto; height:100%;">
+      {% for item in notes%}
+        <tr>
+          <td class="py-0" >{{item.get_component().component_name}}</td>
+          <td class="py-0">{{item.get_component().component_item}}</td>
+          <td class="py-0" >{{item.get_component().component_unit}}</td>
+          <td class="py-0"> {{item.get_component().note_count}}</td>
+        </tr>
+      {%endfor%}
+      </tbody>
+  </table>
+  </div>
+  </div>
+{% endblock %}

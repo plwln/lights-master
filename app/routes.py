@@ -539,7 +539,7 @@ def check_order(order):
             db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
             db.session.commit()
             Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
-        if order.count>product.pstock_count:
+        if product.pstock_count and order.count>product.pstock_count:
             p_stock = Stock.query.filter(Stock.id_product==product.id).first()
             db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
             db.session.commit()
@@ -780,6 +780,13 @@ def storekeeper_page():
         return redirect(url_for('storekeeper_page'))
     return render_template('store_keeper_page.html', notes = notes, form = form, roles = roles)
 
+@app.route('/untouched_details/<order>/<product>')
+@login_required
+def untouched_details(order, product):
+    roles = [x.name for x in current_user.roles]
+    notes = Note.query.filter(Note.order_id == order and Note.na_product==product).all()
+    print(notes)
+    return render_template('untouched_details.html', notes = notes)
 # def rec_html(specification):
 #     for item in specification.get_children(specification.get_component().id):
 #         html = "<tr><td ><span style='margin-left: 10px;'>{{item.component_name}}</span></td><td ><span style='margin-left: 10px;'>{{item.component_unit}}</span></td><td ><span style='margin-left: 10px;'>{{item.get_count(specification.get_component().id)}}</span></td></tr>"

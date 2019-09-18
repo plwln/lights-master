@@ -10,11 +10,11 @@
   </div>
   <div class="row">
     <div class="col card gedf-card mb-3 px-0">
-      <div class="card-header py-1 px-0">
+      <div class="card-header pt-1 pb-0 px-0">
         <div class="d-flex justify-content-between align-items-center">
           <div class="px-0 row ml-2">
             <span class="p-0 h5 m-0">Заказы в обработке</span>
-            <div class="col py-0">
+            <div class="ml-5 col py-0">
               <nav>
                 <div class="nav nav-tabs" id="nav-tab" role="tablist">
                   <a class="nav-item nav-link active" id="nav-card-tab" data-toggle="tab" href="#nav-home" role="tab"
@@ -97,9 +97,11 @@
                         <td>
                           <h6>
                             {%if item.status=='Резерв'%}
-                            <span class="badge badge-danger">
-                              Резерв
-                            </span>
+                            <a
+                              href="{{url_for('untouched_details', order = item.id, product = item.get_product().id )}}">
+                              <span class="badge badge-danger"> Резерв
+                              </span>
+                            </a>
                             {%else%}
                             <span class="badge badge-success">
                               Резерв
@@ -119,64 +121,79 @@
             </div>
           </div>
           <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
-            <div id='neworders' style="overflow: auto; height:100%;">
+            <div>
               {%for order in orders%}
               {%if order.product_orders!=[]%}
-              <table class="table newtabletab">
-                <tr>
-                  <td>
-                    <table>
-                      <tr>
-                        <td> Заказ №{{order.order_item}}</td>
-                      </tr>
-                      <tr>
-                        <td>{{order.get_maker().username}}</td>
-                      </tr>
-                      <tr>
-                        <td>{{order.date}}</td>
-                      </tr>
-                      <tr>
-                        <td>сделать до: {{order.endtime}}</td>
-                      </tr>
-                    </table>
-                  </td>
-                  <td colspan="5">
-                    <table class = 'innertabletab'>
-                      <tr>
-                        <td>Наименование</td>
-                        <td>Артикул</td>
-                        <td>Кол-во</td>
-                        <td>Статус</td >
-                      </tr>
-                      </thead>
-                      {%for item in order.product_orders%}
-                      <tr>
-                        <td>{{item.get_product().product_name}}</td>
-                        <td>{{item.get_product().product_item}}</td>
-                        <td>{{item.count}}</td>
-                        <td>
-                          <h6>
-                            {%if item.status=='Резерв'%}
-                            <span class="badge badge-danger">
-                              Резерв
-                            </span>
-                            {%else%}
-                            <span class="badge badge-success">
-                              Резерв
-                            </span>
-                            {%endif%}
-                          </h6>
-                        </td>
-                      </tr>
-                      {%endfor%}
-                    </table>
-                  </td>
-                </tr>
-              </table>
+              <div id='neworders' style="overflow: auto; height:100%;">
+                <table class="table newtabletab">
+                  <tr>
+                    <td>
+                      <table>
+                        <tr>
+                          <td> Заказ №{{order.order_item}}</td>
+                        </tr>
+                        <tr>
+                          <td>{{order.get_maker().username}}</td>
+                        </tr>
+                        <tr>
+                          <td>{{order.date}}</td>
+                        </tr>
+                        <tr>
+                          <td>сделать до: {{order.endtime}}</td>
+                        </tr>
+                        <tr>
+                          {%if 'Продажники' in roles or 'Admin' in roles%}<td><button type="button"
+                              class=" col py-0 btn btn-sm btn-outline-primary updateButton"
+                              order_id={{order.id}}>Обновить</button></td>
+                              <td>
+                                  <button type="button"
+                                  class=" col py-0 btn btn-sm btn-outline-success comment"
+                                  order_id={{order.id}}>Комментарий</button>
+                              </td>
+                          {%endif%}
+                        </tr>
+                      </table>
+                    </td>
+                    <td colspan="5">
+                      <table class='innertabletab'>
+                        <tr>
+                          <td colspan="3">Наименование</td>
+                          <td>Артикул</td>
+                          <td>Кол-во</td>
+                          <td>Статус</td>
+                        </tr>
+                        </thead>
+                        {%for item in order.product_orders%}
+                        <tr>
+                          <td colspan="3">{{item.get_product().product_name}}</td>
+                          <td>{{item.get_product().product_item}}</td>
+                          <td>{{item.count}}</td>
+                          <td>
+                            <h6>
+                              {%if item.status=='Резерв'%}
+                              <a
+                                href="{{url_for('untouched_details', order = item.id, product = item.get_product().id )}}">
+                                <span class="badge badge-danger"> Резерв
+                                </span>
+                              </a>
+                              {%else%}
+                              <span class="badge badge-success">
+                                Резерв
+                              </span>
+                              {%endif%}
+                            </h6>
+                          </td>
+                        </tr>
+                        {%endfor%}
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </div>
             </div>
+            {%endif%}
+            {%endfor%}
           </div>
-          {%endif%}
-          {%endfor%}
         </div>
       </div>
     </div>
