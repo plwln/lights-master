@@ -47,6 +47,7 @@ class SpecificationForm(Form):
     detail = TextField(det,[validators.Required("Введите наименование детали")])
     count = FloatField('Количество', [validators.Required("Введите количество деталей")])
     submit = SubmitField("Добавить")
+    okSubmit = SubmitField("Ок")
     text = TextAreaField('Комментарий', render_kw={'class': 'form-control', 'rows': 5})
     id = HiddenField()
 

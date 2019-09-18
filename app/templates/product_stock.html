@@ -33,6 +33,7 @@
       <tbody style="overflow: auto; height:400px;">
       {%if stock!=[]%}
       {% for item in stock%}
+      {%if item.get_product().pstock_count!=0 or (item.get_product().p_infired!=0 and item.get_product().p_unfired)%}
         <tr>
           <td class="py-0" >{{item.get_product().product_name}}</td>
           <td class="py-0">{{item.get_product().product_item}}</td>
@@ -40,13 +41,13 @@
           {%if item.get_product().pstock_count<=0%}
           <td class="py-0">Списан
               {%if item.get_product().p_unfired%}
-              /{{item.get_product().p_unfired}}
+              /{{(item.get_product().p_unfired)|int}}
               {%endif%}
           </td>
           {%else%}
-          <td class="py-0">{{item.get_product().pstock_count}}
+          <td class="py-0">{{(item.get_product().pstock_count)|int}}
             {%if item.get_product().p_unfired and item.get_product().p_unfired!=0%}
-            /{{item.get_product().p_unfired}}
+            /{{(item.get_product().p_unfired)|int}}
             {%endif%}
           </td>
           {%endif%}
@@ -54,12 +55,12 @@
               {%if 'Склад' in roles or 'Admin' in roles%} 
             <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">      
               <a href="{{url_for('pdocument', product_id=item.id_product)}}"><button type="button" class="btn btn-success btn-sm py-0">...</button></a> 
-                <button type="button" class="btn btn-info btn-sm py-0" data-toggle="modal" data-target="{{'#'+item.get_product().get_name()}}"> <img src="static/images/document-16.png" alt="" style="vertical-align:middle"> </button>
+                <button type="button" class="btn btn-info btn-sm py-0" data-toggle="modal" data-target="#p{{item.get_product().id}}"> <img src="static/images/document-16.png" alt="" style="vertical-align:middle"> </button>
             </div>
             {%endif%}
           </td>
         </tr>
-        <div class="modal fade" id='{{item.get_product().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
+        <div class="modal fade" id='p{{item.get_product().id}}' tabindex="-1" role="dialog" aria-labelledby="{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header text-center">
@@ -94,6 +95,7 @@
                   </div>
                 </div>
               </div>
+      {%endif%}
       {%endfor%}
       {%endif%}
       </tbody>

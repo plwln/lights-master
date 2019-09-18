@@ -28,7 +28,6 @@
       <thead>
         <tr>
           <td>Наименование</td>
-          <td>Единицы измерения</td>
           <td>Артикул</td>
           <td></td>
         </tr>
@@ -37,13 +36,12 @@
         {% for product in products%}
         <tr>
           <td class="py-0">{{product.product_name}}</td>
-          <td class="py-0">{{product.product_weight}}</td>
           <td class="py-0">{{product.product_item}}</td>
           <td class="py-0">
             <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal"
-              data-target="{{'#'+product.get_name()}}">+</button>
+              data-target="#p{{product.id}}">+</button>
 
-            <div class="modal fade" id='{{product.get_name()}}' tabindex="-1" role="dialog"
+            <div class="modal fade" id='p{{product.id}}' tabindex="-1" role="dialog"
               aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -60,7 +58,7 @@
 
                       </div>
                       <div class="row px-3 py-2">
-                        <div class="col mt-2"> Количество комплектующих:</div>
+                        <div class="col mt-2"> Количество светильников:</div>
                         <div class="col"> {{form.count( class_="mr-2 mb-2 form-control", placeholder="Кол-во")}}</div>
                       </div>
                       {{form.id(value=product.id, type="hidden")}}
@@ -82,7 +80,7 @@
 
 
   <div class="col">
-    <table id=mytable class="table table-sm table-hover table-bordered">
+    <table class="table table-sm table-hover table-bordered">
       <thead>
         <tr>
           <td>Наименование</td>
@@ -100,9 +98,9 @@
           <td class="py-0">{{item.get_product().product_item}}</td>
           <td class="py-0">{{item.count}}</td>
           <td><button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal"
-              data-target="{{'#delete'+item.get_product().get_name()}}">&times;</button>
-            <div class="modal fade" id='delete{{item.get_product().get_name()}}' tabindex="-1" role="dialog"
-              aria-labelledby="delete{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
+              data-target="#delete{{item.id}}">&times;</button>
+            <div class="modal fade" id='delete{{item.id}}' tabindex="-1" role="dialog"
+              aria-labelledby="delete{{item.id}}Label" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header text-center">
@@ -125,7 +123,7 @@
       </tbody>
     </table>
     <div class="row px-0"><button type="button" class="btn btn-success btn offset-8 mb-3" data-toggle="modal"
-        data-target="#append">Добавить документ</button></div>
+        data-target="#append">Добавить заказ</button></div>
   </div>
 
 </div>

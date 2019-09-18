@@ -27,9 +27,9 @@
         <td class="py-0">
             <a href="{{url_for('product_info', product = product.id)}}"><button type="button" class="btn btn-success btn-sm mr-2 py-0">&#8230;</button></a>
             {%if 'Технолог' in roles or 'Admin' in roles%}
-            <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#'+product.get_name()}}">&times;</button>
+            <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="#p{{product.id}}">&times;</button>
             {%endif%}
-            <div class="modal fade" id='{{product.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
+            <div class="modal fade" id='p{{product.id}}' tabindex="-1" role="dialog" aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header text-center">

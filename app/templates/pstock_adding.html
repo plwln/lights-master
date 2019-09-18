@@ -54,9 +54,9 @@
         <td class="py-0" >{{product.product_unit}}</td>
         <td class="py-0">{{product.product_item}}</td>
         <td class="py-0">
-                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#'+product.get_name()}}">+</button>
+                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="#p{{product.id}}">+</button>
                 
-                <div class="modal fade" id='{{product.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
+                <div class="modal fade" id='p{{product.id}}' tabindex="-1" role="dialog" aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
                   <div class="modal-dialog" role="document">
                     <div class="modal-content">
                       <div class="modal-header text-center">
@@ -114,9 +114,9 @@
             <td class="py-0">{{item.get_product().product_item}}</td>
             <td class="py-0">{{item.get_product().pstock_count}}</td>
         <td class="py-0">
-                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#del'+item.get_product().get_name()}}">+</button>
+                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="#del{{item.get_product().id}}">+</button>
                 
-                <div class="modal fade" id='{{"del"+item.get_product().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{'del'+item.get_product().get_name()+'Label'}}" aria-hidden="true">
+                <div class="modal fade" id='del{{item.get_product().id}}' tabindex="-1" role="dialog" aria-labelledby="{{'del'+item.get_product().get_name()+'Label'}}" aria-hidden="true">
                   <div class="modal-dialog" role="document">
                     <div class="modal-content">
                       <div class="modal-header text-center">
@@ -202,7 +202,7 @@
           {%endfor%}
           </tbody>
       </table>
-      <div class="row px-0"><button type="button" class="btn btn-success btn offset-8 mb-3" data-toggle="modal" data-target="#append">Добавить документ</button></div>
+      <div class="row px-0"><button type="button" class="btn btn-success btn offset-8 mb-3" data-toggle="modal" data-target="#append">Провести документ</button></div>
 </div>
 
 </div>

@@ -514,6 +514,8 @@ def check_order(order):
     doc_type = 'Заказ'
     order = Order.query.filter(Order.id==order).first()
     product = Product.query.filter(Product.id==order.prod_id).first()
+    pstock = lambda x: x if x and x>0 else 0
+   
     form = SubmitForm()
     new_md = dict()
     if request.method=='POST':
@@ -522,29 +524,26 @@ def check_order(order):
             details = json.load(fh)
         current_user.append_order(product)
         db.session.commit()
-        if product.pstock_count is None or product.pstock_count<order.count:
-            for det in list(details.keys()):
-                stock = Stock(order.doc_id, None, Component.query.filter(Component.component_name==det).first().id, (details[det]*order.count))
-                db.session.add(stock)
-                db.session.commit()
-                stock.get_count()
-        else:
-            stock = Stock(order.doc_id, product.id, None, order.count)
-            db.session.add(stock)
+        
+        if order.count>product.pstock_count:
+            p_stock = Stock.query.filter(Stock.id_product==product.id).first()
+            db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
             db.session.commit()
-            stock.get_count()
+            p_stock.get_count()
 
         flash('Товар {} добавлен в список'.format(product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
     if request.method=='GET':
         details = product.get_det()
-        pstock = lambda x: x if x and x>0 else 0
         details_new = details.copy()
         stock = []
         mod_stock = []
         if product.pstock_count is not None and product.pstock_count>0:
-            stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
+            p_stock = Stock.query.filter(Stock.id_product==product.id).first()
+            stock.append([product, p_stock])
         if product.pstock_count is None or product.pstock_count<(order.count):
+            for x in(new_md, product, pstock, order ):
+                print(type(x))
             get_mods_rec(details_new, new_md, product, pstock, order)
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
@@ -562,7 +561,8 @@ def check_order(order):
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 mod_stock.append([component,item])
-
+        
+       
         for item in stock:
             print(item[0])
             if type(item[0])=='String':
@@ -584,6 +584,7 @@ def check_order(order):
         dets=dict()
         dets.update(details_new)
         dets.update(new_md)
+        print(dets)
         fh.write(json.dumps(dets, ensure_ascii=False))
     return render_template('check_order.html', form=form, order=order, pstock=pstock(product.pstock_count), product=product, modules=new_md, details=details_new, stock=stock, mod_stock=mod_stock, doc_type = doc_type)
 
@@ -628,7 +629,6 @@ def get_report_order():
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
         elif product.pstock_count is None or product.pstock_count<(order.count):
-            print('SHO')
             get_mods_rec(details_new, new_md, product, pstock, order)
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
