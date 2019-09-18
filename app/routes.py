@@ -36,7 +36,6 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
-    
     Role.query.filter(Role.name=='Agent').delete()
     db.session.commit()
     roles = [x.name for x in current_user.roles]
@@ -445,17 +444,28 @@ def pdocument(product_id):
     documents = [Document.query.filter(Document.id==stock.document_id).first() for stock in stocks]
     return render_template('document.html', form=form, stocks = stocks, documents = documents, product='1')
 
-@app.route('/delete_document/<document_id>')
+@app.route('/delete_document/<s_id>')
 @login_required
-def delete_document(document_id):
-    stock = Stock.query.filter(Stock.document_id==document_id)
+def delete_document(s_id):
+    stock = Stock.query.filter(Stock.id==s_id)
     component_id = stock.first().component_id
     product_id = stock.first().id_product
     stock.delete()
     db.session.commit()
-    stck = Stock.query.filter(Stock.component_id==component_id).first()
+    stck=''
+    if component_id:
+        stck = Stock.query.filter(Stock.component_id==component_id).first()
+    else:
+        stck = Stock.query.filter(Stock.id_product==product_id).first()
     if stck:
         stck.get_count()
+    else:
+        if component_id:
+            Component.query.filter(Component.id==component_id).first().stock_count=0
+            db.session.commit()
+        else:
+            Product.query.filter(Product.id==product_id).first().pstock_count=0
+            db.session.commit()
     if component_id:
         return redirect(url_for('document', component_id = component_id))
     return redirect(url_for('pdocument', product_id = product_id))
@@ -524,7 +534,11 @@ def check_order(order):
             details = json.load(fh)
         current_user.append_order(product)
         db.session.commit()
-        
+        for key in details.keys():
+            cmpnnt = Component.query.filter(Component.component_name==key).first()
+            db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
+            db.session.commit()
+            Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
         if order.count>product.pstock_count:
             p_stock = Stock.query.filter(Stock.id_product==product.id).first()
             db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
@@ -538,13 +552,13 @@ def check_order(order):
         details_new = details.copy()
         stock = []
         mod_stock = []
+        print(product.pstock_count)
         if product.pstock_count is not None and product.pstock_count>0:
             p_stock = Stock.query.filter(Stock.id_product==product.id).first()
             stock.append([product, p_stock])
         if product.pstock_count is None or product.pstock_count<(order.count):
-            for x in(new_md, product, pstock, order ):
-                print(type(x))
             get_mods_rec(details_new, new_md, product, pstock, order)
+            print('tut')
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
@@ -561,25 +575,10 @@ def check_order(order):
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 mod_stock.append([component,item])
-        
-       
-        for item in stock:
-            print(item[0])
-            if type(item[0])=='String':
-                component = Component.query.filter(Component.component_name==item[0].component_name).first()
-                db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
-                db.session.commit()
-                Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
-        for item in new_md:
-            print(item[0])
-            if type(item[0])=='String':
-                component = Component.query.filter(Component.component_name==item[0].component_name).first()
-                db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
-                db.session.commit()
-                Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
         order.status = doc_type
         order.get_document().document_type = 'Резерв'
         db.session.commit()
+    
     with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
         dets=dict()
         dets.update(details_new)

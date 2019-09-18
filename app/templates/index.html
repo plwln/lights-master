@@ -119,11 +119,10 @@
             </div>
           </div>
           <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
-
-            <div id='orders' style="overflow: auto; height:100%;">
+            <div id='neworders' style="overflow: auto; height:100%;">
               {%for order in orders%}
               {%if order.product_orders!=[]%}
-              <table class="table">
+              <table class="table newtabletab">
                 <tr>
                   <td>
                     <table>
@@ -142,12 +141,12 @@
                     </table>
                   </td>
                   <td colspan="5">
-                    <table>
+                    <table class = 'innertabletab'>
                       <tr>
-                        <th>Наименование</th>
-                        <th>Артикул</th>
-                        <th>Кол-во</th>
-                        <th>Статус</th>
+                        <td>Наименование</td>
+                        <td>Артикул</td>
+                        <td>Кол-во</td>
+                        <td>Статус</td >
                       </tr>
                       </thead>
                       {%for item in order.product_orders%}
