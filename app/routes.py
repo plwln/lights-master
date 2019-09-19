@@ -534,12 +534,13 @@ def check_order(order):
             details = json.load(fh)
         current_user.append_order(product)
         db.session.commit()
-        for key in details.keys():
-            cmpnnt = Component.query.filter(Component.component_name==key).first()
-            db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
-            db.session.commit()
-            Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
-        if product.pstock_count and order.count>product.pstock_count:
+        if product.pstock_count is None or product.pstock_count<order.count:
+            for key in details.keys():
+                cmpnnt = Component.query.filter(Component.component_name==key).first()
+                db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
+                db.session.commit()
+                Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
+        else:
             p_stock = Stock.query.filter(Stock.id_product==product.id).first()
             db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
             db.session.commit()
@@ -606,33 +607,37 @@ def get_report_order():
             details= json.load(fh)
         for name in details:
             component = Component.query.filter(Component.component_name==name).first()
-            stck = Stock.query.filter(Stock.component_id==component.id).filter(Stock.document_id==doc.id)
+            stck = Stock.query.filter(Stock.component_id==component.id).filter(Stock.document_id == doc.id)
             nts = Note.query.filter(Note.na_component==component.id).filter(Note.order_id==order.id)
             for s in stck.all():
                 items.append(s)
             for n in nts.all():
                 n_items.append(n)
-    
+        
         pstck = Stock.query.filter(Stock.id_product==product.id).filter(Stock.document_id==doc.id)
         for p in pstck.all():
                 items.append(p)
         for each in n_items:
+            component_id = each.component_id
             Note.query.filter(Note.id==each.id).delete()
             db.session.commit()
+            if Stock.query.filter(component_id==Stock.component_id).first():
+                    Stock.query.filter(component_id==Stock.component_id).first().get_count()
         
         for each in items:
             Stock.query.filter(Stock.id==each.id).delete()
             db.session.commit()
-
         # print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
-        elif product.pstock_count is None or product.pstock_count<(order.count):
+        if product.pstock_count is None or product.pstock_count<(order.count):
             get_mods_rec(details_new, new_md, product, pstock, order)
+            print(details_new)
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
+                    print('tut')
                     check = 'Резерв'
                     doc_type = check
                     note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
@@ -646,21 +651,6 @@ def get_report_order():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 mod_stock.append([component,item])
-
-        for item in stock:
-            if type(item[0])=='String':
-                print(item[0].component_name)
-                component = Component.query.filter(Component.component_name==item[0].component_name).first()
-                db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
-                db.session.commit()
-                Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
-        for item in new_md:
-            if type(item[0])=='String':
-                print(item[0].component_name)
-                component = Component.query.filter(Component.component_name==item[0].component_name).first()
-                db.session.add(Stock(order.doc_id, None, component.id, (details_new[name]*(order.count-pstock(product.pstock_count)))))
-                db.session.commit()
-                Stock.query.filter(item[0].id==Stock.component_id).first().get_count()
         order.status = doc_type
         db.session.commit()
         with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
@@ -671,11 +661,20 @@ def get_report_order():
 
         with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
             details= json.load(fh)
-        if product.pstock_count is not None and product.pstock_count>=order.count:
-            stock = Stock(order.doc_id, product.id, None, order.count)
-            db.session.add(stock)
+        if product.pstock_count is None or product.pstock_count<order.count:
+            for key in details.keys():
+                cmpnnt = Component.query.filter(Component.component_name==key).first()
+                db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
+                
+                db.session.commit()
+                Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
+                
+        else:
+            p_stock = Stock.query.filter(Stock.id_product==product.id).first()
+            p_stock.get_count()
+            db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
             db.session.commit()
-            stock.get_count()
+            
     return render_template('orders_in_process.html',  order=doc)
     
 def get_mods_rec( details_new, new_md, product, pstock, order):
