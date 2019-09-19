@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, datetime, json
 from app import app, db
-from flask import render_template, flash, redirect, url_for, request, send_from_directory,render_template_string
+from flask import render_template, flash, redirect, url_for, request, send_from_directory,render_template_string, jsonify
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from werkzeug.utils import secure_filename
 from werkzeug.urls import url_parse
@@ -618,26 +618,26 @@ def get_report_order():
         for p in pstck.all():
                 items.append(p)
         for each in n_items:
-            component_id = each.component_id
             Note.query.filter(Note.id==each.id).delete()
             db.session.commit()
-            if Stock.query.filter(component_id==Stock.component_id).first():
-                    Stock.query.filter(component_id==Stock.component_id).first().get_count()
         
         for each in items:
+            component_id = each.component_id
             Stock.query.filter(Stock.id==each.id).delete()
             db.session.commit()
+            each_stock = Stock.query.filter(component_id==Stock.component_id).first()
+            if each_stock:
+                    each_stock.get_count()
+                    
         # print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
         if product.pstock_count is not None and product.pstock_count>0:
             stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
         if product.pstock_count is None or product.pstock_count<(order.count):
             get_mods_rec(details_new, new_md, product, pstock, order)
-            print(details_new)
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
-                    print('tut')
                     check = 'Резерв'
                     doc_type = check
                     note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
@@ -675,7 +675,8 @@ def get_report_order():
             db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
             db.session.commit()
             
-    return render_template('orders_in_process.html',  order=doc)
+    return jsonify({'cards':render_template('orders_in_process.html',  order=doc),
+    'table': render_template('table_order_in_process.html',  order=doc, roles = [x.name for x in current_user.roles])})
     
 def get_mods_rec( details_new, new_md, product, pstock, order):
         names=[]

@@ -51,9 +51,10 @@
         <td>
           <h6>
             {%if item.status=='Резерв'%}
-            <span class="badge badge-danger">
-              Резерв
-            </span>
+            <a href="{{url_for('untouched_details', order = item.id, product = item.get_product().id )}}">
+              <span class="badge badge-danger"> Резерв
+              </span>
+            </a>
             {%else%}
             <span class="badge badge-success">
               Резерв

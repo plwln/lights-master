@@ -125,7 +125,7 @@
               {%for order in orders%}
               {%if order.product_orders!=[]%}
               <div id='neworders' style="overflow: auto; height:100%;">
-                <table class="table newtabletab">
+                <table class="table newtabletab " id='table{{order.id}}'>
                   <tr>
                     <td>
                       <table>
@@ -141,7 +141,7 @@
                         <tr>
                           <td>сделать до: {{order.endtime}}</td>
                         </tr>
-                        
+
                         {%if order.comment%}
                         <tr>
                           <td>
@@ -243,7 +243,8 @@
       });
 
       req.done(function (data) {
-        $('#order' + order_id).html(data);
+        $('#order' + order_id).html(data.card);
+        $('#table' + order_id).html(data.table)
         $('.bbody').removeClass('loading');
         $('#order' + order_id).fadeIn(1000);
       });
