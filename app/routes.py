@@ -780,9 +780,11 @@ def storekeeper_page():
         return redirect(url_for('storekeeper_page'))
     return render_template('store_keeper_page.html', notes = notes, form = form, roles = roles)
 
-@app.route('/untouched_details/<order>/<product>')
+@app.route('/untouched_details', methods=['POST'])
 @login_required
-def untouched_details(order, product):
+def untouched_details():
+    order = request.form['order']
+    product = request.form['product']
     roles = [x.name for x in current_user.roles]
     notes = Note.query.filter(Note.order_id == order and Note.na_product==product).all()
     print(notes)
