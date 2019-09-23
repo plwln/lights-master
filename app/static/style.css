@@ -69,10 +69,9 @@ h5 {
     border-left: 1px solid #dee2e6;
 }
 .newtabletab td{
-    padding:2px;
+    padding:0px;
     padding-right: 0px;
 }
-.innertabletab td{
-    padding:1px;
-    padding-left: 0px;
+.newtabletab tr{
+    padding:0px 1px;
 }
