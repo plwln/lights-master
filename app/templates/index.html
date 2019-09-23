@@ -45,13 +45,28 @@
                         <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
                         <div class="h7 text-muted ml-2">{{order.date}}</div>
                         <div class="h7 text-muted ml-2">сделать до: {{order.endtime}}</div>
-
+                        {%if order.order_status%}
+                        <div class="h7 text-muted ml-2">{{order.order_status}}</div>
+                        {%endif%}
                         {%if 'Продажники' in roles or 'Admin' in roles%}
                         <div class="col ml-3 "><button type="button"
-                            class="py-0 btn btn-sm btn-outline-primary updateButton"
+                            class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
                             order_id={{order.id}}>Обновить</button>
                         </div>
                         {%endif%}
+                        {%if order.order_status=='Обработка'%}<button type="button"
+                          class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton" order_id={{order.id}}>В
+                          производство</button>
+                        {%endif%}
+                        {%if order.order_status=='в производстве'%}<button type="button"
+                          class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton"
+                          order_id={{order.id}}>Отгрузить</button>
+                        {%endif%}
+                        {%if order.order_status=='отгружен'%}<button type="button"
+                          class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton"
+                          order_id={{order.id}}>Выполнить</button>
+                        {%endif%}
+
                       </div>
                     </div>
 
@@ -129,8 +144,8 @@
                       {%endfor%}
                       {%if order.comment%}
                       <tr>
-                        <td class = 'py-1'>
-                         <b>Комментарий:</b> {{order.comment}}
+                        <td class='py-1'>
+                          <b>Комментарий:</b> {{order.comment}}
                         </td>
                       </tr>
                       {%endif%}
@@ -146,121 +161,69 @@
             <div>
               {%for order in orders%}
               {%if order.product_orders!=[]%}
-              <div id='neworders' style="overflow: auto; height:100%;">
-                <table class="table newtabletab " id='table{{order.id}}'>
-                  <tr>
-                    <td>
-                      <table>
-                        <tr>
-                          <td> Заказ №{{order.order_item}}</td>
-                        </tr>
-                        <tr>
-                          <td>{{order.get_maker().username}}</td>
-                        </tr>
-                        <tr>
-                          <td>{{order.date}}</td>
-                        </tr>
-                        <tr>
-                          <td>сделать до: {{order.endtime}}</td>
-                        </tr>
-
-                        {%if order.comment%}
-                        <tr>
-                          <td>
-                            Комментарий: {{order.comment}}
-                          </td>
-                        </tr>
-                        {%endif%}
-                        <tr>
-                          {%if 'Продажники' in roles or 'Admin' in roles%}<td>
-                            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                              <button type="button" class=" py-0 btn btn-sm updateButton" order_id={{order.id}}> <img
-                                  src="/static/images/reload.png" title="Обновить"> </button>
-                              <button type="button" class="py-0 btn btn-sm" data-toggle="modal"
-                                data-target="#o{{order.id}}"><img
-                                  src="https://img.icons8.com/material-outlined/24/000000/delete-sign.png"
-                                  title="Удалить">
-                              </button> </div>
-                            <div class="modal fade" id='o{{order.id}}' tabindex="-1" role="dialog"
-                              aria-labelledby="{{order.id}}Label" aria-hidden="true">
-                              <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                  <div class="modal-header text-center">
-                                    <h5 class="modal-title">Удалить Заказ №{{order.order_item}}?</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                      <span aria-hidden="true">&times;</span>
-                                    </button>
-                                  </div>
-                                  <div class="modal-footer">
-                                    <a href="{{url_for('delete_order', id = order.id)}}"><button type="button"
-                                        class="btn btn-danger">Удалить</button></a>
-                                  </div>
-                                </div>
-                              </div>
+              <table class="table newtabletab mb-2 table-bordered" id='table{{order.id}}'>
+                <tr>
+                  <td> Заказ №{{order.order_item}} сделать до: {{order.endtime}}
+                    {%if order.order_status%} статус: {{order.order_status}}
+                    {%endif%}
+                  </td>
+                  <td>{%if order.comment%}
+                    Комментарий: {{order.comment}}
+                    {%endif%}
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="3">Наименование</td>
+                  <td>Артикул</td>
+                  <td>Кол-во</td>
+                  <td>Статус</td>
+                </tr>
+                </thead>
+                {%for item in order.product_orders%}
+                <tr>
+                  <td colspan="3">{{item.get_product().product_name}}</td>
+                  <td>{{item.get_product().product_item}}</td>
+                  <td>{{item.count}}</td>
+                  <td>
+                    <h6>
+                      {%if item.status=='Резерв'%}
+                      <span type='button' class="badge badge-danger" data-toggle="modal"
+                        data-target="#tabcom{{item.id}}{{item.get_product().id}}" order_id={{item.id}}
+                        product_id={{item.get_product().id}}> Резерв
+                      </span>
+                      <div class="modal fade" id='tabcom{{item.id}}{{item.get_product().id}}' tabindex="-1"
+                        role="dialog" aria-labelledby="com{{item.id}}Label" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header text-center">
+                              <h5 class="modal-title">Недостающие детали</h5>
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
                             </div>
-              </div>
-              </td>
-              {%endif%}
-              </tr>
-              </table>
-              </td>
-              <td colspan="5">
-                <table class='innertabletab'>
-                  <tr>
-                    <td colspan="3">Наименование</td>
-                    <td>Артикул</td>
-                    <td>Кол-во</td>
-                    <td>Статус</td>
-                  </tr>
-                  </thead>
-                  {%for item in order.product_orders%}
-                  <tr>
-                    <td colspan="3">{{item.get_product().product_name}}</td>
-                    <td>{{item.get_product().product_item}}</td>
-                    <td>{{item.count}}</td>
-                    <td>
-                      <h6>
-                        {%if item.status=='Резерв'%}
-                        <span type='button' class="badge badge-danger" data-toggle="modal"
-                          data-target="#tabcom{{item.id}}{{item.get_product().id}}" order_id={{item.id}}
-                          product_id={{item.get_product().id}}> Резерв
-                        </span>
-                        <div class="modal fade" id='tabcom{{item.id}}{{item.get_product().id}}' tabindex="-1"
-                          role="dialog" aria-labelledby="com{{item.id}}Label" aria-hidden="true">
-                          <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                              <div class="modal-header text-center">
-                                <h5 class="modal-title">Недостающие детали</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <div class="modal-body">
-                              </div>
+                            <div class="modal-body">
                             </div>
                           </div>
                         </div>
-                        {%else%}
-                        <span class="badge badge-success">
-                          Резерв
-                        </span>
-                        {%endif%}
-                      </h6>
-                    </td>
-                  </tr>
-                  {%endfor%}
-                </table>
-              </td>
-              </tr>
+                      </div>
+                      {%else%}
+                      <span class="badge badge-success">
+                        Резерв
+                      </span>
+                      {%endif%}
+                    </h6>
+                  </td>
+                </tr>
+                {%endfor%}
+                </tr>
               </table>
+              {%endif%}
+              {%endfor%}
             </div>
-            {%endif%}
-            {%endfor%}
           </div>
         </div>
       </div>
     </div>
-  </div>
   </div>
   </div>
 </main>
@@ -283,7 +246,7 @@
         $('#order' + order_id).html(data.card);
         $('#table' + order_id).html(data.table)
         $('.bbody').removeClass('loading');
-        $('#order' + order_id).fadeIn(1000);
+        $('#order' + order_id).fadeIn(500);
       });
 
     });
@@ -302,24 +265,28 @@
 
       req.done(function (data) {
         $(`#com${order_id}${product_id} .modal-body`).html(data);
+        $(`#tabcom${order_id}${product_id} .modal-body`).html(data);
       });
 
     });
 
-    $(document).on('click', '.badge-danger', function () {
+    $(document).on('click', '.updateStatusButton', function () {
       let order_id = $(this).attr('order_id')
-      let product_id = $(this).attr('product_id')
+      $('#order' + order_id).fadeOut(500);
+      $('#table' + order_id).fadeOut(500);
       req = $.ajax({
-        url: `/untouched_details`,
+        url: '/update_status',
         type: 'POST',
         'data': {
-          'order': order_id,
-          'product': product_id
+          id: $(this).attr('order_id'),
         }
       });
 
       req.done(function (data) {
-        $(`#tabcom${order_id}${product_id} .modal-body`).html(data);
+        $('#order' + order_id).html(data.cards);
+        $('#table' + order_id).html(data.table);
+        $('#order' + order_id).fadeIn(500);
+        $('#table' + order_id).fadeIn(500);
       });
 
     });

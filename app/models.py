@@ -3,6 +3,14 @@ from flask_user import current_user, login_required, roles_required, UserManager
 from sqlalchemy import Table, MetaData, exists
 from sqlalchemy.sql import text
 from flask import flash
+from sqlalchemy.orm import validates
+
+class Obs(db.Model):
+    __tablename__ = 'obs'
+    id = db.Column(db.Integer(), primary_key=True)
+    update_date = db.Column(db.String())
+    status = db.Column(db.String())
+    doc = db.Column(db.Integer())
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'

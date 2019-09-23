@@ -525,7 +525,7 @@ def check_order(order):
     order = Order.query.filter(Order.id==order).first()
     product = Product.query.filter(Product.id==order.prod_id).first()
     pstock = lambda x: x if x and x>0 else 0
-   
+    order_status = 'Обработка'
     form = SubmitForm()
     new_md = dict()
     if request.method=='POST':
@@ -553,13 +553,11 @@ def check_order(order):
         details_new = details.copy()
         stock = []
         mod_stock = []
-        print(product.pstock_count)
         if product.pstock_count is not None and product.pstock_count>0:
             p_stock = Stock.query.filter(Stock.id_product==product.id).first()
             stock.append([product, p_stock])
         if product.pstock_count is None or product.pstock_count<(order.count):
             get_mods_rec(details_new, new_md, product, pstock, order)
-            print('tut')
             for name in details_new.keys():
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
@@ -569,6 +567,7 @@ def check_order(order):
                     note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
                     db.session.add(note)
                     db.session.commit()
+                    order_status = None
                     component.get_note_count()
                     stock.append([component, item])
                 else: stock.append([component, item])
@@ -579,6 +578,8 @@ def check_order(order):
         order.status = doc_type
         order.get_document().document_type = 'Резерв'
         db.session.commit()
+        order.get_document().order_status = order_status
+        db.session.commit()
     
     with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
         dets=dict()
@@ -588,6 +589,23 @@ def check_order(order):
         fh.write(json.dumps(dets, ensure_ascii=False))
     return render_template('check_order.html', form=form, order=order, pstock=pstock(product.pstock_count), product=product, modules=new_md, details=details_new, stock=stock, mod_stock=mod_stock, doc_type = doc_type)
 
+@app.route('/update_status', methods=['POST', 'GET'])
+def update_status():
+    doc = Document.query.filter(Document.id==request.form['id']).first()
+    if doc.order_status=='Обработка':
+        doc.order_status='в производстве'
+        db.session.commit()
+    elif doc.order_status=='в производстве':
+        doc.order_status='отгружен'
+        db.session.commit()
+    elif doc.order_status=='отгружен':
+        doc.order_status='выполнен'
+        db.session.commit()
+    else:
+        doc.order_status='Завершен'
+        db.session.commit()
+    return jsonify({'cards':render_template('orders_in_process.html',  order=doc),
+    'table': render_template('table_order_in_process.html',  order=doc, roles = [x.name for x in current_user.roles])})
 
 @app.route('/update', methods=['POST', 'GET'])
 def get_report_order():
@@ -675,7 +693,7 @@ def get_report_order():
             db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
             db.session.commit()
             
-    return jsonify({'cards':render_template('orders_in_process.html',  order=doc),
+    return jsonify({'card':render_template('orders_in_process.html',  order=doc),
     'table': render_template('table_order_in_process.html',  order=doc, roles = [x.name for x in current_user.roles])})
     
 def get_mods_rec( details_new, new_md, product, pstock, order):
@@ -691,15 +709,26 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
                     details_new[name][det]['count'] *= details_new[name]['count']
             component = Component.query.filter(Component.component_name==name).first()
             item = Stock.query.filter(Stock.component_id==component.id).first()
-            if item and component.stock_count>=(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
+            if item and component.stock_count>0:
                 new_md.update({name:details_new[name]['count']})
+                if component.stock_count<(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
+                    count = details_new[name].pop('count')
+                    final_count = lambda x: x-component.stock_count if x>component.stock_count else component.stock_count-x
+                    for det in details_new[name].keys():
+                        if type(details_new[name][det])!=dict:
+                            details_new[name][det]*=final_count(count)
+                        else: details_new[name][det]['count']*=count
+                    details_new.update(details_new[name])
+                    print(details_new)
                 details_new.pop(name)
+                print(details_new)
             else:
                 if 'count' in details_new[name]:
                     count = details_new[name].pop('count')
                     for det in details_new[name].keys():
                         if type(details_new[name][det])!=dict:
                             details_new[name][det]*=count
+                        else: details_new[name][det]['count']*=count
                 details_new.update(details_new[name])
             if name in details_new.keys():
                 details_new.pop(name)
