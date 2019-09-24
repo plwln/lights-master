@@ -7,32 +7,34 @@
       <li class="breadcrumb-item active" aria-current="page">{{product.product_name}}</li>
    </ol>
 </nav>
-
-{%- macro recurse(specifications,parrent,tab) %}
-{%- for specification in specifications %}
+{% macro recurse(specifications,parrent,type,tab) %}
+{{tab}}
+{% for specification in specifications %}
 {%if specification.get_type()=='spec'%}
-{% if specification.component_type == 'Детали корпуса'%}
-<tr class='pl-{{tab}}'>
-   <td class='ml-{{tab}}' scope="row">{{specification.get_component().component_name}}</td>
-   <td class='ml-{{tab}}'>{{specification.get_component().component_unit}}</td>
-   <td class='ml-{{tab}}'>{{specification.count}}</td>
+{% if specification.component_type == type%}
+<tr>
+   <td scope="row">{{specification.get_component().component_name}}</td>
+   <td>{{specification.get_component().component_unit}}</td>
+   <td>{{specification.count}}</td>
 </tr>
-
    {%if specification.get_children(specification.get_component().id)%}
-   {{recurse(specification.get_children(specification.get_component().id),specification.get_component().id,tab+1)}}
+   {{recurse(specification.get_children(specification.get_component().id),specification.get_component().id,tab)}}
    {%endif%}
 {%endif%}
-
-{%else%}
-<tr class='pl-{{tab}}'>
-<td class='ml-{{tab}}' scope="row">{{specification.component_name}}</td>
-   <td class='ml-{{tab}}'>{{specification.component_unit}}</td>
-   <td class='ml-{{tab}}'>{{specification.get_count(parrent)}}</td>
+{{tab}}
+{%elif specification.get_type()=='com'%}
+<tr>
+   {{tab}}
+<td scope="row">{{tab}}{{specification.component_name}}</td>
+   <td>{{specification.component_unit}}</td>
+   <td>{{specification.get_count(parrent)}}</td>
 </tr>
 {%if specification.get_children(specification.id)%}
-{{rec(specification.get_children(specification.id), specification.id, tab+2)}}
+{{rec(specification.get_children(specification.id), specification.id, tab)}}
 {%endif%}
+
 {%endif%}
+
 {%endfor%}
 {%- endmacro %}
 
@@ -92,7 +94,7 @@
                </tr>
             </thead>
             <tbody>
-               {{recurse(specifications, None, 0)}}
+               {{recurse(specifications, None, 'Детали корпуса', '-')}}
             </tbody>
          </table>
       </div>
@@ -108,29 +110,7 @@
                </tr>
             </thead>
             <tbody>
-               {% for specification in specifications%}
-               {% if specification.component_type == 'Электротехнические детали'%}
-               <tr>
-                  <td scope="row">{{specification.get_component().component_name}}</td>
-                  <td>{{specification.get_component().component_unit}}</td>
-                  <td>{{specification.count}}</td>
-               <tr>
-                  {%if specification.get_children(specification.get_component().id)%}
-                  {%for item in specification.get_children(specification.get_component().id)%}
-               <tr>
-                  <td>{{item.component_name}}</td>
-                  <td>{{item.component_unit}}</td>
-                  <td>{{item.count}}</td>
-               </tr>
-
-               {%endfor%}
-               {%endif%}
-               </tr>
-               </tr>
-               {%endif%}
-               {%endfor%}
-               <tr>
-               </tr>
+               {{recurse(specifications, None, 'Электротехнические детали', '-')}}
             </tbody>
          </table>
       </div>
@@ -146,28 +126,7 @@
                </tr>
             </thead>
             <tbody>
-               {% for specification in specifications%}
-               {% if specification.component_type == 'Герметики'%}
-               <tr>
-                  <td scope="row">{{specification.get_component().component_name}}</td>
-                  <td>{{specification.get_component().component_unit}}</td>
-                  <td>{{specification.count}}</td>
-               <tr>
-                  {%if specification.get_children(specification.get_component().id)%}
-                  {%for item in specification.get_children(specification.get_component().id)%}
-               <tr>
-                  <td>{{item.component_name}}</td>
-                  <td>{{item.component_unit}}</td>
-                  <td>{{item.count}}</td>
-               </tr>
-               {%endfor%}
-               {%endif%}
-               </tr>
-               </tr>
-               {%endif%}
-               {%endfor%}
-               <tr>
-               </tr>
+               {{recurse(specifications, None, 'Герметики', '-')}}
             </tbody>
          </table>
       </div>
@@ -184,35 +143,14 @@
                </tr>
             </thead>
             <tbody>
-               {% for specification in specifications%}
-               {% if specification.component_type == 'Метизы'%}
-               <tr>
-                  <td scope="row">{{specification.get_component().component_name}}</td>
-                  <td>{{specification.get_component().component_unit}}</td>
-                  <td>{{specification.count}}</td>
-               <tr>
-                  {%if specification.get_children(specification.get_component().id)%}
-                  {%for item in specification.get_children(specification.get_component().id)%}
-               <tr>
-                  <td>{{item.component_name}}</td>
-                  <td>{{item.component_unit}}</td>
-                  <td>{{item.count}}</td>
-               </tr>
-               {%endfor%}
-               {%endif%}
-               </tr>
-               </tr>
-               {%endif%}
-               {%endfor%}
-               <tr>
-               </tr>
+               {{recurse(specifications, None, 'Метизы', 0)}}
             </tbody>
          </table>
       </div>
 
       <div class=" m-0 col">
          <table class="table table-sm table-hover  ">
-            <h6> Упаковка</h6>
+            <h6>Упаковка</h6>
             <thead>
                <tr>
                   <td scope="col">Деталь</td>
@@ -222,28 +160,7 @@
                </tr>
             </thead>
             <tbody>
-               {% for specification in specifications%}
-               {% if specification.component_type == 'Упаковка'%}
-               <tr>
-                  <td scope="row">{{specification.get_component().component_name}}</td>
-                  <td>{{specification.get_component().component_unit}}</td>
-                  <td>{{specification.count}}</td>
-               <tr>
-                  {%if specification.get_children(specification.get_component().id)%}
-                  {%for item in specification.get_children(specification.get_component().id)%}
-               <tr>
-                  <td>{{item.component_name}}</td>
-                  <td>{{item.component_unit}}</td>
-                  <td>{{item.count}}</td>
-               </tr>
-               {%endfor%}
-               {%endif%}
-               </tr>
-               </tr>
-               {%endif%}
-               {%endfor%}
-               <tr>
-               </tr>
+               {{recurse(specifications, None, 'Упаковка', 0)}}
             </tbody>
          </table>
       </div>
@@ -260,28 +177,7 @@
                </tr>
             </thead>
             <tbody>
-               {% for specification in specifications%}
-               {% if specification.component_type == 'Расходные материалы'%}
-               <tr>
-                  <th scope="row">{{specification.get_component().component_name}}</th>
-                  <td>{{specification.get_component().component_unit}}</td>
-                  <td>{{specification.count}}</td>
-               <tr>
-                  {%if specification.get_children(specification.get_component().id)%}
-                  {%for item in specification.get_children(specification.get_component().id)%}
-               <tr>
-                  <td>{{item.component_name}}</td>
-                  <td>{{item.component_unit}}</td>
-                  <td>{{item.count}}</td>
-               </tr>
-               {%endfor%}
-               {%endif%}
-               </tr>
-               </tr>
-               {%endif%}
-               {%endfor%}
-               <tr>
-               </tr>
+               {{recurse(specifications, None, 'Расходные материалы', 0)}}
             </tbody>
          </table>
       </div>
