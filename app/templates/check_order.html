@@ -35,11 +35,11 @@
           <td class="py-0">{{item[1].get_component().component_item}}</td>
           {%if modules[item[1].get_component().component_name]*order.count <= item[1].get_component().stock_count %}
           <td class="py-0 bg-success">
-            {{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+            {{(modules[item[1].get_component().component_name]*(order.count-pstock))|round(6)}}/{{item[1].get_component().stock_count|round(6)}}
           </td>
           {%else%}
           <td class="py-0 bg-danger">
-            {{modules[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+            {{(modules[item[1].get_component().component_name]*(order.count-pstock))|round(6)}}/{{item[1].get_component().stock_count|round(6)}}
           </td>
           {%endif%}
           {%else%}
@@ -47,9 +47,9 @@
           <td class="py-0">&mdash;</td>
           <td class="py-0">{{item[1].get_product().product_item}}</td>
           {%if order.count <= item[1].get_product().pstock_count %}
-          <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count|round(6)}}</td>
           {%else%}
-          <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count|round(6)}}</td>
           {%endif%}
           {%endif%}
         </tr>
@@ -58,7 +58,7 @@
           <td class="py-0">{{item[0].component_name}}</td>
           <td class="py-0">{{item[0].component_unit}}</td>
           <td class="py-0">{{item[0].component_item}}</td>
-          <td class="py-0 bg-danger">{{modules[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
+          <td class="py-0 bg-danger">{{(modules[item[0].component_name]*(order.count-pstock))|round(6)}}/Нет на складе</td>
         </tr>
         {%endif%}
         {%endfor%}
@@ -86,11 +86,11 @@
           <td class="py-0">{{item[1].get_component().component_item}}</td>
           {%if details[item[1].get_component().component_name]*(order.count-pstock) <= item[1].get_component().stock_count %}
           <td class="py-0 bg-success">
-            {{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+            {{(details[item[1].get_component().component_name]*(order.count-pstock))|round(6)}}/{{item[1].get_component().stock_count|round(6)}}
           </td>
           {%else%}
           <td class="py-0 bg-danger">
-            {{details[item[1].get_component().component_name]*(order.count-pstock)}}/{{item[1].get_component().stock_count}}
+            {{(details[item[1].get_component().component_name]*(order.count-pstock))|round(6)}}/{{item[1].get_component().stock_count|round(6)}}
           </td>
           {%endif%}
           {%else%}
@@ -98,9 +98,9 @@
           <td class="py-0">&mdash;</td>
           <td class="py-0">{{item[1].get_product().product_item}}</td>
           {%if order.count <= item[1].get_product().pstock_count %}
-          <td class="py-0 bg-success">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          <td class="py-0 bg-success">{{order.count|round(6)}}/{{item[1].get_product().pstock_count|round(6)}}</td>
           {%else%}
-          <td class="py-0 bg-danger">{{order.count}}/{{item[1].get_product().pstock_count}}</td>
+          <td class="py-0 bg-danger">{{order.count|round(6)}}/{{item[1].get_product().pstock_count|round(6)}}</td>
           {%endif%}
           {%endif%}
         </tr>
@@ -109,7 +109,7 @@
           <td class="py-0">{{item[0].component_name}}</td>
           <td class="py-0">{{item[0].component_unit}}</td>
           <td class="py-0">{{item[0].component_item}}</td>
-          <td class="py-0 bg-danger">{{details[item[0].component_name]*(order.count-pstock)}}/Нет на складе</td>
+          <td class="py-0 bg-danger">{{(details[item[0].component_name]*(order.count-pstock))|round(6)}}/Нет на складе</td>
         </tr>
         {%endif%}
         {%endfor%}

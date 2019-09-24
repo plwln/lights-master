@@ -230,6 +230,9 @@ class Component(db.Model):
     def get_children(self, id):
         return False
 
+    def get_type(self):
+        return 'com'
+
     def get_note_count(self):
         self.note_count=0
         for note in Note.query.filter(Note.na_component==self.id):
@@ -261,6 +264,9 @@ class Specification(db.Model):
         self.component_id = component_id
         self.count = count
     
+    def get_type(self):
+        return 'spec'
+
     def get_component(self):
         return Component.query.filter(Component.id == self.component_id).first()
     
@@ -269,8 +275,8 @@ class Specification(db.Model):
 
     def get_children(self, id):
         children = ModalComponent.get_children(self.component_id)
+        specs = [Specification.query.filter(Specification.product_id==self.product_id and Specification.component_id==x.id).first() for x in children]
         return children
-
 class ModalComponent(db.Model):
     __tablename__ = 'modalcomponent'
     id = db.Column(db.Integer(), primary_key=True)

@@ -173,6 +173,22 @@ def product_info(product):
     roles = [x.name for x in current_user.roles]
     db_product = Product.query.filter(Product.id==product).first()
     specifications=Specification.query.filter(Specification.product_id==product).all()
+    print(specifications)
+    def rec(specifications, parrent = None):
+        for specification in specifications:
+            if type(specification)==Specification:
+                if specification.component_type == 'Детали корпуса':
+                    print(specification.get_component().component_name)
+                    print(specification.get_component().component_unit)
+                if specification.get_children(specification.get_component().id):
+                    rec(specification.get_children(specification.get_component().id), specification.get_component().id)
+            else:
+                print(specification.component_name)
+                print(specification.get_count(parrent))
+                if specification.get_children(specification.id):
+                    rec(specification.get_children(specification.id), specification.id)
+           
+    rec(specifications)
     modal = ModalComponent.query.first()
     return render_template('product_info.html', roles=roles, product=db_product, modal=modal, specifications=specifications)
 

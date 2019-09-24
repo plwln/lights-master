@@ -114,7 +114,7 @@
             <td class="py-0" >{{item.get_component().component_name}}</td>
             <td class="py-0" >{{item.get_component().component_unit}}</td>
             <td class="py-0">{{item.get_component().component_item}}</td>
-            <td class="py-0">{{item.get_component().stock_count}}</td>
+            <td class="py-0">{{item.get_component().stock_count|round(6)}}</td>
         <td class="py-0">
                 <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#del'+item.get_component().get_name()}}">+</button>
                 
@@ -178,7 +178,7 @@
               {%if item.count==0%}
               <td class="py-0" >Списание</td>
               {%else%}
-              <td class="py-0" >{{item.count}}</td>
+              <td class="py-0" >{{item.count|round(6)}}</td>
               {%endif%}
               <td class="py-0">{{item.get_unit()}}</td>
               <td class="py-0">
