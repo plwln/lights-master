@@ -7,8 +7,7 @@
       <li class="breadcrumb-item active" aria-current="page">{{product.product_name}}</li>
    </ol>
 </nav>
-{% macro recurse(specifications,parrent,type,tab) %}
-{{tab}}
+{% macro recurse(specifications,parrent,type,count) %}
 {% for specification in specifications %}
 {%if specification.get_type()=='spec'%}
 {% if specification.component_type == type%}
@@ -18,19 +17,17 @@
    <td>{{specification.count}}</td>
 </tr>
    {%if specification.get_children(specification.get_component().id)%}
-   {{recurse(specification.get_children(specification.get_component().id),specification.get_component().id,tab)}}
+   {{recurse(specification.get_children(specification.get_component().id),specification.get_component().id,specification.count)}}
    {%endif%}
 {%endif%}
-{{tab}}
 {%elif specification.get_type()=='com'%}
 <tr>
-   {{tab}}
-<td scope="row">{{tab}}{{specification.component_name}}</td>
+<td scope="row">--{{specification.component_name}}</td>
    <td>{{specification.component_unit}}</td>
-   <td>{{specification.get_count(parrent)}}</td>
+   <td>{{specification.get_count(parrent)*count}}</td>
 </tr>
 {%if specification.get_children(specification.id)%}
-{{rec(specification.get_children(specification.id), specification.id, tab)}}
+{{recurse(specification.get_children(specification.id), specification.id, type, specification.get_count(parrent)*count)}}
 {%endif%}
 
 {%endif%}
@@ -94,7 +91,7 @@
                </tr>
             </thead>
             <tbody>
-               {{recurse(specifications, None, 'Детали корпуса', '-')}}
+                  {{spec_dict[0]|safe}}
             </tbody>
          </table>
       </div>
@@ -110,7 +107,7 @@
                </tr>
             </thead>
             <tbody>
-               {{recurse(specifications, None, 'Электротехнические детали', '-')}}
+               {{spec_dict[1]|safe}}
             </tbody>
          </table>
       </div>
@@ -126,7 +123,7 @@
                </tr>
             </thead>
             <tbody>
-               {{recurse(specifications, None, 'Герметики', '-')}}
+               {{spec_dict[2]|safe}}
             </tbody>
          </table>
       </div>
@@ -143,7 +140,7 @@
                </tr>
             </thead>
             <tbody>
-               {{recurse(specifications, None, 'Метизы', 0)}}
+               {{spec_dict[3]|safe}}
             </tbody>
          </table>
       </div>
@@ -160,7 +157,7 @@
                </tr>
             </thead>
             <tbody>
-               {{recurse(specifications, None, 'Упаковка', 0)}}
+               {{spec_dict[4]|safe}}
             </tbody>
          </table>
       </div>
@@ -177,7 +174,7 @@
                </tr>
             </thead>
             <tbody>
-               {{recurse(specifications, None, 'Расходные материалы', 0)}}
+               {{spec_dict[5]|safe}}
             </tbody>
          </table>
       </div>

@@ -9,7 +9,7 @@ from app.models import User, UserRoles, Role, Product, Component, Specification,
 from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm, NoteForm
 from datetime import datetime, date, time
 import datetime as dt
-
+from jinja2 import Environment, BaseLoader, Template
 
 
 @app.route('/')
@@ -173,24 +173,38 @@ def product_info(product):
     roles = [x.name for x in current_user.roles]
     db_product = Product.query.filter(Product.id==product).first()
     specifications=Specification.query.filter(Specification.product_id==product).all()
-    print(specifications)
-    def rec(specifications, parrent = None):
+    spec_dict = [[],[],[],[],[],[]]
+    def rec(specifications, c_type, ret_dict, count=1, parrent = None, tab='--'):
         for specification in specifications:
             if type(specification)==Specification:
-                if specification.component_type == 'Детали корпуса':
-                    print(specification.get_component().component_name)
-                    print(specification.get_component().component_unit)
-                if specification.get_children(specification.get_component().id):
-                    rec(specification.get_children(specification.get_component().id), specification.get_component().id)
+                if specification.component_type == c_type:
+                    ret_dict.append(f''' <tr>
+                    <td scope="row">{specification.get_component().component_name}</td>
+                    <td>{specification.get_component().component_unit}</td>
+                    <td>{specification.count}</td>
+                    </tr>''')
+                    if specification.get_children(specification.get_component().id):
+                        rec(specification.get_children(specification.get_component().id), c_type, ret_dict, specification.count, specification.get_component().id,tab)
             else:
-                print(specification.component_name)
-                print(specification.get_count(parrent))
-                if specification.get_children(specification.id):
-                    rec(specification.get_children(specification.id), specification.id)
-           
-    rec(specifications)
+                ret_dict.append(f'''<tr>
+                                    <td scope="row">{tab}{specification.component_name}</td>
+                                    <td>{specification.component_unit}</td>
+                                    <td>{specification.get_count(parrent)*count}</td>
+                                    </tr>''')
+                if ModalComponent.get_children(specification.id):
+                    minus = tab+tab
+                    rec(ModalComponent.get_children(specification.id), c_type, ret_dict, specification.get_count(parrent)*count, specification.id, minus)
+    i=0
+    tmps = []
+    for det_type in ('Детали корпуса','Электротехнические детали','Герметики','Метизы','Упаковка','Расходные материалы'):       
+        rec(specifications,det_type, spec_dict[i])
+        tmp_string = ''
+        tmp_string=' '.join(spec_dict[i])
+        rtemplate = Template(tmp_string).render()
+        tmps.append(rtemplate)
+        i+=1
     modal = ModalComponent.query.first()
-    return render_template('product_info.html', roles=roles, product=db_product, modal=modal, specifications=specifications)
+    return render_template('product_info.html', spec_dict=tmps, roles=roles, product=db_product, modal=modal, specifications=specifications)
 
 @app.route('/delete_component/<id>')
 @login_required
