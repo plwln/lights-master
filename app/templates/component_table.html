@@ -30,9 +30,9 @@
             <!-- <a href="{{url_for('delete_component', id = component.id)}}"><button type="button" class="btn btn-sm btn-danger">Удалить</button></a> -->
             
             {%if 'Технолог' in roles or 'Admin' in roles%}
-            <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#'+component.get_name()}}">&times;</button>
+            <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="#c{{component.id}}">&times;</button>
             {%endif%}
-            <div class="modal fade" id='{{component.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{component.get_name()+'Label'}}" aria-hidden="true">
+            <div class="modal fade" id='c{{component.id}}' tabindex="-1" role="dialog" aria-labelledby="c{{component.id}}Label" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header text-center">

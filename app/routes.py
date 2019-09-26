@@ -594,7 +594,7 @@ def check_order(order):
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
                     check = lambda x: 'Резерв' if x=='Заказ' else x
                     doc_type = check(doc_type)
-                    note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
+                    note = Note(component.id, product.id, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
                     db.session.add(note)
                     db.session.commit()
                     order_status = None
@@ -688,7 +688,7 @@ def get_report_order():
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
                     check = 'Резерв'
                     doc_type = check
-                    note = Note(component.id, None, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
+                    note = Note(component.id, product.id, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
                     db.session.add(note)
                     db.session.commit()
                     component.get_note_count()
@@ -735,6 +735,7 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
             return
         for name in names:
             for det in details_new[name]:
+                print(details_new[name])
                 if type(details_new[name][det])==dict and details_new[name]['count']>1:
                     details_new[name][det]['count'] *= details_new[name]['count']
             component = Component.query.filter(Component.component_name==name).first()
@@ -743,7 +744,9 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
                 new_md.update({name:details_new[name]['count']})
                 if component.stock_count<(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
                     count = details_new[name].pop('count')
+                    print((count))
                     final_count = lambda x: x-component.stock_count if x>component.stock_count else component.stock_count-x
+                    print(final_count(count))
                     for det in details_new[name].keys():
                         if type(details_new[name][det])!=dict:
                             details_new[name][det]*=final_count(count)
@@ -845,7 +848,7 @@ def untouched_details():
     order = request.form['order']
     product = request.form['product']
     roles = [x.name for x in current_user.roles]
-    notes = Note.query.filter(Note.order_id == order and Note.na_product==product).all()
+    notes = Note.query.filter(Note.order_id == order).filter(Note.na_product==product).all()
     print(notes)
     return render_template('untouched_details.html', notes = notes)
 # def rec_html(specification):
