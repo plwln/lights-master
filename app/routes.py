@@ -735,6 +735,7 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
             return
         for name in names:
             for det in details_new[name]:
+                print(name)
                 print(details_new[name])
                 if type(details_new[name][det])==dict and details_new[name]['count']>1:
                     details_new[name][det]['count'] *= details_new[name]['count']
@@ -744,17 +745,13 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
                 new_md.update({name:details_new[name]['count']})
                 if component.stock_count<(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
                     count = details_new[name].pop('count')
-                    print((count))
-                    final_count = lambda x: x-component.stock_count if x>component.stock_count else component.stock_count-x
-                    print(final_count(count))
+                    
                     for det in details_new[name].keys():
                         if type(details_new[name][det])!=dict:
-                            details_new[name][det]*=final_count(count)
-                        else: details_new[name][det]['count']*=count
+                            details_new[name][det]*=((order.count-component.stock_count)/order.count)
+                        else: details_new[name][det]['count']*=((order.count-component.stock_count)/order.count)
                     details_new.update(details_new[name])
-                    print(details_new)
                 details_new.pop(name)
-                print(details_new)
             else:
                 if 'count' in details_new[name]:
                     count = details_new[name].pop('count')
@@ -849,7 +846,6 @@ def untouched_details():
     product = request.form['product']
     roles = [x.name for x in current_user.roles]
     notes = Note.query.filter(Note.order_id == order).filter(Note.na_product==product).all()
-    print(notes)
     return render_template('untouched_details.html', notes = notes)
 # def rec_html(specification):
 #     for item in specification.get_children(specification.get_component().id):
