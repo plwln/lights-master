@@ -415,11 +415,7 @@ class Stock(db.Model):
             if item.get_document() and item.get_document().document_type=='Приход':
                 count+=item.count
             elif item.get_document() and item.get_document().document_type=='Расход':
-                if count>=item.count:
-                    count-=item.count
-                else:
-                    db.session.delete(item)
-                    db.session.commit()
+                count-=item.count
             elif item.get_document().document_type=='Резерв' or  item.get_document().document_type=='Заказ':
                 count -= item.count
                 if reserved is None:

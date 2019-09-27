@@ -735,8 +735,7 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
             return
         for name in names:
             for det in details_new[name]:
-                print(name)
-                print(details_new[name])
+                
                 if type(details_new[name][det])==dict and details_new[name]['count']>1:
                     details_new[name][det]['count'] *= details_new[name]['count']
             component = Component.query.filter(Component.component_name==name).first()
@@ -744,12 +743,14 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
             if item and component.stock_count>0:
                 new_md.update({name:details_new[name]['count']})
                 if component.stock_count<(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
+                    print(name)
                     count = details_new[name].pop('count')
-                    
+                    print(count)
                     for det in details_new[name].keys():
+                        #ccount = lambda x: (x*order.count) if (x*order.count)<order.count else order.count
                         if type(details_new[name][det])!=dict:
-                            details_new[name][det]*=((order.count-component.stock_count)/order.count)
-                        else: details_new[name][det]['count']*=((order.count-component.stock_count)/order.count)
+                            details_new[name][det]*=((count*order.count-component.stock_count)/(order.count))
+                        else: details_new[name][det]['count']*=((count*order.count-component.stock_count)/(order.count))
                     details_new.update(details_new[name])
                 details_new.pop(name)
             else:
