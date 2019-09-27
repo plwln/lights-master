@@ -46,7 +46,7 @@
             {%endif%}
           </td>
           {%else%}
-          <td class="py-0">{{item.get_component().stock_count|round(6)}}
+          <td class="py-0">{{(item.get_component().stock_count+item.get_component().unfired)|round(6)}}
             {%if item.get_component().unfired and item.get_component().unfired!=0%}
             /{{item.get_component().unfired|round(6)}}
             {%endif%}
@@ -107,7 +107,7 @@
       </tbody>
     </table>
   </div>
-
+</div>
   <script>
     $(function () {
       $('.selectpicker').on('change', function () {
