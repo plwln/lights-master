@@ -10,7 +10,7 @@ from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentFor
 from datetime import datetime, date, time
 import datetime as dt
 from jinja2 import Environment, BaseLoader, Template
-
+import math
 
 @app.route('/')
 @login_required
@@ -688,7 +688,7 @@ def get_report_order():
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
                     check = 'Резерв'
                     doc_type = check
-                    note = Note(component.id, product.id, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
+                    note = Note(component.id, product.id, order.id, math.fabs((details_new[name]*(order.count-pstock(product.pstock_count)))-component.stock_count), '')
                     db.session.add(note)
                     db.session.commit()
                     component.get_note_count()
@@ -747,7 +747,6 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
                     count = details_new[name].pop('count')
                     print(count)
                     for det in details_new[name].keys():
-                        #ccount = lambda x: (x*order.count) if (x*order.count)<order.count else order.count
                         if type(details_new[name][det])!=dict:
                             details_new[name][det]*=((count*order.count-component.stock_count)/(order.count))
                         else: details_new[name][det]['count']*=((count*order.count-component.stock_count)/(order.count))
