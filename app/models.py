@@ -401,7 +401,7 @@ class Stock(db.Model):
         unit = Component.query.filter(Component.id==self.component_id).first().component_unit
         return unit
 
-    def get_count(self):
+    def get_old_count(self):
         count=0
         reserved = 0
         stock_count = 0
@@ -431,6 +431,38 @@ class Stock(db.Model):
             Component.query.filter(Component.id==self.component_id).first().unfired = reserved
             Component.query.filter(Component.id==self.component_id).first().stock_count = count
         db.session.commit()
+
+    def get_count(self):
+        count=0
+        reserved = 0
+        stock_count = 0
+        if self.id_product:
+            stocks = Stock.query.filter(Stock.id_product==self.id_product).all()
+            stocks = db.session.query(Stock, Document).filter(Stock.id_product==self.id_product).join(Document, Stock.document_id==Document.id).all()
+            stock_count = Product.query.filter(Product.id==self.id_product).first().pstock_count 
+        if self.component_id:
+            stocks = db.session.query(Stock, Document).filter(Stock.component_id==self.component_id).join(Document, Stock.document_id==Document.id).all()
+            stock_count = Component.query.filter(Component.id==self.component_id).first().stock_count
+        
+        for item in stocks:
+            if item[1].document_type=='Приход':
+                count+=item[0].count
+            elif item[1].document_type=='Расход':
+                count-=item[0].count
+            elif item[1].document_type=='Резерв':
+                count-=item[0].count
+                reserved += item[0].count
+            else:
+                count=0
+            
+        if self.id_product:
+            Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
+            Product.query.filter(Product.id==self.id_product).first().pstock_count=count
+        else: 
+            Component.query.filter(Component.id==self.component_id).first().unfired = reserved
+            Component.query.filter(Component.id==self.component_id).first().stock_count = count
+        db.session.commit()
+
 
     def get_component(self):
         return Component.query.filter(Component.id==self.component_id).first()

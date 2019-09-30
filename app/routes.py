@@ -17,110 +17,6 @@ import threading
 import time
 from multiprocessing.dummy import Pool as ThreadPool 
 
-class Worker(threading.Thread):
- 
-    def __init__(self, work_queue):
-        super(Worker,self).__init__()
-        self.work_queue = work_queue
- 
-    def run(self):
-        try:
-            filename = self.work_queue.get()
-            self.order_processor(filename)
-        finally:
-            pass
- 
-    def order_processor(self, doc):
-        doc_type = 'Заказ'
-        for order in doc.product_orders:
-            items = []
-            n_items= []
-            product = order.get_product()
-            details = {}
-            pstock = lambda x: x if x and x>0 else 0
-            details_new = product.get_det()
-            stock = []
-            mod_stock = []
-            new_md = dict()
-            start_time = time.time()
-            with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-                details= json.load(fh)
-            print("--- %s seconds ---" % (time.time() - start_time))
-            start_time = time.time()
-            for name in details:
-                component = Component.query.filter(Component.component_name==name).first()
-                component = db.get_engine()
-                stck = Stock.query.filter(Stock.component_id==component.id).filter(Stock.document_id == doc.id)
-                nts = Note.query.filter(Note.na_component==component.id).filter(Note.order_id==order.id)
-                for s in stck.all():
-                    items.append(s)
-                for n in nts.all():
-                    n_items.append(n)
-            
-            pstck = Stock.query.filter(Stock.id_product==product.id).filter(Stock.document_id==doc.id)
-            for p in pstck.all():
-                    items.append(p)
-            for each in n_items:
-                Note.query.filter(Note.id==each.id).delete()
-                db.session.commit()
-            
-            for each in items:
-                component_id = each.component_id
-                Stock.query.filter(Stock.id==each.id).delete()
-                db.session.commit()
-                each_stock = Stock.query.filter(component_id==Stock.component_id).first()
-                if each_stock:
-                        each_stock.get_count()
-                        
-            # print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
-            if product.pstock_count is not None and product.pstock_count>0:
-                stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
-            if product.pstock_count is None or product.pstock_count<(order.count):
-                get_mods_rec(details_new, new_md, product, pstock, order)
-                for name in details_new.keys():
-                    component = Component.query.filter(Component.component_name==name).first()
-                    item = Stock.query.filter(Stock.component_id==component.id).first()
-                    if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
-                        check = 'Резерв'
-                        doc_type = check
-                        note = Note(component.id, product.id, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
-                        db.session.add(note)
-                        db.session.commit()
-                        component.get_note_count()
-                        stock.append([component, item])
-                    else:
-                        stock.append([component, item])
-                for name in new_md:
-                    component = Component.query.filter(Component.component_name==name).first()
-                    item = Stock.query.filter(Stock.component_id==component.id).first()
-                    mod_stock.append([component,item])
-            order.status = doc_type
-            db.session.commit()
-            print("--- %s seconds ---" % (time.time() - start_time))
-
-            start_time = time.time()
-            with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
-                dets=dict()
-                dets.update(details_new)
-                dets.update(new_md)
-                fh.write(json.dumps(dets, ensure_ascii=False))
-
-            with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-                details= json.load(fh)
-            print("--- %s seconds ---" % (time.time() - start_time))
-            if product.pstock_count is None or product.pstock_count<order.count:
-                for key in details.keys():
-                    cmpnnt = Component.query.filter(Component.component_name==key).first()
-                    db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
-                    
-                    db.session.commit()
-                    Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
-                    
-            else:
-                p_stock = Stock.query.filter(Stock.id_product==product.id).first()
-                p_stock.get_count()
-                db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
-                db.session.commit()
 def delete_old_stocks(items):
     print(items)
     for item in items:
@@ -140,6 +36,7 @@ def update_thread():
     items=[]
     count = len(docs)//2
     if count==0: count=1
+    if count>5: count=5
     pool = ThreadPool(count) 
     items.append(pool.map(order_processor, docs))
     pool.map(delete_old_stocks, items)
@@ -174,6 +71,7 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
+    stock = Stock.query.first()
     Role.query.filter(Role.name=='Agent').delete()
     db.session.commit()
     roles = [x.name for x in current_user.roles]
@@ -782,7 +680,7 @@ def update_all():
     for doc in docs:
         if doc.order_status not in ['Обработка', 'в производстве', 'отгружен', 'выполнен', 'Завершен']:
             print(doc.order_status)
-            order_processor(doc)
+            order_processor(doc.id)
 
     return jsonify({'card':render_template('all_orders_in_process.html',  orders=docs, roles = [x.name for x in current_user.roles]),
     'table': render_template('all_table_order_in_process.html',  orders=docs, roles = [x.name for x in current_user.roles])})
@@ -825,12 +723,10 @@ def order_processor(doc):
         start_time = time.time()
         for name in details:
             component = Component.query.filter(Component.component_name==name).first()
-            stck = Stock.query.filter(Stock.component_id==component.id).filter(Stock.document_id == doc.id)
-            nts = Note.query.filter(Note.na_component==component.id).filter(Note.order_id==order.id)
-            for s in stck.all():
-                items.append(s)
-            for n in nts.all():
-                n_items.append(n)
+            query = db.session.query(Stock, Note).filter(Stock.component_id==component.id).filter(Stock.document_id == doc.id).filter(Note.na_component==Stock.component_id).filter(Note.order_id==order.id)
+            for q in query.all():
+                items.append(q[0])
+                n_items.append(q[1])
         print("--- %s seconds ---" % (time.time() - start_time))
         pstck = Stock.query.filter(Stock.id_product==product.id).filter(Stock.document_id==doc.id)
         for p in pstck.all():
@@ -878,16 +774,15 @@ def order_processor(doc):
         start_time = time.time()
         if product.pstock_count is None or product.pstock_count<order.count:
             for key in details.keys():
-                cmpnnt = Component.query.filter(Component.component_name==key).first()
-                db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
-                
+                cmpnnt = db.session.query(Component.id).filter(Component.component_name==key).first()
+                db.session.add(Stock(order.doc_id, None, cmpnnt[0], (details[key]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
-                Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
+                Stock.query.filter(cmpnnt[0]==Stock.component_id).first().get_count()
                 
         else:
-            p_stock = Stock.query.filter(Stock.id_product==product.id).first()
+            p_stock = db.session.query(Product.id).filter(Stock.id_product==product.id).first()
             p_stock.get_count()
-            db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
+            db.session.add(Stock(order.doc_id, product[0], None, product.pstock_count))
             db.session.commit()
         print("--- %s seconds ---" % (time.time() - start_time))
         return items
