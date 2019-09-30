@@ -18,7 +18,10 @@
           <td class="py-0" >{{item.get_component().component_name}}</td>
           <td class="py-0">{{item.get_component().component_item}}</td>
           <td class="py-0" >{{item.get_component().component_unit}}</td>
-          <td class="py-0"> {{item.n_count|round(6)}}</td>
+          {{item.get_component().stock_count+item.get_component().unfired}}
+          {%if item.n_count>(item.get_component().stock_count+item.get_component().unfired)%}
+          <td class="py-0"> {{(item.n_count-(item.get_component().stock_count+item.get_component().unfired))|round(6)}}</td>
+          {%endif%}
         </tr>
       {%endfor%}
       </tbody>

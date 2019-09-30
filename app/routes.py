@@ -747,6 +747,7 @@ def order_processor(doc):
             for name in new_md:
                 component = Component.query.filter(Component.component_name==name).first()
                 item = Stock.query.filter(Stock.component_id==component.id).first()
+                item.get_count()
                 mod_stock.append([component,item])
         order.status = doc_type
         db.session.commit()
@@ -805,6 +806,7 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
                     details_new.update(details_new[name])
                 details_new.pop(name)
             else:
+                if item: item.get_count()
                 if 'count' in details_new[name]:
                     count = details_new[name].pop('count')
                     for det in details_new[name].keys():
