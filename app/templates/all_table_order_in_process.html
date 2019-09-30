@@ -1,0 +1,60 @@
+{%for order in orders%}
+{%if order.product_orders!=[]%}
+<table style='background-color:#fff;' class="table newtabletab mb-2 table-bordered" id='table{{order.id}}'>
+    <tr>
+        <td> Заказ №{{order.order_item}} сделать до: {{order.endtime}}
+            {%if order.order_status%} статус: {{order.order_status}}
+            {%endif%}
+        </td>
+        <td>{%if order.comment%}
+            Комментарий: {{order.comment}}
+            {%endif%}
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">Наименование</td>
+        <td>Артикул</td>
+        <td>Кол-во</td>
+        <td>Статус</td>
+    </tr>
+    </thead>
+    {%for item in order.product_orders%}
+    <tr>
+        <td colspan="3">{{item.get_product().product_name}}</td>
+        <td>{{item.get_product().product_item}}</td>
+        <td>{{item.count}}</td>
+        <td>
+            <h6>
+                {%if item.status=='Резерв'%}
+                <span type='button' class="badge badge-danger" data-toggle="modal"
+                    data-target="#tabcom{{item.id}}{{item.get_product().id}}" order_id={{item.id}}
+                    product_id={{item.get_product().id}}> Резерв
+                </span>
+                <div class="modal fade" id='tabcom{{item.id}}{{item.get_product().id}}' tabindex="-1" role="dialog"
+                    aria-labelledby="com{{item.id}}Label" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header text-center">
+                                <h5 class="modal-title">Недостающие детали</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {%else%}
+                <span class="badge badge-success">
+                    Резерв
+                </span>
+                {%endif%}
+            </h6>
+        </td>
+    </tr>
+    {%endfor%}
+    </tr>
+</table>
+{%endif%}
+{%endfor%}

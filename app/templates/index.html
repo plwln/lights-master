@@ -23,6 +23,9 @@
                 </div>
               </nav>
             </div>
+            <div class="p-0 form-group mb-1 mr-2 ">
+              <button type="button" class="btn btn-info updateAllButton">Обновить заказы</button>
+            </div>
             <div class="p-0 form-group mb-1 mr-2 pull-right">
               <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
             </div>
@@ -157,11 +160,13 @@
               {%endfor%}
             </div>
           </div>
-          <div style = 'background-color: rgba(163, 220, 235, 0.699);' class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+          <div style='background-color: rgba(163, 220, 235, 0.699);' class="tab-pane fade" id="nav-profile"
+            role="tabpanel" aria-labelledby="nav-profile-tab">
             <div>
               {%for order in orders%}
               {%if order.product_orders!=[]%}
-              <table style = 'background-color:#fff;' class="table newtabletab mb-2 table-bordered" id='table{{order.id}}'>
+              <table style='background-color:#fff;' class="table newtabletab mb-2 table-bordered"
+                id='table{{order.id}}'>
                 <tr>
                   <td> Заказ №{{order.order_item}} сделать до: {{order.endtime}}
                     {%if order.order_status%} статус: {{order.order_status}}
@@ -229,6 +234,24 @@
 </main>
 <script>
   $(document).ready(function () {
+
+    $(document).on('click', '.updateAllButton', function () {
+      let order_id = $(this).attr('order_id')
+      $('#orders').fadeOut(1000);
+      $('.bbody').addClass('loading');
+      req = $.ajax({
+        url: '/update_all',
+        type: 'POST',
+      });
+
+      req.done(function (data) {
+        $('#orders').html(data.card);
+        $('#table').html(data.table)
+        $('.bbody').removeClass('loading');
+        $('#orders').fadeIn(500);
+      });
+
+    });
 
     $(document).on('click', '.updateButton', function () {
       let order_id = $(this).attr('order_id')

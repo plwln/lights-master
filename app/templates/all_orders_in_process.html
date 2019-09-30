@@ -1,0 +1,121 @@
+{%for order in orders%}
+{%if order.product_orders!=[]%}
+<div class="card gedf-card mb-3" id='order{{order.id}}'>
+    <div class="card-header py-1 pr-1">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class=" row ">
+                    <div class="h5 m-0">Заказ №{{order.order_item}}</div>
+                    <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
+                    <div class="h7 text-muted ml-2">{{order.date}}</div>
+                    <div class="h7 text-muted ml-2">сделать до: {{order.endtime}}</div>
+                    {%if order.order_status%}
+                    <div class="h7 ml-2 text-muted mr-2"><b>{{order.order_status}}</b></div>
+                    {%endif%}
+                    {%if 'Продажники' in roles or 'Admin' in roles%}
+                    <div class="col ml-3 "><button type="button"
+                            class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
+                            order_id={{order.id}}>Обновить</button>
+                    </div>
+                    {%endif%}
+                    {%if order.order_status=='Обработка'%}<button type="button"
+                        class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton" order_id={{order.id}}>В
+                        производство</button>
+                    {%endif%}
+                    {%if order.order_status=='в производстве'%}<button type="button"
+                        class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton"
+                        order_id={{order.id}}>Отгрузить</button>
+                    {%endif%}
+                    {%if order.order_status=='отгружен'%}<button type="button"
+                        class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton"
+                        order_id={{order.id}}>Выполнить</button>
+                    {%endif%}
+
+                </div>
+            </div>
+
+            {%if 'Продажники' in roles or 'Admin' in roles%}
+            <button type="button" class="btn  py-0" data-toggle="modal"
+                data-target="{{'#'+order.get_name()}}">&times;</button>
+            {%endif%}
+            <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog"
+                aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header text-center">
+                            <h5 class="modal-title">Удалить заказ??</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="{{url_for('delete_order', id = order.id)}}"><button type="button"
+                                    class="btn btn-danger">Удалить</button></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="card-body px-0 py-0">
+        <table class="table table-condensed custab">
+            <thead class='m-0'>
+                <tr>
+                    <th colspan=2>Наименование</th>
+                    <th>Артикул</th>
+                    <th>Кол-во</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for item in order.product_orders%}
+                <tr>
+                    <td colspan=2>{{item.get_product().product_name}}</td>
+                    <td>{{item.get_product().product_item}}</td>
+                    <td>{{item.count}}</td>
+                    <td>
+                        <h6>
+                            {%if item.status=='Резерв'%}
+                            <span type='button' class="badge badge-danger" data-toggle="modal"
+                                data-target="#com{{item.id}}{{item.get_product().id}}" order_id={{item.id}}
+                                product_id={{item.get_product().id}}> Резерв
+                            </span>
+                            <div class="modal fade" id='com{{item.id}}{{item.get_product().id}}' tabindex="-1"
+                                role="dialog" aria-labelledby="com{{item.id}}Label" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header text-center">
+                                            <h5 class="modal-title">Недостающие детали</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {%else%}
+                            <span class="badge badge-success">
+                                Резерв
+                            </span>
+                            {%endif%}
+                        </h6>
+                    </td>
+                </tr>
+                {%endfor%}
+                {%if order.comment%}
+                <tr>
+                    <td class='py-1'>
+                        <b>Комментарий:</b> {{order.comment}}
+                    </td>
+                </tr>
+                {%endif%}
+            </tbody>
+        </table>
+    </div>
+</div>
+{%endif%}
+{%endfor%}
