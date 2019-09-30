@@ -449,7 +449,7 @@ class Stock(db.Model):
                 count+=item[0].count
             elif item[1].document_type=='Расход':
                 count-=item[0].count
-            elif item[1].document_type=='Резерв':
+            elif item[1].document_type in ('Резерв', 'Заказ'):
                 count-=item[0].count
                 reserved += item[0].count
             else:

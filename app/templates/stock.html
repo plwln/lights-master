@@ -46,11 +46,9 @@
             {%endif%}
           </td>
           {%else%}
-          <td class="py-0">
-            IF{{item.get_component().stock_count}}{{item.get_component().stock_count+item.get_component().unfired|round(6)}}
+          <td class="py-0">{{(item.get_component().stock_count+item.get_component().unfired)|round(6)}}
             {%if item.get_component().unfired and item.get_component().unfired!=0%}
             /{{item.get_component().unfired|round(6)}}
-            NF{{item.get_component().unfired|round(6)}}
             {%endif%}
           </td>
           {%endif%}
