@@ -4,12 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_user import UserManager
 from flask_wtf.csrf import CSRFProtect
-
+import sqlite3
 
 app = Flask(__name__, static_url_path='/static')
 app._set_static_folder = '/static'
 app.config.from_object(Config)
 db = SQLAlchemy(app)
+# db.apply_driver_hacks(app,Config.SQLALCHEMY_DATABASE_URI, {'pool_size': 10})
 migrate = Migrate(app, db)
 
 from app import routes, models

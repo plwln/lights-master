@@ -15,6 +15,7 @@ from asyncio import Queue
 import asyncio
 import threading
 import time
+from multiprocessing.dummy import Pool as ThreadPool 
 
 class Worker(threading.Thread):
  
@@ -120,21 +121,33 @@ class Worker(threading.Thread):
                 p_stock.get_count()
                 db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
                 db.session.commit()
-
+def delete_old_stocks(items):
+    print(items)
+    for item in items:
+        for each in item:
+            component_id = each.component_id
+            Stock.query.filter(Stock.id==each.id).delete()
+            each_stock = Stock.query.filter(component_id==Stock.component_id).first()
+            if each_stock:
+                    each_stock.get_count()
+        db.session.commit()
 @app.route('/update_thread', methods=['POST', 'GET'])
 def update_thread():
-    docs = Document.query.filter(Document.product_orders).filter(Document.order_item).all()
+    start_time = time.time()
+    orders = Document.query.filter(Document.product_orders).filter(Document.order_item).all()
+    docs = [x.id for x in orders if x.order_status not in ['Обработка', 'в производстве', 'отгружен', 'выполнен', 'Завершен'] ]
     print(docs)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    work_queue = asyncio.Queue()
-    for filename in docs:
-        work_queue.put(filename)
-    for i in range(3):
-        worker = Worker(work_queue)
-        worker.start()
-    return jsonify({'card':render_template('all_orders_in_process.html',  orders=docs, roles = [x.name for x in current_user.roles]),
-    'table': render_template('all_table_order_in_process.html',  orders=docs, roles = [x.name for x in current_user.roles])})
+    items=[]
+    count = len(docs)//2
+    if count==0: count=1
+    pool = ThreadPool(count) 
+    items.append(pool.map(order_processor, docs))
+    pool.map(delete_old_stocks, items)
+    pool.close() 
+    pool.join()
+    print("--- %s seconds ---" % (time.time() - start_time))
+    return jsonify({'card':render_template('all_orders_in_process.html',  orders=orders, roles = [x.name for x in current_user.roles]),
+    'table': render_template('all_table_order_in_process.html',  orders=orders, roles = [x.name for x in current_user.roles])})
 
 
 @app.route('/')
@@ -779,13 +792,21 @@ def update_all():
 def get_report_order():
     doc = Document.query.filter(Document.id==request.form['id']).first()
     start_time = time.time()
-    order_processor(doc)
+    items = order_processor(request.form['id'])
+    for each in items:
+            component_id = each.component_id
+            Stock.query.filter(Stock.id==each.id).delete()
+            db.session.commit()
+            each_stock = Stock.query.filter(component_id==Stock.component_id).first()
+            if each_stock:
+                    each_stock.get_count()
     print("--- %s seconds ---" % (time.time() - start_time))
     return jsonify({'card':render_template('orders_in_process.html',  order=doc),
     'table': render_template('table_order_in_process.html',  order=doc, roles = [x.name for x in current_user.roles])})
 
 
 def order_processor(doc):
+    doc = Document.query.filter(Document.id==doc).first()
     doc_type = 'Заказ'
     for order in doc.product_orders:
         items = []
@@ -817,14 +838,6 @@ def order_processor(doc):
         for each in n_items:
             Note.query.filter(Note.id==each.id).delete()
             db.session.commit()
-        
-        for each in items:
-            component_id = each.component_id
-            Stock.query.filter(Stock.id==each.id).delete()
-            db.session.commit()
-            each_stock = Stock.query.filter(component_id==Stock.component_id).first()
-            if each_stock:
-                    each_stock.get_count()
         start_time = time.time()            
         # print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
         if product.pstock_count is not None and product.pstock_count>0:
@@ -877,6 +890,7 @@ def order_processor(doc):
             db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
             db.session.commit()
         print("--- %s seconds ---" % (time.time() - start_time))
+        return items
 def get_mods_rec( details_new, new_md, product, pstock, order):
         names=[]
         for name in details_new.keys():
