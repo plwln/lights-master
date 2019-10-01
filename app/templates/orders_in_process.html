@@ -6,15 +6,15 @@
         <div class="h7 text-muted ml-2">{{order.get_maker().username}}</div>
         <div class="h7 text-muted ml-2">{{order.date}}</div>
         <div class="h7 text-muted ml-2">сделать до: {{order.endtime}}</div>
+        {%if order.order_status%}
+                        <div class="h7 ml-2 text-muted mr-2"><b>{{order.order_status}}</b></div>
+                        {%endif%}
         {%if 'Продажники' in roles or 'Admin' in roles%}
                         <div class="col ml-3 "><button type="button"
                             class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
                             order_id={{order.id}}>Обновить</button>
                         </div>
                         {%endif%}
-        {%if order.order_status%}
-        <div class="h7 ml-2 mr-2"><b>{{order.order_status}}</b></div>
-        {%endif%}
         {%if order.order_status=='Обработка'%}<button type="button"
           class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton" order_id={{order.id}}>В
           производство</button>

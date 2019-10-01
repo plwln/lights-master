@@ -35,11 +35,11 @@ def update_thread():
     print(docs)
     items=[]
     count = len(docs)//2
+    if count==1: count=2
     if count==0: count=1
     if count>5: count=5
     pool = ThreadPool(count) 
-    items.append(pool.map(order_processor, docs))
-    pool.map(delete_old_stocks, items)
+    pool.map(order_processor, docs)
     pool.close() 
     pool.join()
     print("--- %s seconds ---" % (time.time() - start_time))
@@ -630,7 +630,7 @@ def check_order(order):
                 if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
                     check = lambda x: 'Резерв' if x=='Заказ' else x
                     doc_type = check(doc_type)
-                    note = Note(component.id, product.id, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
+                    note = Note(component.id, product.id, order.id, math.fabs((component.stock_count+component.unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
                     db.session.add(note)
                     db.session.commit()
                     order_status = None
@@ -691,13 +691,14 @@ def get_report_order():
     start_time = time.time()
     order_processor(request.form['id'])
     print("--- %s seconds ---" % (time.time() - start_time))
-    return jsonify({'card':render_template('orders_in_process.html',  order=doc),
+    return jsonify({'card':render_template('orders_in_process.html',  order=doc, roles = [x.name for x in current_user.roles]),
     'table': render_template('table_order_in_process.html',  order=doc, roles = [x.name for x in current_user.roles])})
 
 
 def order_processor(doc):
     doc = Document.query.filter(Document.id==doc).first()
     doc_type = 'Заказ'
+    order_status = 'Обработка'
     for order in doc.product_orders:
         items = []
         n_items= []
@@ -731,25 +732,25 @@ def order_processor(doc):
         if product.pstock_count is None or product.pstock_count<(order.count):
             get_mods_rec(details_new, new_md, product, pstock, order)
             for name in details_new.keys():
-                component = Component.query.filter(Component.component_name==name).first()
-                item = Stock.query.filter(Stock.component_id==component.id).first()
-                if item: item.get_count()
-                if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
-                     
+                query = db.session.query(Component,Stock).filter(Component.component_name==name).filter(Stock.component_id==Component.id).first()
+                if query[1]: query[1].get_count()
+                if query[1] is None or query[0].stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
                     doc_type ='Резерв'
-                    note = Note(component.id, product.id, order.id, (details_new[name]*(order.count-pstock(product.pstock_count))), '')
+                    note = Note(query[0].id, product.id, order.id, math.fabs((query[0].stock_count+query[0].unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
                     db.session.add(note)
                     db.session.commit()
-                    component.get_note_count()
-                    stock.append([component, item])
+                    order_status = None
+                    query[0].get_note_count()
+                    stock.append([query[0], query[1]])
                 else:
-                    stock.append([component, item])
+                    stock.append([query[0], query[1]])
             for name in new_md:
-                component = Component.query.filter(Component.component_name==name).first()
-                item = Stock.query.filter(Stock.component_id==component.id).first()
-                item.get_count()
-                mod_stock.append([component,item])
+                query2 = db.session.query(Component,Stock).filter(Component.component_name==name).filter(Stock.component_id==Component.id).first()
+                query2[1].get_count()
+                mod_stock.append([query2[0],query2[1]])
         order.status = doc_type
+        db.session.commit()
+        order.get_document().order_status = order_status
         db.session.commit()
         print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -766,10 +767,10 @@ def order_processor(doc):
         start_time = time.time()
         if product.pstock_count is None or product.pstock_count<order.count:
             for key in details.keys():
-                cmpnnt = db.session.query(Component.id).filter(Component.component_name==key).first()
+                cmpnnt = db.session.query(Component.id, Stock).filter(Component.component_name==key).filter(Component.id==Stock.component_id).first()
                 db.session.add(Stock(order.doc_id, None, cmpnnt[0], (details[key]*(order.count-pstock(product.pstock_count)))))
-                db.session.commit()
-                Stock.query.filter(cmpnnt[0]==Stock.component_id).first().get_count()
+                cmpnnt[1].get_count()
+            db.session.commit()
                 
         else:
             p_stock = db.session.query(Product.id).filter(Stock.id_product==product.id).first()
@@ -793,8 +794,6 @@ def get_mods_rec( details_new, new_md, product, pstock, order):
             component = Component.query.filter(Component.component_name==name).first()
             item = Stock.query.filter(Stock.component_id==component.id).first()
             if item: item.get_count()
-            print(component.component_name)
-            print(component.stock_count)
             if item and component.stock_count>0:
                 new_md.update({name:details_new[name]['count']})
                 if component.stock_count<(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
