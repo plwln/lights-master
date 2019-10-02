@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-import os, datetime, json
+import os
+import datetime
+import json
 from app import app, db
-from flask import render_template, flash, redirect, url_for, request, send_from_directory,render_template_string, jsonify
+from flask import render_template, flash, redirect, url_for, request, send_from_directory, render_template_string, jsonify
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from werkzeug.utils import secure_filename
 from werkzeug.urls import url_parse
@@ -15,36 +17,45 @@ from asyncio import Queue
 import asyncio
 import threading
 import time
-from multiprocessing.dummy import Pool as ThreadPool 
+from multiprocessing.dummy import Pool as ThreadPool
+
 
 def delete_old_stocks(items):
     print(items)
     for item in items:
         for each in item:
             component_id = each.component_id
-            Stock.query.filter(Stock.id==each.id).delete()
-            each_stock = Stock.query.filter(component_id==Stock.component_id).first()
+            Stock.query.filter(Stock.id == each.id).delete()
+            each_stock = Stock.query.filter(
+                component_id == Stock.component_id).first()
             if each_stock:
-                    each_stock.get_count()
+                each_stock.get_count()
         db.session.commit()
+
+
 @app.route('/update_thread', methods=['POST', 'GET'])
 def update_thread():
     start_time = time.time()
-    orders = Document.query.filter(Document.product_orders).filter(Document.order_item).all()[::-1]
-    docs = [x.id for x in orders if x.order_status not in ['Обработка', 'в производстве', 'отгружен', 'выполнен', 'Завершен'] ]
+    orders = Document.query.filter(Document.product_orders).filter(
+        Document.order_item).all()[::-1]
+    docs = [x.id for x in orders if x.order_status not in [
+        'Обработка', 'в производстве', 'отгружен', 'выполнен', 'Завершен']]
     print(docs)
-    items=[]
+    items = []
     count = len(docs)//2
-    if count==1: count=2
-    if count==0: count=1
-    if count>5: count=5
-    pool = ThreadPool(count) 
+    if count == 1:
+        count = 2
+    if count == 0:
+        count = 1
+    if count > 5:
+        count = 5
+    pool = ThreadPool(count)
     pool.map(order_processor, docs)
-    pool.close() 
+    pool.close()
     pool.join()
     print("--- %s seconds ---" % (time.time() - start_time))
-    return jsonify({'card':render_template('all_orders_in_process.html',  orders=orders, roles = [x.name for x in current_user.roles]),
-    'table': render_template('all_table_order_in_process.html',  orders=orders, roles = [x.name for x in current_user.roles])})
+    return jsonify({'card': render_template('all_orders_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles]),
+                    'table': render_template('all_table_order_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles])})
 
 
 @app.route('/')
@@ -72,12 +83,13 @@ def home_page():
     #     role.name = name
     #     db.session.commit()
     stock = Stock.query.first()
-    Role.query.filter(Role.name=='Agent').delete()
+    Role.query.filter(Role.name == 'Agent').delete()
     db.session.commit()
     roles = [x.name for x in current_user.roles]
-    docs = [Document.query.filter(Document.id==x[0]).first() for x in list(set(db.session.query(Order.doc_id).all()))]
+    docs = [Document.query.filter(Document.id == x[0]).first(
+    ) for x in list(set(db.session.query(Order.doc_id).all()))]
     print(docs)
-    return render_template('index.html', orders=sorted(docs, key = lambda x: x.id)[::-1], roles = roles)
+    return render_template('index.html', orders=sorted(docs, key=lambda x: x.id)[::-1], roles=roles)
 
 
 @app.route('/users_table')
@@ -89,6 +101,7 @@ def users_table():
     users = User.query.filter(User.username != current_user.username)
     return render_template('table.html', users=users)
 
+
 @app.route('/role/<user>')
 @roles_required('Admin')
 def roles_form(user):
@@ -96,12 +109,14 @@ def roles_form(user):
     roles = Role.query.all()
     return render_template('user_roles.html', user=user, roles=roles)
 
+
 @app.route('/delete_role/<user>/<role>')
 @roles_required('Admin')
 def delete_role(user, role):
     db_user = User.query.filter(User.username == user).first()
     db_user.delete_role(role)
     return redirect(url_for('roles_form', user=user))
+
 
 @app.route('/append_role/<user>/<role>')
 @roles_required('Admin')
@@ -118,33 +133,39 @@ def product_table():
     products = Product.query.order_by(Product.product_name).all()
     return render_template('product_table.html', roles=roles, products=products)
 
-@app.route('/create_product', methods = ['GET', 'POST'])
-@app.route('/clone_product/<cloned_product>', methods = ['GET', 'POST'])
+
+@app.route('/create_product', methods=['GET', 'POST'])
+@app.route('/clone_product/<cloned_product>', methods=['GET', 'POST'])
 @login_required
 def create_product(cloned_product=False):
     form = ProductForm()
     if request.method == 'POST':
         if form.validate() == False:
             flash('Не заполнены необходимые поля или введены некорректные данные')
-            return render_template('create_product.html', form = form)
+            return render_template('create_product.html', form=form)
         else:
             if Product.query.filter(Product.product_name == form.name.data).first() or Product.query.filter(Product.product_item == form.item.data).first():
                 flash('Товар с таким именем или артикулом существует')
-                return render_template('create_product.html', form = form)  
+                return render_template('create_product.html', form=form)
             else:
-                product = Product(form.name.data, form.power.data, form.item.data, form.weight.data, form.materials.data)
+                product = Product(form.name.data, form.power.data,
+                                  form.item.data, form.weight.data, form.materials.data)
                 db.session.add(product)
                 if cloned_product:
-                    cloned_product = Product.query.filter(Product.id==cloned_product).first()
-                    specifications = Specification.query.filter(Specification.product_id==cloned_product.id).all()
+                    cloned_product = Product.query.filter(
+                        Product.id == cloned_product).first()
+                    specifications = Specification.query.filter(
+                        Specification.product_id == cloned_product.id).all()
                     for specification in specifications:
-                        cloned_specification = Specification(specification.component_type, product.id, specification.component_id, specification.count)
+                        cloned_specification = Specification(
+                            specification.component_type, product.id, specification.component_id, specification.count)
                         db.session.add(cloned_specification)
                 db.session.commit()
-                return redirect(url_for('product_specification', product = product.id, det = 'hollow'))
+                return redirect(url_for('product_specification', product=product.id, det='hollow'))
     return render_template('create_product.html', form=form)
 
-@app.route('/product_specification/<product>/<det>', methods = ['GET', 'POST'])
+
+@app.route('/product_specification/<product>/<det>', methods=['GET', 'POST'])
 @login_required
 def product_specification(product, det):
     modal = ModalComponent.query.first()
@@ -152,21 +173,24 @@ def product_specification(product, det):
     if det == 'hollow':
         component_name = det
     else:
-        component_name = Component.query.filter(Component.id==det).first().component_name
+        component_name = Component.query.filter(
+            Component.id == det).first().component_name
     components = Component.query.order_by(Component.component_name).all()
     if request.method == 'POST':
         if form.count.data is None:
             flash('Используйте "." вместо ","')
-            return redirect(url_for('product_specification', modal=modal, product=product,component_name=component_name, components=components, specifications=Specification.query.filter(Specification.product_id==product) ))
+            return redirect(url_for('product_specification', modal=modal, product=product, component_name=component_name, components=components, specifications=Specification.query.filter(Specification.product_id == product)))
         # if Specification.query.filter(Specification.product_id == product and Specification.component_id == det).first().component_type == form.component_type.data:
         #     Specification.query.filter(Specification.product_id == product and Specification.component_id == det).first().count+=form.count.data
         #     db.session.commit()
         # else:
-        specification = Specification(form.component_type.data, product, det, form.count.data)
+        specification = Specification(
+            form.component_type.data, product, det, form.count.data)
         db.session.add(specification)
         db.session.commit()
-        return redirect(url_for('product_specification', modal=modal, component_name=component_name, det='hollow', product=product,components=components, specifications=Specification.query.filter(Specification.product_id==product)))
-    return render_template('product_specification.html', modal=modal, component_name=component_name,det='hollow', form=form, components=components, specifications=Specification.query.filter(Specification.product_id==product), product=product)
+        return redirect(url_for('product_specification', modal=modal, component_name=component_name, det='hollow', product=product, components=components, specifications=Specification.query.filter(Specification.product_id == product)))
+    return render_template('product_specification.html', modal=modal, component_name=component_name, det='hollow', form=form, components=components, specifications=Specification.query.filter(Specification.product_id == product), product=product)
+
 
 @app.route('/component_table')
 @login_required
@@ -176,43 +200,51 @@ def component_table():
     components = Component.query.order_by(Component.component_name).all()
     return render_template('component_table.html', roles=roles, components=components, modal_component=modal_component)
 
-@app.route('/create_component', methods = ['GET', 'POST'])
-@app.route('/create_component/<cloned_component>', methods = ['GET', 'POST'])
+
+@app.route('/create_component', methods=['GET', 'POST'])
+@app.route('/create_component/<cloned_component>', methods=['GET', 'POST'])
 @login_required
 def create_component(cloned_component=False):
     form = ComponentForm()
     if request.method == 'POST':
         if form.validate() == False:
             flash('Не заполнены необходимые поля или введены некорректные данные')
-            return render_template('create_component.html', form = form)
+            return render_template('create_component.html', form=form)
         else:
             if Component.query.filter(Component.component_name == form.name.data).first() or Component.query.filter(Component.component_item == form.item.data).first():
                 flash('Товар с таким именем или артикулом существует')
-                return render_template('create_component.html', form = form)  
+                return render_template('create_component.html', form=form)
             else:
-                component = Component(form.name.data, form.unit.data, form.item.data)
+                component = Component(
+                    form.name.data, form.unit.data, form.item.data)
                 db.session.add(component)
                 db.session.commit()
                 if cloned_component:
-                    cloned_component = Component.query.filter(Component.id==cloned_component).first()
-                    modal_components = ModalComponent.query.filter(ModalComponent.parrent_id==cloned_component.id).all()
+                    cloned_component = Component.query.filter(
+                        Component.id == cloned_component).first()
+                    modal_components = ModalComponent.query.filter(
+                        ModalComponent.parrent_id == cloned_component.id).all()
                     for modal_component in modal_components:
-                        cloned_modal = ModalComponent(component.id, modal_component.child_id, modal_component.count)
+                        cloned_modal = ModalComponent(
+                            component.id, modal_component.child_id, modal_component.count)
                         db.session.add(cloned_modal)
                     db.session.commit()
-                return redirect(url_for('create_modal_component',  modal_component = component.id, det = 'hollow'))  
+                return redirect(url_for('create_modal_component',  modal_component=component.id, det='hollow'))
     return render_template('create_component.html', form=form)
+
 
 @app.route('/product_info/<product>')
 @login_required
 def product_info(product):
     roles = [x.name for x in current_user.roles]
-    db_product = Product.query.filter(Product.id==product).first()
-    specifications=Specification.query.filter(Specification.product_id==product).all()
-    spec_dict = [[],[],[],[],[],[]]
-    def rec(specifications, c_type, ret_dict, count=1, parrent = None, tab='--'):
+    db_product = Product.query.filter(Product.id == product).first()
+    specifications = Specification.query.filter(
+        Specification.product_id == product).all()
+    spec_dict = [[], [], [], [], [], []]
+
+    def rec(specifications, c_type, ret_dict, count=1, parrent=None, tab='--'):
         for specification in specifications:
-            if type(specification)==Specification:
+            if type(specification) == Specification:
                 if specification.component_type == c_type:
                     ret_dict.append(f''' <tr>
                     <td scope="row">{specification.get_component().component_name}</td>
@@ -220,7 +252,8 @@ def product_info(product):
                     <td>{specification.count}</td>
                     </tr>''')
                     if specification.get_children(specification.get_component().id):
-                        rec(specification.get_children(specification.get_component().id), c_type, ret_dict, specification.count, specification.get_component().id,tab)
+                        rec(specification.get_children(specification.get_component(
+                        ).id), c_type, ret_dict, specification.count, specification.get_component().id, tab)
             else:
                 ret_dict.append(f'''<tr>
                                     <td scope="row">{tab}{specification.component_name}</td>
@@ -229,41 +262,46 @@ def product_info(product):
                                     </tr>''')
                 if ModalComponent.get_children(specification.id):
                     minus = tab+tab
-                    rec(ModalComponent.get_children(specification.id), c_type, ret_dict, specification.get_count(parrent)*count, specification.id, minus)
-    i=0
+                    rec(ModalComponent.get_children(specification.id), c_type, ret_dict,
+                        specification.get_count(parrent)*count, specification.id, minus)
+    i = 0
     tmps = []
-    for det_type in ('Детали корпуса','Электротехнические детали','Герметики','Метизы','Упаковка','Расходные материалы'):       
-        rec(specifications,det_type, spec_dict[i])
+    for det_type in ('Детали корпуса', 'Электротехнические детали', 'Герметики', 'Метизы', 'Упаковка', 'Расходные материалы'):
+        rec(specifications, det_type, spec_dict[i])
         tmp_string = ''
-        tmp_string=' '.join(spec_dict[i])
+        tmp_string = ' '.join(spec_dict[i])
         rtemplate = Template(tmp_string).render()
         tmps.append(rtemplate)
-        i+=1
+        i += 1
     modal = ModalComponent.query.first()
     return render_template('product_info.html', spec_dict=tmps, roles=roles, product=db_product, modal=modal, specifications=specifications)
+
 
 @app.route('/delete_component/<id>')
 @login_required
 def delete_component(id):
     Component.delete_component(id)
-    return redirect(url_for('component_table'))  
+    return redirect(url_for('component_table'))
+
 
 @app.route('/delete_specification/<id>')
 @login_required
 def delete_specification(id):
-    product = Specification.query.filter(Specification.id == id).first().product_id
+    product = Specification.query.filter(
+        Specification.id == id).first().product_id
     Specification.query.filter(Specification.id == id).delete()
     db.session.commit()
-    return redirect(url_for('product_specification', product=product, det='hollow'))  
+    return redirect(url_for('product_specification', product=product, det='hollow'))
+
 
 @app.route('/delete_product/<id>')
 @login_required
 def delete_product(id):
     Product.delete_product(id)
-    return redirect(url_for('product_table'))  
+    return redirect(url_for('product_table'))
 
 
-@app.route('/create_modal_component/<modal_component>/<det>', methods = ['GET', 'POST'])
+@app.route('/create_modal_component/<modal_component>/<det>', methods=['GET', 'POST'])
 @login_required
 def create_modal_component(modal_component, det):
     form = SpecificationForm()
@@ -271,37 +309,44 @@ def create_modal_component(modal_component, det):
     if det == 'hollow':
         component_name = det
     else:
-        component_name = Component.query.filter(Component.id==det).first().component_name
+        component_name = Component.query.filter(
+            Component.id == det).first().component_name
     modals = [x.id for x in ModalComponent.get_children(modal_component)]
-    components = Component.query.filter(Component.id!=modal_component).order_by(Component.component_name).all()
+    components = Component.query.filter(
+        Component.id != modal_component).order_by(Component.component_name).all()
     parents = ModalComponent.get_parents(modal_component)
     if request.method == 'POST':
         if form.count.data is None:
             flash('Используйте "." вместо ","')
-            return redirect(url_for('create_modal_component', parents=parents, modals=modals,  modal_component=modal_component,component_name=component_name, components=components, specifications=ModalComponent.query.filter(ModalComponent.parrent_id==modal_component) ))
-        specification = ModalComponent( modal_component, det, form.count.data)
+            return redirect(url_for('create_modal_component', parents=parents, modals=modals,  modal_component=modal_component, component_name=component_name, components=components, specifications=ModalComponent.query.filter(ModalComponent.parrent_id == modal_component)))
+        specification = ModalComponent(modal_component, det, form.count.data)
         db.session.add(specification)
         db.session.commit()
-        return redirect(url_for('create_modal_component', parents=parents, modals=modals, modal_component=modal_component, det='hollow', component_name=component_name,components=components, specifications=ModalComponent.query.filter(ModalComponent.parrent_id==modal_component)))
-    return render_template('create_modal_component.html', parents=parents, modals=modals, modal_component=modal_component,det='hollow',component_name=component_name, form=form, components=components, specifications=ModalComponent.query.filter(ModalComponent.parrent_id==modal_component))
+        return redirect(url_for('create_modal_component', parents=parents, modals=modals, modal_component=modal_component, det='hollow', component_name=component_name, components=components, specifications=ModalComponent.query.filter(ModalComponent.parrent_id == modal_component)))
+    return render_template('create_modal_component.html', parents=parents, modals=modals, modal_component=modal_component, det='hollow', component_name=component_name, form=form, components=components, specifications=ModalComponent.query.filter(ModalComponent.parrent_id == modal_component))
+
 
 @app.route('/delete_modal_component/<id>')
 @login_required
 def delete_modal_component(id):
-    modal_component = ModalComponent.query.filter(ModalComponent.id == id).first().parrent_id
+    modal_component = ModalComponent.query.filter(
+        ModalComponent.id == id).first().parrent_id
     ModalComponent.query.filter(ModalComponent.id == id).delete()
     db.session.commit()
-    return redirect(url_for('create_modal_component', modal_component=modal_component, det='hollow')) 
+    return redirect(url_for('create_modal_component', modal_component=modal_component, det='hollow'))
+
 
 @app.route('/component_info/<component>')
 @login_required
 def component_info(component):
     roles = [x.name for x in current_user.roles]
-    db_component = Component.query.filter(Component.id==component).first()
-    specifications=ModalComponent.query.filter(ModalComponent.parrent_id==component)
+    db_component = Component.query.filter(Component.id == component).first()
+    specifications = ModalComponent.query.filter(
+        ModalComponent.parrent_id == component)
     return render_template('component_info.html', roles=roles, component=db_component, specifications=specifications)
 
-@app.route('/stock', methods = ['GET', 'POST'])
+
+@app.route('/stock', methods=['GET', 'POST'])
 @login_required
 def stock():
     roles = [x.name for x in current_user.roles]
@@ -313,7 +358,8 @@ def stock():
     stock = []
     for item in stock_db:
         if item[0] is not None:
-            stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
+            stock.append(Stock.query.filter(
+                Stock.component_id == item[0]).first())
     for item in stock:
         if item.get_component() is not None and item.get_component().stock_count is None:
             item.get_count()
@@ -322,39 +368,46 @@ def stock():
         if form.count.data is None:
             flash('Используйте "." вместо ","')
             return redirect(url_for('stock', form=form, stock=stock))
-        document = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, form.document_type.data, form.text.data)
+        document = Document(datetime.today().strftime(
+            "%Y/%m/%d %H:%M"), current_user.id, form.document_type.data, form.text.data)
         db.session.add(document)
         db.session.commit()
         stock = Stock(document.id, None, form.id.data, form.count.data)
         db.session.add(stock)
         db.session.commit()
-        compon = Component.query.filter(Component.id==stock.component_id).first()
+        compon = Component.query.filter(
+            Component.id == stock.component_id).first()
         last_count = compon.stock_count
         stock.get_count()
-        if form.document_type.data=='Приход':
-            note = Note.query.filter(Note.na_component==stock.component_id).first()
+        if form.document_type.data == 'Приход':
+            note = Note.query.filter(
+                Note.na_component == stock.component_id).first()
             if note:
                 n_count = note.n_count
                 stck_count = stock.get_component().stock_count
                 count = n_count-stck_count
-                if count<=0:
-                    Note.query.filter(Note.na_component==stock.component_id).delete()
+                if count <= 0:
+                    Note.query.filter(Note.na_component ==
+                                      stock.component_id).delete()
                     db.session.commit()
                 else:
-                    note.n_stock=count
+                    note.n_stock = count
                     db.session.commit
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
-        elif form.document_type.data=='Расход':
-            if compon.stock_count!=0 and compon.stock_count==last_count:
-                flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(stock.get_name()), 'message')
+        elif form.document_type.data == 'Расход':
+            if compon.stock_count != 0 and compon.stock_count == last_count:
+                flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(
+                    stock.get_name()), 'message')
             else:
-                flash('Расход детали {} со склада'.format(stock.get_name()), 'message')
+                flash('Расход детали {} со склада'.format(
+                    stock.get_name()), 'message')
         else:
             flash('Деталь {} списана'.format(stock.get_name()), 'message')
         return redirect(url_for('stock', form=form, stock=stock, roles=roles))
     return render_template('stock.html', form=form, stock=stock, roles=roles)
 
-@app.route('/stock_adding/<doc_type>/<doc>', methods = ['GET', 'POST'])
+
+@app.route('/stock_adding/<doc_type>/<doc>', methods=['GET', 'POST'])
 @login_required
 def stock_adding(doc_type, doc):
     today = datetime.today()
@@ -364,21 +417,21 @@ def stock_adding(doc_type, doc):
     last_stocked = Stock.query.first()
     added = current_user.added
     components = Component.query.order_by(Component.component_name).all()
-    document = Document(' ', current_user.id, doc_type,' ')
-    if doc!='False':
-        document= Document.query.filter(Document.id==doc).first()
+    document = Document(' ', current_user.id, doc_type, ' ')
+    if doc != 'False':
+        document = Document.query.filter(Document.id == doc).first()
     db.session.add(document)
     db.session.commit()
     stock_db = list(set(db.session.query(Stock.component_id).all()))
     stock = []
     for item in stock_db:
-        stock.append(Stock.query.filter(Stock.component_id==item[0]).first())
+        stock.append(Stock.query.filter(Stock.component_id == item[0]).first())
 
     if request.method == 'POST':
-        if form.id.data=='comment':
+        if form.id.data == 'comment':
             for item in current_user.get_added():
-                item.get_document().date=today.strftime("%Y/%m/%d %H:%M")
-                item.get_document().comment=form1.text.data
+                item.get_document().date = today.strftime("%Y/%m/%d %H:%M")
+                item.get_document().comment = form1.text.data
                 db.session.commit()
                 current_user.added.remove(item)
                 item.get_count()
@@ -387,18 +440,20 @@ def stock_adding(doc_type, doc):
         else:
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
-                return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added = added, last_stocked = last_stocked, form = form, component = components, modal_component=modal_component ))
+                return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added=added, last_stocked=last_stocked, form=form, component=components, modal_component=modal_component))
             stock = Stock(document.id, None, form.id.data, form.count.data)
-            
+
             db.session.add(stock)
             db.session.commit()
             current_user.append_stock(stock.id)
-            flash('Деталь {} добавлена в список'.format(stock.get_name()), 'message')
-        return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added = added, form = form, last_stocked = last_stocked,  component = components, modal_component=modal_component))
-    
-    return render_template('stock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added = added, form = form, last_stocked = last_stocked,  components = components, modal_component=modal_component)
+            flash('Деталь {} добавлена в список'.format(
+                stock.get_name()), 'message')
+        return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added=added, form=form, last_stocked=last_stocked,  component=components, modal_component=modal_component))
 
-@app.route('/stock_product', methods = ['GET', 'POST'])
+    return render_template('stock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added=added, form=form, last_stocked=last_stocked,  components=components, modal_component=modal_component)
+
+
+@app.route('/stock_product', methods=['GET', 'POST'])
 @login_required
 def stock_product():
     roles = [x.name for x in current_user.roles]
@@ -410,7 +465,8 @@ def stock_product():
     stock = []
     for item in stock_db:
         if item[0] is not None:
-            stock.append(Stock.query.filter(Stock.id_product==item[0]).first())
+            stock.append(Stock.query.filter(
+                Stock.id_product == item[0]).first())
 
     for item in stock:
         if item.get_product() is not None and item.get_product().pstock_count is None:
@@ -420,60 +476,66 @@ def stock_product():
         if form.count.data is None:
             flash('Используйте "." вместо ","')
             return redirect(url_for('stock', form=form, stock=stock))
-        document = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, form.document_type.data, form.text.data)
+        document = Document(datetime.today().strftime(
+            "%Y/%m/%d %H:%M"), current_user.id, form.document_type.data, form.text.data)
         db.session.add(document)
         db.session.commit()
         stock = Stock(document.id, form.id.data, None, form.count.data)
         db.session.add(stock)
         db.session.commit()
-        prod = Product.query.filter(Product.id==stock.id_product).first()
+        prod = Product.query.filter(Product.id == stock.id_product).first()
         last_count = prod.pstock_count
         stock.get_count()
-        if form.document_type.data=='Приход':
+        if form.document_type.data == 'Приход':
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
-            note = Note.query.filter(Note.na_product==stock.id_product).first()
+            note = Note.query.filter(
+                Note.na_product == stock.id_product).first()
             if note:
                 count = Note.n_count-stock.get_product().pstock_count
-                if count<=0:
-                    Note.query.filter(Note.na_product==stock.id_product).delete()
+                if count <= 0:
+                    Note.query.filter(Note.na_product ==
+                                      stock.id_product).delete()
                     db.session.commit()
                 else:
-                    note.n_stock=count
+                    note.n_stock = count
                     db.session.commit
-        elif form.document_type.data=='Расход':
-            if prod.pstock_count!=0 and prod.pstock_count==last_count:
-                flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(stock.get_name()), 'message')
+        elif form.document_type.data == 'Расход':
+            if prod.pstock_count != 0 and prod.pstock_count == last_count:
+                flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(
+                    stock.get_name()), 'message')
             else:
-                flash('Расход детали {} со склада'.format(stock.get_name()), 'message')
+                flash('Расход детали {} со склада'.format(
+                    stock.get_name()), 'message')
         else:
             flash('Деталь {} списана'.format(stock.get_name()), 'message')
         return redirect(url_for('stock_product', form=form, stock=stock, roles=roles))
     return render_template('product_stock.html', form=form, stock=stock, roles=roles)
 
 
-@app.route('/pstock_adding/<doc_type>/<doc>', methods = ['GET', 'POST'])
+@app.route('/pstock_adding/<doc_type>/<doc>', methods=['GET', 'POST'])
 @login_required
 def pstock_adding(doc_type, doc):
     today = datetime.today()
     form = SpecificationForm()
     form1 = DocumentForm()
     products = Product.query.order_by(Product.product_name).all()
-    document = Document(' ', current_user.id, doc_type,' ')
-    if doc!='False':
-        document= Document.query.filter(Document.id==doc).first()
+    document = Document(' ', current_user.id, doc_type, ' ')
+    if doc != 'False':
+        document = Document.query.filter(Document.id == doc).first()
     db.session.add(document)
     db.session.commit()
     stock_db = list(set(db.session.query(Stock.id_product).all()))
     stock = []
     for item in stock_db:
         if item[0] is not None:
-            stock.append(Stock.query.filter(Stock.id_product==item[0]).first())
+            stock.append(Stock.query.filter(
+                Stock.id_product == item[0]).first())
 
     if request.method == 'POST':
-        if form.id.data=='comment':
+        if form.id.data == 'comment':
             for item in current_user.get_added():
-                item.get_document().date=today.strftime("%Y/%m/%d %H:%M")
-                item.get_document().comment=form1.text.data
+                item.get_document().date = today.strftime("%Y/%m/%d %H:%M")
+                item.get_document().comment = form1.text.data
                 db.session.commit()
                 current_user.added.remove(item)
                 item.get_count()
@@ -483,60 +545,67 @@ def pstock_adding(doc_type, doc):
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
             stock = Stock(document.id, form.id.data, None, form.count.data)
-            
+
             db.session.add(stock)
             db.session.commit()
             current_user.append_stock(stock.id)
-            flash('Товар {} добавлен в список'.format(stock.get_name()), 'message')
-        return redirect(url_for('pstock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products))
-    
-    return render_template('pstock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1,form = form, products = products)
+            flash('Товар {} добавлен в список'.format(
+                stock.get_name()), 'message')
+        return redirect(url_for('pstock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, form=form, products=products))
 
+    return render_template('pstock_adding.html', doc=doc, doc_type=doc_type, stock=stock, form1=form1, form=form, products=products)
 
 
 @app.route('/document/<component_id>')
 @login_required
 def document(component_id):
     form = SpecificationForm()
-    stocks = Stock.query.filter(Stock.component_id==component_id).all()
-    documents = [Document.query.filter(Document.id==stock.document_id).first() for stock in stocks]
-    return render_template('document.html', form=form, stocks = stocks, documents = documents, product='0')
+    stocks = Stock.query.filter(Stock.component_id == component_id).all()
+    documents = [Document.query.filter(
+        Document.id == stock.document_id).first() for stock in stocks]
+    return render_template('document.html', form=form, stocks=stocks, documents=documents, product='0')
+
 
 @app.route('/pdocument/<product_id>')
 @login_required
 def pdocument(product_id):
     form = SpecificationForm()
-    stocks = Stock.query.filter(Stock.id_product==product_id).all()
-    documents = [Document.query.filter(Document.id==stock.document_id).first() for stock in stocks]
-    return render_template('document.html', form=form, stocks = stocks, documents = documents, product='1')
+    stocks = Stock.query.filter(Stock.id_product == product_id).all()
+    documents = [Document.query.filter(
+        Document.id == stock.document_id).first() for stock in stocks]
+    return render_template('document.html', form=form, stocks=stocks, documents=documents, product='1')
+
 
 @app.route('/delete_document/<s_id>')
 @login_required
 def delete_document(s_id):
-    stock = Stock.query.filter(Stock.id==s_id)
+    stock = Stock.query.filter(Stock.id == s_id)
     component_id = stock.first().component_id
     product_id = stock.first().id_product
     stock.delete()
     db.session.commit()
-    stck=''
+    stck = ''
     if component_id:
-        stck = Stock.query.filter(Stock.component_id==component_id).first()
+        stck = Stock.query.filter(Stock.component_id == component_id).first()
     else:
-        stck = Stock.query.filter(Stock.id_product==product_id).first()
+        stck = Stock.query.filter(Stock.id_product == product_id).first()
     if stck:
         stck.get_count()
     else:
         if component_id:
-            Component.query.filter(Component.id==component_id).first().stock_count=0
+            Component.query.filter(
+                Component.id == component_id).first().stock_count = 0
             db.session.commit()
         else:
-            Product.query.filter(Product.id==product_id).first().pstock_count=0
+            Product.query.filter(
+                Product.id == product_id).first().pstock_count = 0
             db.session.commit()
     if component_id:
-        return redirect(url_for('document', component_id = component_id))
-    return redirect(url_for('pdocument', product_id = product_id))
+        return redirect(url_for('document', component_id=component_id))
+    return redirect(url_for('pdocument', product_id=product_id))
 
-@app.route('/order/<doc>', methods = ['GET', 'POST'])
+
+@app.route('/order/<doc>', methods=['GET', 'POST'])
 @login_required
 def order(doc):
     today = datetime.today()
@@ -544,199 +613,223 @@ def order(doc):
     form1 = DocumentForm()
     added = current_user.order
     product = Product.query.order_by(Product.product_name).all()
-    document=''
-    if doc=='False':
-        document = Document(today.strftime("%Y/%m/%d %H:%M"), current_user.id, 'Резерв',' ')
+    document = ''
+    if doc == 'False':
+        document = Document(today.strftime("%Y/%m/%d %H:%M"),
+                            current_user.id, 'Резерв', ' ')
         db.session.add(document)
         db.session.commit()
     else:
-        document= Document.query.filter(Document.id==doc).first()
+        document = Document.query.filter(Document.id == doc).first()
     orders = document.product_orders
     if request.method == 'POST':
-        if form.id.data=='comment':
-            
+        if form.id.data == 'comment':
+
             startdate = document.date.split(' ')[0].split('/')
-            year,month,day=int(startdate[0]),int(startdate[1]),int(startdate[2])
-            if (form1.entrydate.data-date(year = year, month=month,day=day)).days<2:
+            year, month, day = int(startdate[0]), int(
+                startdate[1]), int(startdate[2])
+            if (form1.entrydate.data-date(year=year, month=month, day=day)).days < 2:
                 flash('Срок слишком мал. Не менее двух дней!')
-                return redirect(url_for('order', doc=doc, form1=form1, added = added, form = form, products=product))
+                return redirect(url_for('order', doc=doc, form1=form1, added=added, form=form, products=product))
             document.endtime = form1.entrydate.data
             db.session.commit()
-            current_user.order=[]
+            current_user.order = []
             db.session.commit()
-            orders=[]
+            orders = []
             db.session.commit()
-            document.comment=form1.text.data
+            document.comment = form1.text.data
             db.session.commit()
             document.order_item = form1.number.data
             db.session.commit()
-            
+
             flash('Заказ произведён', 'message')
-            return redirect(url_for('order', doc='False', form1=form1, added = added, form = form, products=product))
+            return redirect(url_for('order', doc='False', form1=form1, added=added, form=form, products=product))
         else:
             if form.count.data is None:
                 flash('Используйте "." вместо ","')
-                return redirect(url_for('order', doc=document.id,  form1=form1, added = added, form = form, products=product ))   
+                return redirect(url_for('order', doc=document.id,  form1=form1, added=added, form=form, products=product))
             order = Order(document.id, form.id.data, form.count.data)
             db.session.add(order)
             db.session.commit()
             document.append_doc_order(order.id)
             return redirect(url_for('check_order', order=order.id))
-    return render_template('order.html', doc='False', form1=form1, added = added, form = form, products=product, orders=orders)
+    return render_template('order.html', doc='False', form1=form1, added=added, form=form, products=product, orders=orders)
 
-@app.route('/check_order/<order>', methods = ['GET', 'POST'])
+
+@app.route('/check_order/<order>', methods=['GET', 'POST'])
 @login_required
 def check_order(order):
     doc_type = 'Заказ'
-    order = Order.query.filter(Order.id==order).first()
-    product = Product.query.filter(Product.id==order.prod_id).first()
-    pstock = lambda x: x if x and x>0 else 0
+    order = Order.query.filter(Order.id == order).first()
+    product = Product.query.filter(Product.id == order.prod_id).first()
+    def pstock(x): return x if x and x > 0 else 0
     order_status = 'Обработка'
     form = SubmitForm()
     new_md = dict()
-    if request.method=='POST':
+    if request.method == 'POST':
         details = dict()
-        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
+        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh:  # открываем файл на чтение
             details = json.load(fh)
         current_user.append_order(product)
         db.session.commit()
-        if product.pstock_count is None or product.pstock_count<order.count:
+        if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
-                cmpnnt = Component.query.filter(Component.component_name==key).first()
-                db.session.add(Stock(order.doc_id, None, cmpnnt.id, (details[key]*(order.count-pstock(product.pstock_count)))))
+                cmpnnt = Component.query.filter(
+                    Component.component_name == key).first()
+                db.session.add(Stock(order.doc_id, None, cmpnnt.id,
+                                     (details[key]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
-                Stock.query.filter(cmpnnt.id==Stock.component_id).first().get_count()
+                Stock.query.filter(
+                    cmpnnt.id == Stock.component_id).first().get_count()
         else:
-            p_stock = Stock.query.filter(Stock.id_product==product.id).first()
-            db.session.add(Stock(order.doc_id, product.id, None, product.pstock_count))
+            p_stock = Stock.query.filter(
+                Stock.id_product == product.id).first()
+            db.session.add(Stock(order.doc_id, product.id,
+                                 None, product.pstock_count))
             db.session.commit()
             p_stock.get_count()
 
-        flash('Товар {} добавлен в список'.format(product.product_name), 'message')
+        flash('Товар {} добавлен в список'.format(
+            product.product_name), 'message')
         return redirect(url_for('order', doc=order.doc_id))
-    if request.method=='GET':
+    if request.method == 'GET':
         details = product.get_det()
         details_new = details.copy()
         stock = []
         mod_stock = []
-        if product.pstock_count is not None and product.pstock_count>0:
-            p_stock = Stock.query.filter(Stock.id_product==product.id).first()
+        if product.pstock_count is not None and product.pstock_count > 0:
+            p_stock = Stock.query.filter(
+                Stock.id_product == product.id).first()
             stock.append([product, p_stock])
-        if product.pstock_count is None or product.pstock_count<(order.count):
+        if product.pstock_count is None or product.pstock_count < (order.count):
             get_mods_rec(details_new, new_md, product, pstock, order)
             for name in details_new.keys():
-                component = Component.query.filter(Component.component_name==name).first()
-                item = Stock.query.filter(Stock.component_id==component.id).first()
-                if item is None or component.stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
-                    check = lambda x: 'Резерв' if x=='Заказ' else x
+                component = Component.query.filter(
+                    Component.component_name == name).first()
+                item = Stock.query.filter(
+                    Stock.component_id == component.id).first()
+                if item is None or component.stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
+                    def check(x): return 'Резерв' if x == 'Заказ' else x
                     doc_type = check(doc_type)
-                    note = Note(component.id, product.id, order.id, math.fabs((component.stock_count+component.unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
+                    note = Note(component.id, product.id, order.id, math.fabs(
+                        (component.stock_count+component.unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
                     db.session.add(note)
                     db.session.commit()
                     order_status = None
                     component.get_note_count()
                     stock.append([component, item])
-                else: stock.append([component, item])
+                else:
+                    stock.append([component, item])
             for name in new_md:
-                component = Component.query.filter(Component.component_name==name).first()
-                item = Stock.query.filter(Stock.component_id==component.id).first()
-                mod_stock.append([component,item])
+                component = Component.query.filter(
+                    Component.component_name == name).first()
+                item = Stock.query.filter(
+                    Stock.component_id == component.id).first()
+                mod_stock.append([component, item])
         order.status = doc_type
         order.get_document().document_type = 'Резерв'
         db.session.commit()
         order.get_document().order_status = order_status
         db.session.commit()
-    
-    with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
-        dets=dict()
+
+    with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh:  # открываем файл на запись
+        dets = dict()
         dets.update(details_new)
         dets.update(new_md)
         print(dets)
         fh.write(json.dumps(dets, ensure_ascii=False))
-    return render_template('check_order.html', form=form, order=order, pstock=pstock(product.pstock_count), product=product, modules=new_md, details=details_new, stock=stock, mod_stock=mod_stock, doc_type = doc_type)
+    return render_template('check_order.html', form=form, order=order, pstock=pstock(product.pstock_count), product=product, modules=new_md, details=details_new, stock=stock, mod_stock=mod_stock, doc_type=doc_type)
+
 
 @app.route('/update_status', methods=['POST', 'GET'])
 def update_status():
-    doc = Document.query.filter(Document.id==request.form['id']).first()
-    if doc.order_status=='Обработка':
-        doc.order_status='в производстве'
+    doc = Document.query.filter(Document.id == request.form['id']).first()
+    if doc.order_status == 'Обработка':
+        doc.order_status = 'в производстве'
         db.session.commit()
-    elif doc.order_status=='в производстве':
-        doc.order_status='отгружен'
+    elif doc.order_status == 'в производстве':
+        doc.order_status = 'отгружен'
         db.session.commit()
-    elif doc.order_status=='отгружен':
-        doc.order_status='выполнен'
+    elif doc.order_status == 'отгружен':
+        doc.order_status = 'выполнен'
         db.session.commit()
     else:
-        doc.order_status='Завершен'
+        doc.order_status = 'Завершен'
         db.session.commit()
-    return jsonify({'cards':render_template('orders_in_process.html',  order=doc),
-    'table': render_template('table_order_in_process.html',  order=doc, roles = [x.name for x in current_user.roles])})
+    return jsonify({'cards': render_template('orders_in_process.html',  order=doc),
+                    'table': render_template('table_order_in_process.html',  order=doc, roles=[x.name for x in current_user.roles])})
+
 
 @app.route('/update_all', methods=['POST', 'GET'])
 def update_all():
-    docs = Document.query.filter(Document.product_orders).filter(Document.order_item).all()
+    docs = Document.query.filter(Document.product_orders).filter(
+        Document.order_item).all()
     print(docs)
     for doc in docs:
         if doc.order_status not in ['Обработка', 'в производстве', 'отгружен', 'выполнен', 'Завершен']:
             print(doc.order_status)
             order_processor(doc.id)
-    return jsonify({'card':render_template('all_orders_in_process.html',  orders=docs, roles = [x.name for x in current_user.roles]),
-    'table': render_template('all_table_order_in_process.html',  orders=docs, roles = [x.name for x in current_user.roles])})
+    return jsonify({'card': render_template('all_orders_in_process.html',  orders=docs, roles=[x.name for x in current_user.roles]),
+                    'table': render_template('all_table_order_in_process.html',  orders=docs, roles=[x.name for x in current_user.roles])})
 
 
 @app.route('/update', methods=['POST', 'GET'])
 def get_report_order():
-    doc = Document.query.filter(Document.id==request.form['id']).first()
+    doc = Document.query.filter(Document.id == request.form['id']).first()
     start_time = time.time()
     order_processor(request.form['id'])
     print("--- %s seconds ---" % (time.time() - start_time))
-    return jsonify({'card':render_template('orders_in_process.html',  order=doc, roles = [x.name for x in current_user.roles]),
-    'table': render_template('table_order_in_process.html',  order=doc, roles = [x.name for x in current_user.roles])})
+    return jsonify({'card': render_template('orders_in_process.html',  order=doc, roles=[x.name for x in current_user.roles]),
+                    'table': render_template('table_order_in_process.html',  order=doc, roles=[x.name for x in current_user.roles])})
 
 
 def order_processor(doc):
-    doc = Document.query.filter(Document.id==doc).first()
+    doc = Document.query.filter(Document.id == doc).first()
     doc_type = 'Заказ'
     order_status = 'Обработка'
     for order in doc.product_orders:
         items = []
-        n_items= []
+        n_items = []
         product = order.get_product()
         details = {}
-        pstock = lambda x: x if x and x>0 else 0
+        def pstock(x): return x if x and x > 0 else 0
         details_new = product.get_det()
         stock = []
         mod_stock = []
         new_md = dict()
         start_time = time.time()
-        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-            details= json.load(fh)
+        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh:  # открываем файл на чтение
+            details = json.load(fh)
         print("--- %s seconds ---" % (time.time() - start_time))
         start_time = time.time()
-        stocks = Stock.query.filter(Stock.document_id==doc.id)
+        stocks = Stock.query.filter(Stock.document_id == doc.id)
         for stck in stocks.all():
-            Stock.query.filter(Stock.id==stck.id).delete()
+            Stock.query.filter(Stock.id == stck.id).delete()
         db.session.commit()
         print("--- %s seconds ---" % (time.time() - start_time))
-        pstck = Stock.query.filter(Stock.id_product==product.id).filter(Stock.document_id==doc.id)
+        pstck = Stock.query.filter(Stock.id_product == product.id).filter(
+            Stock.document_id == doc.id)
         for p in pstck.all():
-                items.append(p)
-        for note in Note.query.filter(Note.order_id==order.id).all():
-            Note.query.filter(Note.id==note.id).delete()
+            items.append(p)
+        for note in Note.query.filter(Note.order_id == order.id).all():
+            Note.query.filter(Note.id == note.id).delete()
         db.session.commit()
-        start_time = time.time()            
+        start_time = time.time()
         # print([(x.get_component().component_name, x.get_document().document_type, x) for x in items])
-        if product.pstock_count is not None and product.pstock_count>0:
-            stock.append([product, Stock.query.filter(Stock.id_product==product.id).first()])
-        if product.pstock_count is None or product.pstock_count<(order.count):
+        if product.pstock_count is not None and product.pstock_count > 0:
+            stock.append([product, Stock.query.filter(
+                Stock.id_product == product.id).first()])
+        if product.pstock_count is None or product.pstock_count < (order.count):
             get_mods_rec(details_new, new_md, product, pstock, order)
             for name in details_new.keys():
-                query = db.session.query(Component,Stock).filter(Component.component_name==name).filter(Stock.component_id==Component.id).first()
-                if query[1]: query[1].get_count()
-                if query[1] is None or query[0].stock_count<(details_new[name]*(order.count-pstock(product.pstock_count))):
-                    doc_type ='Резерв'
-                    note = Note(query[0].id, product.id, order.id, math.fabs((query[0].stock_count+query[0].unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
+                query = db.session.query(Component, Stock).filter(
+                    Component.component_name == name).filter(Stock.component_id == Component.id).first()
+                if query[1]:
+                    query[1].get_count()
+                if query[1] is None or query[0].stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
+                    doc_type = 'Резерв'
+                    note = Note(query[0].id, product.id, order.id, math.fabs(
+                        (query[0].stock_count+query[0].unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
                     db.session.add(note)
                     db.session.commit()
                     order_status = None
@@ -745,9 +838,10 @@ def order_processor(doc):
                 else:
                     stock.append([query[0], query[1]])
             for name in new_md:
-                query2 = db.session.query(Component,Stock).filter(Component.component_name==name).filter(Stock.component_id==Component.id).first()
+                query2 = db.session.query(Component, Stock).filter(
+                    Component.component_name == name).filter(Stock.component_id == Component.id).first()
                 query2[1].get_count()
-                mod_stock.append([query2[0],query2[1]])
+                mod_stock.append([query2[0], query2[1]])
         order.status = doc_type
         db.session.commit()
         order.get_document().order_status = order_status
@@ -755,76 +849,87 @@ def order_processor(doc):
         print("--- %s seconds ---" % (time.time() - start_time))
 
         start_time = time.time()
-        with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh: #открываем файл на запись
-            dets=dict()
+        with open(str(product.id)+'.json', 'w', encoding='utf-8') as fh:  # открываем файл на запись
+            dets = dict()
             dets.update(details_new)
             dets.update(new_md)
             fh.write(json.dumps(dets, ensure_ascii=False))
 
-        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh: #открываем файл на чтение
-            details= json.load(fh)
+        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh:  # открываем файл на чтение
+            details = json.load(fh)
         print("--- %s seconds ---" % (time.time() - start_time))
         start_time = time.time()
-        if product.pstock_count is None or product.pstock_count<order.count:
+        if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
-                cmpnnt = db.session.query(Component.id, Stock).filter(Component.component_name==key).filter(Component.id==Stock.component_id).first()
-                db.session.add(Stock(order.doc_id, None, cmpnnt[0], (details[key]*(order.count-pstock(product.pstock_count)))))
+                cmpnnt = db.session.query(Component.id, Stock).filter(
+                    Component.component_name == key).filter(Component.id == Stock.component_id).first()
+                db.session.add(Stock(
+                    order.doc_id, None, cmpnnt[0], (details[key]*(order.count-pstock(product.pstock_count)))))
                 cmpnnt[1].get_count()
             db.session.commit()
-                
+
         else:
-            p_stock = db.session.query(Product.id).filter(Stock.id_product==product.id).first()
-            db.session.add(Stock(order.doc_id, product[0], None, product.pstock_count))
+            p_stock = db.session.query(Product.id).filter(
+                Stock.id_product == product.id).first()
+            db.session.add(
+                Stock(order.doc_id, product[0], None, product.pstock_count))
             db.session.commit()
             p_stock.get_count()
         print("--- %s seconds ---" % (time.time() - start_time))
 
-def get_mods_rec( details_new, new_md, product, pstock, order):
-        names=[]
-        for name in details_new.keys():
-            if type(details_new[name])==dict:
-                names.append(name)
-        if names == []:
-            return
-        for name in names:
-            for det in details_new[name]:
-                
-                if type(details_new[name][det])==dict and details_new[name]['count']>1:
-                    details_new[name][det]['count'] *= details_new[name]['count']
-            component = Component.query.filter(Component.component_name==name).first()
-            item = Stock.query.filter(Stock.component_id==component.id).first()
-            if item: item.get_count()
-            if item and component.stock_count>0:
-                new_md.update({name:details_new[name]['count']})
-                if component.stock_count<(details_new[name]['count']*(order.count-pstock(product.pstock_count))):
-                    count = details_new[name].pop('count')
-                    for det in details_new[name].keys():
-                        if type(details_new[name][det])!=dict:
-                            details_new[name][det]*=((count*order.count-component.stock_count)/(order.count))
-                        else: details_new[name][det]['count']*=((count*order.count-component.stock_count)/(order.count))
-                    details_new.update(details_new[name])
-                details_new.pop(name)
-            else:
-                if item: item.get_count()
-                if 'count' in details_new[name]:
-                    count = details_new[name].pop('count')
-                    for det in details_new[name].keys():
-                        if type(details_new[name][det])!=dict:
-                            details_new[name][det]*=count
-                        else: details_new[name][det]['count']*=count
-                details_new.update(details_new[name])
-            if name in details_new.keys():
-                details_new.pop(name)
-        get_mods_rec(details_new, new_md, product, pstock, order)
-        return
 
+def get_mods_rec(details_new, new_md, product, pstock, order):
+    names = []
+    for name in details_new.keys():
+        if type(details_new[name]) == dict:
+            names.append(name)
+    if names == []:
+        return
+    for name in names:
+        for det in details_new[name]:
+
+            if type(details_new[name][det]) == dict and details_new[name]['count'] > 1:
+                details_new[name][det]['count'] *= details_new[name]['count']
+        component = Component.query.filter(
+            Component.component_name == name).first()
+        item = Stock.query.filter(Stock.component_id == component.id).first()
+        if item:
+            item.get_count()
+        if item and component.stock_count > 0:
+            new_md.update({name: details_new[name]['count']})
+            if component.stock_count < (details_new[name]['count']*(order.count-pstock(product.pstock_count))):
+                count = details_new[name].pop('count')
+                for det in details_new[name].keys():
+                    if type(details_new[name][det]) != dict:
+                        details_new[name][det] *= (
+                            (count*order.count-component.stock_count)/(order.count))
+                    else:
+                        details_new[name][det]['count'] *= (
+                            (count*order.count-component.stock_count)/(order.count))
+                details_new.update(details_new[name])
+            details_new.pop(name)
+        else:
+            if item:
+                item.get_count()
+            if 'count' in details_new[name]:
+                count = details_new[name].pop('count')
+                for det in details_new[name].keys():
+                    if type(details_new[name][det]) != dict:
+                        details_new[name][det] *= count
+                    else:
+                        details_new[name][det]['count'] *= count
+            details_new.update(details_new[name])
+        if name in details_new.keys():
+            details_new.pop(name)
+    get_mods_rec(details_new, new_md, product, pstock, order)
+    return
 
 
 @app.route('/delete_and_back/<id>')
 @login_required
 def delete_and_back(id):
-    doc = Order.query.filter(Order.id==id).first().doc_id
-    order = Order.query.filter(Order.id==id).first()
+    doc = Order.query.filter(Order.id == id).first().doc_id
+    order = Order.query.filter(Order.id == id).first()
     order.delete()
     return redirect(url_for('order', doc=doc))
 
@@ -835,6 +940,7 @@ def delete_order(id):
     Document.delete(id)
     return redirect(url_for('home_page'))
 
+
 @app.route('/fork/<doc_type>')
 @login_required
 def fork(doc_type):
@@ -843,6 +949,7 @@ def fork(doc_type):
         current_user.added.remove(item)
         db.session.commit()
     return redirect(url_for('stock_adding', doc_type=doc_type, doc='False'))
+
 
 @app.route('/prod_fork/<doc_type>')
 @login_required
@@ -853,44 +960,51 @@ def prod_fork(doc_type):
         db.session.commit()
     return redirect(url_for('pstock_adding', doc_type=doc_type, doc='False'))
 
+
 @app.route('/delete_stock/<stock_id>/<doc_id>')
 @login_required
 def delete_stock(stock_id, doc_id):
     current_user.delete_stock(stock_id)
-    doc = Document.query.filter(Document.id==doc_id).first()
+    doc = Document.query.filter(Document.id == doc_id).first()
     return redirect(url_for('stock_adding', doc_type=doc.document_type, doc=doc.id))
+
 
 @app.route('/delete_pstock/<stock_id>/<doc_id>')
 @login_required
 def delete_pstock(stock_id, doc_id):
     current_user.delete_stock(stock_id)
-    doc = Document.query.filter(Document.id==doc_id).first()
+    doc = Document.query.filter(Document.id == doc_id).first()
     return redirect(url_for('pstock_adding', doc_type=doc.document_type, doc=doc.id))
 
 
 @app.route('/remove_stock/<component_id>')
 @login_required
 def remove_stock(component_id, comment):
-    document = Document(datetime.utcnow(), current_user.id, 'Cписание', comment)
+    document = Document(datetime.utcnow(), current_user.id,
+                        'Cписание', comment)
     db.session.add(document)
     db.session.commit()
-    stock = Stock(document.id, component_id, 0)
+    stock = Stock(document.id, None, component_id, 0)
     db.session.add(stock)
     db.session.commit()
     return redirect(url_for('stock'))
 
-@app.route('/storekeeper_page', methods = ['GET', 'POST'])
+
+@app.route('/storekeeper_page', methods=['GET', 'POST'])
 @login_required
 def storekeeper_page():
     roles = [x.name for x in current_user.roles]
-    notes = [Note.query.filter(Note.na_component==x[0]).first() for x in set(db.session.query(Note.na_component).all())]
+    notes = [Note.query.filter(Note.na_component == x[0]).first(
+    ) for x in set(db.session.query(Note.na_component).all())]
     print(notes)
     form = NoteForm()
-    if request.method=='POST':
-        Note.query.filter(Note.id==form.id.data).first().arrival_date = form.entrydate.data
+    if request.method == 'POST':
+        Note.query.filter(Note.id == form.id.data).first(
+        ).arrival_date = form.entrydate.data
         db.session.commit()
         return redirect(url_for('storekeeper_page'))
-    return render_template('store_keeper_page.html', notes = notes, form = form, roles = roles)
+    return render_template('store_keeper_page.html', notes=notes, form=form, roles=roles)
+
 
 @app.route('/untouched_details', methods=['POST'])
 @login_required
@@ -898,14 +1012,18 @@ def untouched_details():
     order = request.form['order']
     product = request.form['product']
     roles = [x.name for x in current_user.roles]
-    notes = Note.query.filter(Note.order_id == order).filter(Note.na_product==product).all()
-    return render_template('untouched_details.html', notes = notes)
+    notes = Note.query.filter(Note.order_id == order).filter(
+        Note.na_product == product).all()
+    return render_template('untouched_details.html', notes=notes)
+
 
 @app.route('/workshops', methods=['GET', 'POST'])
 @roles_required('Admin')
 def workshops():
     workshops = Shop.query.all()
+
     return render_template('workshops.html', workshops=workshops)
+
 
 @app.route('/make_shop', methods=['POST'])
 @roles_required('Admin')
@@ -915,23 +1033,28 @@ def make_shop():
     db.session.add(new_shop)
     db.session.commit()
     workshops = Shop.query.all()
-    return render_template('shop_tabs.html', workshops = workshops)
+    return render_template('shop_tabs.html', workshops=workshops)
+
 
 @app.route('/component_list', methods=['POST'])
 @roles_required('Admin')
 def component_list():
     details = Component.query.all()
-    return render_template('workshop_details.html', details = details, type = request.form['type'])
+    return render_template('workshop_details.html', details=details, type=request.form['type'])
+
 
 @app.route('/add_component', methods=['POST'])
 @roles_required('Admin')
 def add_component():
     print(request)
-    component = Component.query.filter(Component.id == request.form['component_id']).first()
-    shop = Shop.query.filter(Shop.id==request.form['workshop_id']).first()
+    component = Component.query.filter(
+        Component.id == request.form['component_id']).first()
+    shop = Shop.query.filter(Shop.id == request.form['workshop_id']).first()
     component.shop.append(shop)
     db.session.commit()
-    if len(component.shop)<=1:
-        details = ComponentShop.query.filter(shop.id==ComponentShop.shop_id).all()
-        return render_template('workshop_details.html', details = details, type = 'list')
-    return render_template('component_row.html', det = component)
+    if len(component.shop) <= 1:
+        details = db.session.query(Component).join(ComponentShop).filter(
+            Component.id == ComponentShop.com_id).filter(shop.id == ComponentShop.shop_id).all()
+        print(details)
+        return render_template('workshop_details.html', details=details, type='list')
+    return render_template('component_row.html', det=component)
