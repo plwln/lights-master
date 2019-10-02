@@ -70,6 +70,17 @@ class Role(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), unique=True)
 
+class Shop(db.Model):
+    __tablename__='shop'
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(50), unique=True)
+
+class ComponentShop(db.Model):
+    __tablename__ = 'component_shop'
+    id = db.Column(db.Integer(), primary_key=True)
+    com_id = db.Column(db.Integer(), db.ForeignKey('component.id', ondelete='CASCADE'))
+    shop_id = db.Column(db.Integer(), db.ForeignKey('shop.id', ondelete='CASCADE'))
+
 # Define the UserRoles association table
 class UserRoles(db.Model):
     __tablename__ = 'user_roles'
@@ -202,6 +213,7 @@ class Component(db.Model):
     unfired = db.Column(db.Float())
     stock_count = db.Column(db.Float())
     note_count = db.Column(db.Float())
+    shop = db.relationship('Shop', secondary='component_shop')
     def __init__(self, component_name, component_unit, component_item):
         self.component_name = component_name
         self.component_unit = component_unit

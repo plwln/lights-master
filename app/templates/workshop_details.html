@@ -1,0 +1,28 @@
+<div style='border-top:none;' class="card">
+    <div class="table-responsive">
+        <table class="table searchable">
+            {%if type!='add'%}
+            <thead>
+                <tr>
+                    <th class='py-0' style='border:none;'>Наименование</th>
+                    <th class='py-0' style='border:none;'>Артикул</th>
+                    <th class='py-0' style='border:none;'>Единицы измерения</th>
+                </tr>
+            </thead>
+            {%endif%}
+            <tbody>
+                {%for det in details%}
+                <tr>
+                    <td colspan=2 class='py-0' colspan2>{{det.component_name}}</td>
+                    <td class='py-0'>{{det.component_item}}</td>
+                    <td class='py-0'>{{det.component_unit}}</td>
+                    {%if type=='add'%}
+                    <td class='py-0' ><button type="button" class="btn btn-success btn-sm mr-2 py-0 addingButton"
+                            component_id={{det.id}}>+</button></td>
+                    {%endif%}
+                </tr>
+                {%endfor%}
+            </tbody>
+        </table>
+    </div>
+</div>

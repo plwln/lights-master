@@ -1,0 +1,131 @@
+{%extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="card">
+        <div class="col-lg grid-margin stretch-card">
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    {%for workshop in workshops%}
+                    <a class="nav-item nav-link active" id="nav-card-tab" data-toggle="tab" href="#shop{{workshop.id}}"
+                        role="tab" aria-controls="nav-home" aria-selected="true">{{workshop.name}}</a>
+                    {%endfor%}
+                    <div class='mt-2 ml-2'>
+                        <button type="button" class="btn btn-success btn-sm py-0 " data-toggle="modal"
+                            data-target="#addShop">+</button>
+                    </div>
+                </div>
+
+        </div>
+        </nav>
+        <div class="modal fade" id='addShop' tabindex="-1" role="dialog" aria-labelledby="addShop" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header text-center" style='border-bottom: none;'>
+                        <h5 class="modal-title">Добавить цех</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form class='form' action="" method=post>
+                            <input type="text" class="form-control" id="shopName" placeholder="Название цеха">
+                    </div>
+                    <div style='border-top: none;' class="modal-footer pt-0">
+                        <button type="submit" class="btn btn-primary" id='shopAdding'>Добавить</button>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+        <div class="card-body">
+            {%for workshop in workshops%}
+            <div class="tab-pane fade show active" id='shop{{workshop.id}}' role="tabpanel"
+                aria-labelledby="nav-home-tab">
+                <button type="button" class="btn btn-success btn-sm py-0 " id='detailAdding' data-toggle="modal"
+                    data-target="#addDetail" shop={{workshop.id}}>Добавить деталь</button>
+                <div class="modal fade" id='addDetail' tabindex="-1" role="dialog" aria-labelledby="addDetail"
+                    aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header text-center" style='border-bottom: none;'>
+                                <h5 class="modal-title">Добавить деталь</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="col"><input type="text" class="form-control " id="search"
+                                    placeholder="Поиск по таблице">
+                            </div>
+                            <div class="row">
+                                <div class="modal-body" id='components'>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {%endfor%}
+        </div>
+    </div>
+
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        $(document).on('click', '#shopAdding', function () {
+
+            let name = $("#shopName").val()
+            req = $.ajax({
+                url: '/make_shop',
+                type: 'POST',
+                'data': {
+                    name: name,
+                }
+            });
+
+            req.done(function (data) {
+                $('#nav-tab').html(data);
+            });
+
+        });
+        $(document).on('click', '.addingButton', function () {
+
+            let component_id = $(this).attr('component_id')
+            let workshop_id = $('#detailAdding').attr('shop')
+            console.log(workshop_id)
+            req = $.ajax({
+                url: '/add_component',
+                type: 'POST',
+                'data': {
+                    component_id: component_id,
+                    workshop_id: workshop_id,
+                }
+            });
+
+            req.done(function (data) {
+                $('#shop'+workshop_id).prepend(data);
+            });
+
+        });
+        $(document).on('click', '#detailAdding', function () {
+
+            req = $.ajax({
+                url: '/component_list',
+                type: 'POST',
+                'data': {
+                    type: 'add',
+                }
+            });
+
+            req.done(function (data) {
+                $('#components').html(data);
+            });
+
+        });
+    });
+</script>
+
+
+{%endblock%}

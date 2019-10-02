@@ -7,14 +7,13 @@
         <div class="h7 text-muted ml-2">{{order.date}}</div>
         <div class="h7 text-muted ml-2">сделать до: {{order.endtime}}</div>
         {%if order.order_status%}
-                        <div class="h7 ml-2 text-muted mr-2"><b>{{order.order_status}}</b></div>
-                        {%endif%}
+        <div class="h7 ml-2 text-muted mr-2"><b>{{order.order_status}}</b></div>
+        {%endif%}
         {%if 'Продажники' in roles or 'Admin' in roles%}
-                        <div class="col ml-3 "><button type="button"
-                            class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
-                            order_id={{order.id}}>Обновить</button>
-                        </div>
-                        {%endif%}
+        <div class="col ml-3 "><button type="button" class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
+            order_id={{order.id}}>Обновить</button>
+        </div>
+        {%endif%}
         {%if order.order_status=='Обработка'%}<button type="button"
           class="py-0 px-1 btn btn-sm btn-outline-success updateStatusButton" order_id={{order.id}}>В
           производство</button>
@@ -69,24 +68,24 @@
           <h6>
             {%if item.status=='Резерв'%}
             <span type='button' class="badge badge-danger" data-toggle="modal"
-            data-target="#com{{item.id}}{{item.get_product().id}}" order_id={{item.id}}
-            product_id={{item.get_product().id}}> Резерв
-          </span>
-          <div class="modal fade" id='com{{item.id}}{{item.get_product().id}}' tabindex="-1"
-            role="dialog" aria-labelledby="com{{item.id}}Label" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-              <div class="modal-content">
-                <div class="modal-header text-center">
-                  <h5 class="modal-title">Недостающие детали</h5>
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                <div class="modal-body">
+              data-target="#com{{item.id}}{{item.get_product().id}}" order_id={{item.id}}
+              product_id={{item.get_product().id}}> Резерв
+            </span>
+            <div class="modal fade" id='com{{item.id}}{{item.get_product().id}}' tabindex="-1" role="dialog"
+              aria-labelledby="com{{item.id}}Label" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header text-center">
+                    <h5 class="modal-title">Недостающие детали</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
             </a>
             {%else%}
             <span class="badge badge-success">

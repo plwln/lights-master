@@ -5,7 +5,7 @@ from flask import render_template, flash, redirect, url_for, request, send_from_
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from werkzeug.utils import secure_filename
 from werkzeug.urls import url_parse
-from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note
+from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note, Shop, ComponentShop
 from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm, NoteForm
 from datetime import datetime, date, time
 import datetime as dt
@@ -30,7 +30,7 @@ def delete_old_stocks(items):
 @app.route('/update_thread', methods=['POST', 'GET'])
 def update_thread():
     start_time = time.time()
-    orders = Document.query.filter(Document.product_orders).filter(Document.order_item).all()
+    orders = Document.query.filter(Document.product_orders).filter(Document.order_item).all()[::-1]
     docs = [x.id for x in orders if x.order_status not in ['Обработка', 'в производстве', 'отгружен', 'выполнен', 'Завершен'] ]
     print(docs)
     items=[]
@@ -900,8 +900,38 @@ def untouched_details():
     roles = [x.name for x in current_user.roles]
     notes = Note.query.filter(Note.order_id == order).filter(Note.na_product==product).all()
     return render_template('untouched_details.html', notes = notes)
-# def rec_html(specification):
-#     for item in specification.get_children(specification.get_component().id):
-#         html = "<tr><td ><span style='margin-left: 10px;'>{{item.component_name}}</span></td><td ><span style='margin-left: 10px;'>{{item.component_unit}}</span></td><td ><span style='margin-left: 10px;'>{{item.get_count(specification.get_component().id)}}</span></td></tr>"
-#         if specification.get_children(item.id)!=[]:
-#             rec_html(specification.get_children(item.id))
+
+@app.route('/workshops', methods=['GET', 'POST'])
+@roles_required('Admin')
+def workshops():
+    workshops = Shop.query.all()
+    return render_template('workshops.html', workshops=workshops)
+
+@app.route('/make_shop', methods=['POST'])
+@roles_required('Admin')
+def make_shop():
+    new_shop = Shop()
+    new_shop.name = request.form['name']
+    db.session.add(new_shop)
+    db.session.commit()
+    workshops = Shop.query.all()
+    return render_template('shop_tabs.html', workshops = workshops)
+
+@app.route('/component_list', methods=['POST'])
+@roles_required('Admin')
+def component_list():
+    details = Component.query.all()
+    return render_template('workshop_details.html', details = details, type = request.form['type'])
+
+@app.route('/add_component', methods=['POST'])
+@roles_required('Admin')
+def add_component():
+    print(request)
+    component = Component.query.filter(Component.id == request.form['component_id']).first()
+    shop = Shop.query.filter(Shop.id==request.form['workshop_id']).first()
+    component.shop.append(shop)
+    db.session.commit()
+    if len(component.shop)<=1:
+        details = ComponentShop.query.filter(shop.id==ComponentShop.shop_id).all()
+        return render_template('workshop_details.html', details = details, type = 'list')
+    return render_template('component_row.html', det = component)

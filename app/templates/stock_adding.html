@@ -54,9 +54,9 @@
         <td class="py-0" >{{component.component_unit}}</td>
         <td class="py-0">{{component.component_item}}</td>
         <td class="py-0">
-                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#'+component.get_name()}}">+</button>
+                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="#{{component.id}}">+</button>
                 
-                <div class="modal fade" id='{{component.get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{component.get_name()+'Label'}}" aria-hidden="true">
+                <div class="modal fade" id='{{component.id}}' tabindex="-1" role="dialog" aria-labelledby="{{component.id}}Label" aria-hidden="true">
                   <div class="modal-dialog" role="document">
                     <div class="modal-content">
                       <div class="modal-header text-center">
@@ -116,9 +116,9 @@
             <td class="py-0">{{item.get_component().component_item}}</td>
             <td class="py-0">{{item.get_component().stock_count|round(6)}}</td>
         <td class="py-0">
-                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#del'+item.get_component().get_name()}}">+</button>
+                <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="#del{{item.get_component().id}}">+</button>
                 
-                <div class="modal fade" id='{{"del"+item.get_component().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{'del'+item.get_component().get_name()+'Label'}}" aria-hidden="true">
+                <div class="modal fade" id='del{{item.get_component().id}}' tabindex="-1" role="dialog" aria-labelledby="del{{item.get_component().id}}Label" aria-hidden="true">
                   <div class="modal-dialog" role="document">
                     <div class="modal-content">
                       <div class="modal-header text-center">
@@ -182,8 +182,8 @@
               {%endif%}
               <td class="py-0">{{item.get_unit()}}</td>
               <td class="py-0">
-                  <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="{{'#delete'+item.get_component().get_name()}}">&times;</button>
-                  <div class="modal fade" id='{{"delete"+item.get_component().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{'delete'+item.get_component().get_name()+'Label'}}" aria-hidden="true">
+                  <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="#delete{{item.get_component().id}}">&times;</button>
+                  <div class="modal fade" id='delete{{item.get_component().id}}' tabindex="-1" role="dialog" aria-labelledby="delete{{item.get_component().id}}Label" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                       <div class="modal-content">
                         <div class="modal-header text-center">
