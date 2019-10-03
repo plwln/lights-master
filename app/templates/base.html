@@ -64,7 +64,7 @@
                         aria-haspopup="true" aria-expanded="false">Админ</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown05">
                         <a class="dropdown-item" href="{{ url_for('users_table') }}">Таблица пользователей</a>
-                        <a class="dropdown-item" href="#">Another action</a>
+                        <a class="dropdown-item" href="{{ url_for('workshops') }}">Цеха</a>
                         <a class="dropdown-item" href="#">Something else here</a>
                     </div>
                 </li>
@@ -97,6 +97,14 @@
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
     <script>
+        $(".search").keyup(function () {
+            $.each($(".searchable tbody tr"), function () {
+                if ($(this).text().toLowerCase().indexOf($(_this).val().toLowerCase()) === -1)
+                    $(this).hide();
+                else
+                    $(this).show();
+            });
+        });
         $("#search").keyup(function () {
             _this = this;
             $.each($("#mytable tbody tr"), function () {
@@ -106,12 +114,6 @@
                     $(this).show();
             });
             $.each($("#nav-profile .newtabletab"), function () {
-                if ($(this).text().toLowerCase().indexOf($(_this).val().toLowerCase()) === -1)
-                    $(this).hide();
-                else
-                    $(this).show();
-            });
-            $.each($(".searchable tbody tr"), function () {
                 if ($(this).text().toLowerCase().indexOf($(_this).val().toLowerCase()) === -1)
                     $(this).hide();
                 else

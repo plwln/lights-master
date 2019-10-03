@@ -29,55 +29,59 @@
         <div class="card">
             <div class="col-lg grid-margin stretch-card">
                 <div class="row">
-                    <div class="col-4 mt-2  px-0"><input type="text" class="form-control " id="search"
+                    <div class="col-4 mt-2 ml-3 px-0"><input type="text" class="form-control search"
                             placeholder="Поиск по таблице">
 
                     </div>
                     <div class="mt-2 ml-2  px-0"><button type="button" class="btn btn-success  " id='detailAdding'
-                            data-toggle="modal" data-target="#addDetail" shop="">Добавить деталь</button></div>
+                            data-toggle="modal" data-target="#addDetail" shop="" disabled=true>Добавить деталь</button></div>
 
                 </div>
             </div>
-        </div>
-        <div class="modal fade" id='addShop' tabindex="-1" role="dialog" aria-labelledby="addShop" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header text-center" style='border-bottom: none;'>
-                        <h5 class="modal-title">Добавить цех</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+            <div class="modal fade" id='addShop' tabindex="-1" role="dialog" aria-labelledby="addShop"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header text-center" style='border-bottom: none;'>
+                            <h5 class="modal-title">Добавить цех</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form class='form' action="" method=post>
+                                <input type="text" class="form-control" id="shopName" placeholder="Название цеха">
+                        </div>
+                        <div style='border-top: none;' class="modal-footer pt-0">
+                            <button type="submit" class="btn btn-primary px-0" id='shopAdding'>Добавить</button>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <form class='form' action="" method=post>
-                            <input type="text" class="form-control" id="shopName" placeholder="Название цеха">
-                    </div>
-                    <div style='border-top: none;' class="modal-footer pt-0">
-                        <button type="submit" class="btn btn-primary px-0" id='shopAdding'>Добавить</button>
-                    </div>
+                    </form>
                 </div>
-                </form>
             </div>
-        </div>
-        <div class="card-body" id=components>
-                <div class="modal fade" id='addDetail' tabindex="-1" role="dialog" aria-labelledby="addDetail"
-                    aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header text-center" style='border-bottom: none;'>
-                                <h5 class="modal-title">Добавить деталь</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
+            <div class="modal fade" id='addDetail' tabindex="-1" role="dialog" aria-labelledby="addDetail"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header text-center" style='border-bottom: none;'>
+                            <h5 class="modal-title">Добавить деталь</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="col-4 mt-2  px-0"><input type="text" class="form-control search"
+                                placeholder="Поиск по таблице">
 
-                            <div class="row">
-                                <div class="modal-body" id='components'>
-                                </div>
+                        </div>
+                        <div class="row">
+                            <div class="modal-body" id='component_list'>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="card-body" id=components>
+
             </div>
         </div>
     </div>
@@ -87,13 +91,13 @@
     $(document).ready(function () {
         $(document).on('click', '.workshopLinks', function () {
             let workshop = $(this).attr('workshop')
+            $('#detailAdding').attr('disabled', false);
             $("#detailAdding").attr("shop", workshop)
             req = $.ajax({
-                url: '/component_list',
+                url: '/show_workshop',
                 type: 'POST',
                 'data': {
                     'workshop': workshop,
-                    'type': 'show'
                 }
             });
 
@@ -133,7 +137,7 @@
             });
 
             req.done(function (data) {
-                $('#shop' + workshop_id).prepend(data);
+                $('#components table').prepend(data);
             });
 
         });
@@ -148,7 +152,7 @@
             });
 
             req.done(function (data) {
-                $('#components').html(data);
+                $('#component_list').html(data);
             });
 
         });

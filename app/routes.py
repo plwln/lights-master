@@ -1052,9 +1052,15 @@ def add_component():
     shop = Shop.query.filter(Shop.id == request.form['workshop_id']).first()
     component.shop.append(shop)
     db.session.commit()
-    if len(component.shop) <= 1:
-        details = db.session.query(Component).join(ComponentShop).filter(
+    details = db.session.query(Component).join(ComponentShop).filter(
             Component.id == ComponentShop.com_id).filter(shop.id == ComponentShop.shop_id).all()
-        print(details)
+    if len(details) <= 1:
         return render_template('workshop_details.html', details=details, type='list')
     return render_template('component_row.html', det=component)
+
+@app.route('/show_workshop', methods=['POST'])
+@roles_required('Admin')
+def show_workshop():
+    details = db.session.query(Component).join(ComponentShop).filter(
+            Component.id == ComponentShop.com_id).filter(request.form['workshop'] == ComponentShop.shop_id).all()
+    return render_template('workshop_details.html', details=details, type='list')
