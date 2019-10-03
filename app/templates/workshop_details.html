@@ -11,7 +11,7 @@
             {%endif%}
             <tbody>
                 {%for det in details%}
-                <tr>
+                <tr id='d{{det.id}}'>
                     <td colspan=2 class='py-0' colspan2>{{det.component_name}}</td>
                     <td class='py-0'>{{det.component_item}}</td>
                     <td class='py-0'>{{det.component_unit}}</td>

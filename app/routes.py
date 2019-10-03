@@ -19,7 +19,6 @@ import threading
 import time
 from multiprocessing.dummy import Pool as ThreadPool
 
-
 def delete_old_stocks(items):
     print(items)
     for item in items:
