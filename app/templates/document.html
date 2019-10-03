@@ -37,9 +37,9 @@
           <td class="py-0">{{item.get_document().date}}</td>
           <td class="py-0">{{item.get_document().comment}}</td>
           <td>
-            <button type="button" class="btn btn-danger btn-sm py-0" data-toggle="modal" data-target="{{'#'+item.get_document().get_name()}}"> &times;</button>
+            <button type="button" class="btn btn-danger btn-sm py-0" data-toggle="modal" data-target="#d{{item.get_document().id}}"> &times;</button>
         
-            <div class="modal fade" id='{{item.get_document().get_name()}}' tabindex="-1" role="dialog" aria-labelledby="{{item.get_document().get_name()+'Label'}}" aria-hidden="true">
+            <div class="modal fade" id='d{{item.get_document().id}}' tabindex="-1" role="dialog" aria-labelledby="d{{item.get_document().id}}Label" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
                   <div class="modal-header text-center">

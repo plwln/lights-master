@@ -26,9 +26,9 @@
         {%endif%}
       </div>
     </div>
-    <button type="button" class="btn py-0" data-toggle="modal" data-target="{{'#'+order.get_name()}}">&times;</button>
-    <div class="modal fade" id='{{order.get_name()}}' tabindex="-1" role="dialog"
-      aria-labelledby="{{order.get_name()+'Label'}}" aria-hidden="true">
+    <button type="button" class="btn py-0" data-toggle="modal" data-target="#o{{order.id}}">&times;</button>
+    <div class="modal fade" id='o{{order.id}}' tabindex="-1" role="dialog"
+      aria-labelledby="o{{order.id}}Label" aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header text-center">
