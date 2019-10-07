@@ -19,6 +19,7 @@ import threading
 import time
 from multiprocessing.dummy import Pool as ThreadPool
 
+
 def delete_old_stocks(items):
     print(items)
     for item in items:
@@ -1052,14 +1053,33 @@ def add_component():
     component.shop.append(shop)
     db.session.commit()
     details = db.session.query(Component).join(ComponentShop).filter(
-            Component.id == ComponentShop.com_id).filter(shop.id == ComponentShop.shop_id).all()
+        Component.id == ComponentShop.com_id).filter(shop.id == ComponentShop.shop_id).all()
     if len(details) <= 1:
         return render_template('workshop_details.html', details=details, type='list')
     return render_template('component_row.html', det=component)
+
 
 @app.route('/show_workshop', methods=['POST'])
 @roles_required('Admin')
 def show_workshop():
     details = db.session.query(Component).join(ComponentShop).filter(
-            Component.id == ComponentShop.com_id).filter(request.form['workshop'] == ComponentShop.shop_id).all()
+        Component.id == ComponentShop.com_id).filter(request.form['workshop'] == ComponentShop.shop_id).all()
     return render_template('workshop_details.html', details=details, type='list')
+
+
+@app.route('/workshop_orders', methods=['GET', 'POST'])
+@roles_required('Admin')
+def workshop_orders():
+    query = Document.query.filter(
+        Document.order_status == 'в производстве').all()
+    print(query)
+    dets = db.session.query(Stock, Document, Component).filter(Document.order_status == 'в производстве').filter(
+        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).all()
+    components = []
+    print(request.form['shop'])
+    print(dets)
+    for det in dets:
+        if request.form['shop'] == det[2].shop_name() :
+            components.append(det)
+    print(components)
+    return None

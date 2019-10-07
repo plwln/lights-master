@@ -234,7 +234,13 @@
 </main>
 <script>
   $(document).ready(function () {
-
+    req = $.ajax({
+      url: '/workshop_orders',
+      type: 'POST',
+      data: {
+          'shop': 'Распиловка',
+        }
+    });
     $(document).on('click', '.updateAllButton', function () {
       let order_id = $(this).attr('order_id')
       $('#orders').fadeOut(1000);

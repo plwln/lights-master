@@ -218,7 +218,11 @@ class Component(db.Model):
         self.component_name = component_name
         self.component_unit = component_unit
         self.component_item = component_item
-    
+    def shop_name(self):
+        if self.shop !=[]:
+            return self.shop[0].name
+        else:
+            return None
     def delete_component(id):
         specification = Specification.query.filter(Specification.component_id==id).first()
         child = ModalComponent.query.filter(ModalComponent.child_id==id).first()
