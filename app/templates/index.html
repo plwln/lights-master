@@ -254,9 +254,9 @@
         $('#orders').html(data.card);
         $('#table').html(data.table)
         $('.bbody').removeClass('loading');
-        $('#orders').fadeIn(500);
+        
       });
-
+      location.reload();
     });
 
     $(document).on('click', '.updateButton', function () {

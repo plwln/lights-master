@@ -789,7 +789,6 @@ def order_processor(doc):
     order_status = 'Обработка'
     for order in doc.product_orders:
         items = []
-        n_items = []
         product = order.get_product()
         details = {}
         def pstock(x): return x if x and x > 0 else 0
@@ -798,8 +797,11 @@ def order_processor(doc):
         mod_stock = []
         new_md = dict()
         start_time = time.time()
-        with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh:  # открываем файл на чтение
-            details = json.load(fh)
+        try:
+            with open(str(product.id)+'.json', 'r', encoding='utf-8') as fh:  # открываем файл на чтение
+                details = json.load(fh)
+        except:
+            details = details_new.copy()
         print("--- %s seconds ---" % (time.time() - start_time))
         start_time = time.time()
         stocks = Stock.query.filter(Stock.document_id == doc.id)
@@ -824,6 +826,10 @@ def order_processor(doc):
             for name in details_new.keys():
                 query = db.session.query(Component, Stock).filter(
                     Component.component_name == name).filter(Stock.component_id == Component.id).first()
+                if query is None:
+                    query = [(Component.query.filter(
+                    Component.component_name == name).first()), None]
+                print(query)
                 if query[1]:
                     query[1].get_count()
                 if query[1] is None or query[0].stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
@@ -844,8 +850,10 @@ def order_processor(doc):
                 mod_stock.append([query2[0], query2[1]])
         order.status = doc_type
         db.session.commit()
+        print(order_status)
         order.get_document().order_status = order_status
         db.session.commit()
+        print(order.get_document().order_status)
         print("--- %s seconds ---" % (time.time() - start_time))
 
         start_time = time.time()
@@ -861,12 +869,12 @@ def order_processor(doc):
         start_time = time.time()
         if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
-                cmpnnt = db.session.query(Component.id, Stock).filter(
-                    Component.component_name == key).filter(Component.id == Stock.component_id).first()
-                db.session.add(Stock(
-                    order.doc_id, None, cmpnnt[0], (details[key]*(order.count-pstock(product.pstock_count)))))
-                cmpnnt[1].get_count()
-            db.session.commit()
+                
+                cmpnnt = Component.query.filter(Component.component_name == name).first().id
+                new_stck = Stock(order.doc_id, None, cmpnnt, (details[key]*(order.count-pstock(product.pstock_count))))
+                db.session.add(new_stck)
+                db.session.commit()
+                new_stck.get_count()
 
         else:
             p_stock = db.session.query(Product.id).filter(
