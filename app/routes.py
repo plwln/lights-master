@@ -1063,6 +1063,7 @@ def add_component():
     details = db.session.query(Component).join(ComponentShop).filter(
         Component.id == ComponentShop.com_id).filter(shop.id == ComponentShop.shop_id).all()
     if len(details) <= 1:
+        print('tut')
         return render_template('workshop_details.html', details=details, type='list')
     return render_template('component_row.html', det=component)
 
@@ -1090,4 +1091,12 @@ def workshop_orders():
         if request.form['shop'] == det[2].shop_name() :
             components.append(det)
     print(components)
-    return None
+    return '', 204
+
+@app.route('/delete_component_shop', methods=['GET', 'POST'])
+@roles_required('Admin')
+def delete_component_shop():
+    print(request.form['id'])
+    Component.query.filter(Component.id==request.form['id']).first().shop=[]
+    db.session.commit()
+    return '', 204
