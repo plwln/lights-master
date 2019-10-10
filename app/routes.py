@@ -711,8 +711,12 @@ def check_order(order):
                 if item is None or component.stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
                     def check(x): return 'Резерв' if x == 'Заказ' else x
                     doc_type = check(doc_type)
-                    note = Note(component.id, product.id, order.id, math.fabs(
-                        (component.stock_count+component.unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
+                    unfired = lambda x: x if x else 0
+                    if component.stock_count:
+                        note = Note(component.id, product.id, order.id, math.fabs(
+                            (component.stock_count+unfired(component.unfired))-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
+                    else:
+                        note = Note(component.id, product.id, order.id, math.fabs((details_new[name]*(order.count-pstock(product.pstock_count)))), '')
                     db.session.add(note)
                     db.session.commit()
                     order_status = None
