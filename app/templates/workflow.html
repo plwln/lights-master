@@ -2,27 +2,22 @@
 {% block content %}
 <div class="col-lg-12 col-xl-6 grid-margin stretch-card flex-column">
     <div class="card">
+            <div class="card-body px-0 pb-0 border-bottom">
+                    <div class="d-flex justify-content-between mb-2 px-2">
+                        <h4 class="card-title ml-2">Заказ 000 </h4>
+                        <div class="mr-2">
+                          сделать до 01.01.2020
+                        </div>
+                    </div>
+                    </div>
         <div class="card-body">
-            <div class="chartjs-size-monitor">
-                <div class="chartjs-size-monitor-expand">
-                    <div class=""></div>
-                </div>
-                <div class="chartjs-size-monitor-shrink">
-                    <div class=""></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-4">
-                    <h4 class="card-title">Заказ 000 </h4>
-                </div>
-            </div>
             <div class="row mb-2">
                 <div class="col-sm-4">
                     <h6 class="text-dark font-weight-bold mt-2">Товар 1 200 шт</h6>
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table">
+                <table class="table table-sm">
                     <tbody>
                         <tr>
                             <td>
@@ -31,13 +26,32 @@
                             <td><span class="">100</span></td>
                             <td class=p-1>
                                 <div class="btn-group" role="group" aria-label="Basic example">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#exModal">
                                         Приход
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary">
                                         Закрыть
                                     </button>
                                 </div>
+                                <div class="modal fade" id="exModal" tabindex="-1" role="dialog" aria-labelledby="exModal" style="display: none;" aria-hidden="true">
+                                        <div class="modal-dialog modal-sm" role="document">
+                                          <div class="modal-content">
+                                            <div class="modal-header">
+                                              <h5 class="modal-title" id="exModal">Сделано</h5>
+                                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">×</span>
+                                              </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="text" class="form-control form-control-sm" placeholder="Кол-во" aria-label="Username">
+                                            </div>
+                                            <div class="modal-footer">
+                                              <button type="button" class="btn btn-sm btn-success">Оформить</button>
+                                              <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">Отменить</button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                             </td>
                         </tr>
                         <tr>
