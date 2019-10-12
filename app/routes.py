@@ -1122,3 +1122,7 @@ def delete_component_shop():
     Component.query.filter(Component.id==request.form['id']).first().shop=[]
     db.session.commit()
     return '', 204
+
+@app.route('/workflow', methods=['GET', 'POST'])
+def workflow():
+    return render_template('workflow.html')
