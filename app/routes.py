@@ -58,6 +58,12 @@ def update_thread():
                     'table': render_template('all_table_order_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles])})
 
 
+@app.route('/get_count_all')
+@login_required
+def get_count_all():
+    for stck in Stock.query.all():
+        stck.get_count()
+
 @app.route('/')
 @login_required
 def home_page():
@@ -82,9 +88,6 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
-    stock = Stock.query.first()
-    Role.query.filter(Role.name == 'Agent').delete()
-    db.session.commit()
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x[0]).first(
     ) for x in list(set(db.session.query(Order.doc_id).all()))]
@@ -942,7 +945,22 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
 def delete_and_back(id):
     doc = Order.query.filter(Order.id == id).first().doc_id
     order = Order.query.filter(Order.id == id).first()
+    stck = list(db.session.query(Stock.component_id).filter(Stock.document_id==doc).all())
+    stocks = [x[0] for x in stck]
+    stck_p = list(db.session.query(Stock.id_product).filter(Stock.document_id==doc).filter(Stock.id_product).all())
+    stocks_p = [x[0] for x in stck_p]
     order.delete()
+    if stocks:
+        for stock in stocks:
+            s = Stock.query.filter(Stock.component_id==stock).first()
+            if s:
+                s.get_count()
+    if stocks_p:
+        for stock_p in stocks_p:
+            s_p = Stock.query.filter(Stock.id_product==stock_p).first()
+            if s_p:
+                s_p.get_count()
+    
     return redirect(url_for('order', doc=doc))
 
 

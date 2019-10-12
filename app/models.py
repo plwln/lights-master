@@ -465,7 +465,7 @@ class Stock(db.Model):
                 count+=item[0].count
             elif item[1].document_type=='Расход':
                 count-=item[0].count
-            elif item[1].document_type in ('Резерв', 'Заказ'):
+            elif item[1].document_type == 'Резерв':
                 count-=item[0].count
                 reserved += item[0].count
             else:
@@ -474,7 +474,7 @@ class Stock(db.Model):
         if self.id_product:
             Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
             Product.query.filter(Product.id==self.id_product).first().pstock_count=count
-        else: 
+        else:
             Component.query.filter(Component.id==self.component_id).first().unfired = reserved
             Component.query.filter(Component.id==self.component_id).first().stock_count = count
         db.session.commit()
