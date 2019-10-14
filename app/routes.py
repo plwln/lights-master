@@ -88,10 +88,11 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
+    print(Component.query.filter(Component.id==52).first().unfired)
+    print(Stock.query.filter(Stock.id==5286).first().count)
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x[0]).first(
     ) for x in list(set(db.session.query(Order.doc_id).all()))]
-    print(docs)
     return render_template('index.html', orders=sorted(docs, key=lambda x: x.id)[::-1], roles=roles)
 
 
@@ -875,12 +876,14 @@ def order_processor(doc):
         start_time = time.time()
         if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
+                print(key)
                 cmpnnt = Component.query.filter(Component.component_name == key).first().id
                 new_stck = Stock(order.doc_id, None, cmpnnt, (details[key]*(order.count-pstock(product.pstock_count))))
                 db.session.add(new_stck)
                 db.session.commit()
                 print(new_stck.component_id)
-                Stock.query.first().get_count()
+                print(new_stck.count)
+                new_stck.get_count()
 
         else:
             p_stock = db.session.query(Product.id).filter(
