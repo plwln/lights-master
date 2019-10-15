@@ -88,8 +88,6 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
-    print(Component.query.filter(Component.id==52).first().unfired)
-    print(Stock.query.filter(Stock.id==5286).first().count)
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x[0]).first(
     ) for x in list(set(db.session.query(Order.doc_id).all()))]
@@ -1105,17 +1103,18 @@ def show_workshop():
 def workshop_orders():
     query = Document.query.filter(
         Document.order_status == 'в производстве').all()
-    print(query)
     dets = db.session.query(Stock, Document, Component).filter(Document.order_status == 'в производстве').filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).all()
     components = []
-    print(request.form['shop'])
-    print(dets)
     for det in dets:
-        if request.form['shop'] == det[2].shop_name() :
-            components.append(det)
+        if det[2].shop_name() :
+            print(datetime.strptime(det[1].endtime,
+            "%Y-%m-%d"))
+            print(det[2].shop_name())
+            if det[2].shop_name()==request.form['shop']:
+                components.append(det)
     print(components)
-    return '', 204
+    return render_template('workflow_table.html', docs = query, components = components)
 
 @app.route('/delete_component_shop', methods=['GET', 'POST'])
 @roles_required('Admin')
