@@ -1,22 +1,23 @@
 <table class="table table-sm">
+    {%for time in components%}
+    {{time}}
     <tbody>
-        {%for stock, document, component in components%}
         <tr>
             <td>
-                {{component.component_name}}
+                {{components[time][2].component_name}}
             </td>
-            <td><span class="">{{stock.count}}</span></td>
+            <td><span class=""> {{components[time][0].count}}</span></td>
             <td class=p-1>
                 <div class="btn-group" role="group" aria-label="Basic example">
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                        data-target="#c{{component.id}}">
+                        data-target="#c{{components[time][2].id}}">
                         Приход
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-secondary">
                         Закрыть
                     </button>
                 </div>
-                <div class="modal fade" id="c{{component.id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
+                <div class="modal fade" id="c{{components[time][2].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
                     style="display: none;" aria-hidden="true">
                     <div class="modal-dialog modal-sm" role="document">
                         <div class="modal-content">
@@ -40,6 +41,6 @@
                 </div>
             </td>
         </tr>
-{%endfor%}
     </tbody>
+    {%endfor%}
 </table>

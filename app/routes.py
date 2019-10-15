@@ -1105,15 +1105,15 @@ def workshop_orders():
         Document.order_status == 'в производстве').all()
     dets = db.session.query(Stock, Document, Component).filter(Document.order_status == 'в производстве').filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).all()
-    components = []
+    components = {}
     for det in dets:
         if det[2].shop_name() :
-            print(datetime.strptime(det[1].endtime,
-            "%Y-%m-%d"))
-            print(det[2].shop_name())
             if det[2].shop_name()==request.form['shop']:
-                components.append(det)
-    print(components)
+                endtime = datetime.strptime(det[1].endtime,"%Y-%m-%d")
+                if endtime not in components:
+                    components[det[1].endtime] = det
+                else:
+                    components[det[1].endtime].append(det)
     return render_template('workflow_table.html', docs = query, components = components)
 
 @app.route('/delete_component_shop', methods=['GET', 'POST'])
