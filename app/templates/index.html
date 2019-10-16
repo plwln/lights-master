@@ -51,7 +51,7 @@
                         {%if order.order_status%}
                         <div class="h7 ml-2 text-muted mr-2"><b>{{order.order_status}}</b></div>
                         {%endif%}
-                        {%if 'Продажники' in roles or 'Admin' in roles%}
+                        {%if 'Продажники' in roles or 'Admin' in roles and order.order_status not in ['в производстве', 'отгружен', 'выполнен', 'Завершен']%}
                         <div class="col ml-3 "><button type="button"
                             class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
                             order_id={{order.id}}>Обновить</button>

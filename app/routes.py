@@ -1074,7 +1074,6 @@ def component_list():
 @app.route('/add_component', methods=['POST'])
 @roles_required('Admin')
 def add_component():
-    print(request)
     component = Component.query.filter(
         Component.id == request.form['component_id']).first()
     shop = Shop.query.filter(Shop.id == request.form['workshop_id']).first()
@@ -1099,6 +1098,7 @@ def show_workshop():
 @app.route('/workshop_orders', methods=['GET', 'POST'])
 @roles_required('Admin')
 def workshop_orders():
+    print(request.form['shop'])
     query = Document.query.filter(
         Document.order_status == 'в производстве').all()
     dets = db.session.query(Stock, Document, Component).filter(Document.order_status == 'в производстве').filter(
@@ -1118,11 +1118,12 @@ def workshop_orders():
 @app.route('/delete_component_shop', methods=['GET', 'POST'])
 @roles_required('Admin')
 def delete_component_shop():
-    print(request.form['id'])
     Component.query.filter(Component.id==request.form['id']).first().shop=[]
     db.session.commit()
     return '', 204
 
 @app.route('/workflow', methods=['GET', 'POST'])
 def workflow():
-    return render_template('workflow.html')
+    workshops = Shop.query.all()
+
+    return render_template('workflow.html', workshops=workshops)

@@ -19,7 +19,7 @@
           <td class="py-0">{{item.get_component().component_item}}</td>
           <td class="py-0" >{{item.get_component().component_unit}}</td>
           
-          <td class="py-0"> {{item.n_count}}</td>
+          <td class="py-0"> {{item.n_count|round(6)}}</td>
         </tr>
       {%endfor%}
       </tbody>
