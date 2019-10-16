@@ -12,7 +12,7 @@
             {%if order.order_status%}
             <div class="h7 ml-2 text-muted mr-2"><b>{{order.order_status}}</b></div>
             {%endif%}
-            {%if 'Продажники' in roles or 'Admin' in roles%}
+            {%if 'Продажники' in roles or 'Admin' in roles and order.order_status == 'Обработка' %}
             <div class="col ml-3 "><button type="button"
                 class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
                 order_id={{order.id}}>Обновить</button>
@@ -108,8 +108,8 @@
           {%endfor%}
           {%if order.comment%}
           <tr>
-            <td class='py-1'>
-              <b>Комментарий:</b> {{order.comment}}
+            <td class='py-1 text-danger'>
+              <b>Комментарий: {{order.comment}}</b>
             </td>
           </tr>
           {%endif%}

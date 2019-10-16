@@ -1,6 +1,6 @@
+{%for time in times%}
+<p>{{time}}</p>
 <table class="table table-sm">
-    {%for time in components%}
-    {{time}}
     <tbody>
         <tr>
             <td>
@@ -17,8 +17,8 @@
                         Закрыть
                     </button>
                 </div>
-                <div class="modal fade" id="c{{components[time][2].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
-                    style="display: none;" aria-hidden="true">
+                <div class="modal fade" id="c{{components[time][2].id}}" tabindex="-1" role="dialog"
+                    aria-labelledby="exModal" style="display: none;" aria-hidden="true">
                     <div class="modal-dialog modal-sm" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -42,5 +42,5 @@
             </td>
         </tr>
     </tbody>
-    {%endfor%}
 </table>
+{%endfor%}

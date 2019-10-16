@@ -796,7 +796,10 @@ def order_processor(doc):
     print(doc.id)
     print(doc.document_type)
     doc_type = 'Заказ'
-    order_status = 'Обработка'
+    if doc.order_status is None:
+        order_status = 'Обработка'
+    else:
+        order_status = doc.order_status
     for order in doc.product_orders:
         items = []
         product = order.get_product()
@@ -839,8 +842,6 @@ def order_processor(doc):
                 if query is None:
                     query = [(Component.query.filter(
                     Component.component_name == name).first()), None]
-                print(name)
-                print(query)
                 if query[1]:
                     query[1].get_count()
                 if query[1] is None or query[0].stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
@@ -874,13 +875,10 @@ def order_processor(doc):
         start_time = time.time()
         if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
-                print(key)
                 cmpnnt = Component.query.filter(Component.component_name == key).first().id
                 new_stck = Stock(order.doc_id, None, cmpnnt, (details[key]*(order.count-pstock(product.pstock_count))))
                 db.session.add(new_stck)
                 db.session.commit()
-                print(new_stck.component_id)
-                print(new_stck.count)
                 new_stck.get_count()
 
         else:
@@ -1114,7 +1112,8 @@ def workshop_orders():
                     components[det[1].endtime] = det
                 else:
                     components[det[1].endtime].append(det)
-    return render_template('workflow_table.html', docs = query, components = components)
+    times=sorted(components, key=lambda x: x)
+    return render_template('workflow_table.html', docs = query, times = times, components = components)
 
 @app.route('/delete_component_shop', methods=['GET', 'POST'])
 @roles_required('Admin')
