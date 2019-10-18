@@ -1146,5 +1146,6 @@ def workflow_count():
         stock.workflow_count=int(request.form['workflow_count'])
         db.session.commit()
         print(stock.workflow_count)
-    print(stock.workflow_count)
-    return '', 204
+    
+    return render_template('workflow_row.html', stock = stock)
+
