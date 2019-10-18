@@ -1127,3 +1127,24 @@ def workflow():
     workshops = Shop.query.all()
 
     return render_template('workflow.html', workshops=workshops)
+
+@app.route('/workflow_count', methods=['GET', 'POST'])
+def workflow_count():
+    stock = Stock.query.filter(Stock.id == request.form['stock']).first()
+    new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
+    db.session.add(new_doc)
+    db.session.commit()
+    new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))
+    db.session.add(new_stck)
+    db.session.commit()
+    new_stck.get_count()
+    if stock.workflow_count:
+        stock.workflow_count+=int(request.form['workflow_count'])
+        db.session.commit()
+        print(stock.workflow_count)
+    else:
+        stock.workflow_count=int(request.form['workflow_count'])
+        db.session.commit()
+        print(stock.workflow_count)
+    print(stock.workflow_count)
+    return '', 204

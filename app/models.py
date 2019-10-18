@@ -400,7 +400,7 @@ class Stock(db.Model):
     component_id = db.Column(db.Integer(), db.ForeignKey('component.id', ondelete='CASCADE'))
     id_product = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
     count =  db.Column(db.Float())
-
+    workflow_count = db.Column(db.Float())
     def __init__(self, document_id, id_product, component_id, count):
         self.document_id = document_id
         self.component_id = component_id

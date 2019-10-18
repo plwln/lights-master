@@ -52,7 +52,24 @@
                 $('.table-responsive').html(data);
             });
         });
-        $('#shop1').click(); 
+        $('#shop1').click();
+        $(document).on('click', '.report', function () {
+            stock = $(this).attr('stock_id');
+            console.log('#wc'+stock)
+            workflow_count = $('#wc'+stock).val()
+            console.log(workflow_count)
+            req = $.ajax({
+                url: '/workflow_count',
+                type: 'POST',
+                data: {
+                    'stock': stock,
+                    'workflow_count': workflow_count,
+                }
+            });
+            req.done(function (data) {
+               
+            });
+        });
     });
 </script>
 {%endblock%}

@@ -8,7 +8,11 @@
             <td>
                 {{components[time][2].component_name}}
             </td>
-            <td><span class=""> {{components[time][0].count}}</span></td>
+            <td><span class=""> {{components[time][0].count}}</span>
+            {%if components[time][0].workflow_count%}
+                / {{components[time][0].workflow_count}}
+            {%endif%}
+        </td>
             <td class=p-1>
                 <div class="btn-group" role="group" aria-label="Basic example">
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
@@ -30,11 +34,11 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <input type="text" class="form-control form-control-sm" placeholder="Кол-во"
+                                <input type="text" id='wc{{components[time][0].id}}' class="form-control form-control-sm wf_count" placeholder="Кол-во"
                                     aria-label="Username">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-sm btn-success">Оформить</button>
+                                <button type="button" stock_id='{{components[time][0].id}}' class="btn btn-sm btn-success report">Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
                             </div>
