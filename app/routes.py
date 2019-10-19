@@ -680,8 +680,7 @@ def check_order(order):
             for key in details.keys():
                 cmpnnt = Component.query.filter(
                     Component.component_name == key).first()
-                db.session.add(Stock(order.doc_id, None, cmpnnt.id,
-                                     (details[key]*(order.count-pstock(product.pstock_count)))))
+                db.session.add(Stock(order.doc_id, None, cmpnnt.id, math.ceil(details[key]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
                 Stock.query.filter(
                     cmpnnt.id == Stock.component_id).first().get_count()
@@ -876,10 +875,17 @@ def order_processor(doc):
         if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
                 cmpnnt = Component.query.filter(Component.component_name == key).first().id
-                new_stck = Stock(order.doc_id, None, cmpnnt, (details[key]*(order.count-pstock(product.pstock_count))))
-                db.session.add(new_stck)
-                db.session.commit()
-                new_stck.get_count()
+                stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt.id).first()
+                if stck:
+                    stck.count = math.ceil(dets[key]*(order.count-pstock(product.pstock_count)))
+                    db.session.commit()
+                    stck.get_count()
+                else:
+                    new_stck = Stock(order.doc_id, None, cmpnnt.id,
+                                        math.ceil(dets[key]*(order.count-pstock(product.pstock_count))))
+                    db.session.add(new_stck)
+                    db.session.commit()
+                    new_stck.get_count()
 
         else:
             p_stock = db.session.query(Product.id).filter(
