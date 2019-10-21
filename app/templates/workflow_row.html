@@ -1,3 +1,4 @@
+{%if stock.workflow_count is none or stock.workflow_count < stock.count%}
 <tr id = 'row{{stock.id}}'>
     <td>
         {{stock.get_component().component_name}}
@@ -8,15 +9,14 @@
     {%endif%}
 </td>
     <td class=p-1>
-        <div class="btn-group" role="group" aria-label="Basic example">
             <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
                 data-target="#c{{stock.get_component().id}}">
                 Приход
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">
-                Закрыть
+            <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
+                data-target="#col{{stock.id}}" aria-expanded="false" aria-controls="collapseExample">
+                Товар
             </button>
-        </div>
         <div class="modal fade" id="c{{stock.get_component().id}}" tabindex="-1" role="dialog"
             aria-labelledby="exModal" style="display: none;" aria-hidden="true">
             <div class="modal-dialog modal-sm" role="document">
@@ -41,3 +41,4 @@
         </div>
     </td>
 </tr>
+{%endif%}

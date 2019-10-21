@@ -1111,6 +1111,7 @@ def workshop_orders():
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).all()
     components = {}
     for det in dets:
+        print(det[1].product_orders)
         if det[2].shop_name() :
             if det[2].shop_name()==request.form['shop']:
                 endtime = datetime.strptime(det[1].endtime,"%Y-%m-%d")
