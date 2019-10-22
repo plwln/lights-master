@@ -1132,8 +1132,8 @@ def delete_component_shop():
 @app.route('/workflow', methods=['GET', 'POST'])
 def workflow():
     workshops = Shop.query.all()
-
-    return render_template('workflow.html', workshops=workshops)
+    roles = [x.name for x in current_user.roles]
+    return render_template('workflow.html', roles=roles, workshops=workshops)
 
 @app.route('/workflow_count', methods=['GET', 'POST'])
 def workflow_count():

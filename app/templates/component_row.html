@@ -3,9 +3,9 @@
     <td class='py-0'>{{det.component_item}}</td>
     <td class='py-0'>{{det.component_unit}}</td>
     <td class='py-0'><button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal"
-            data-target="#c{{det.id}}">&times;</button>
+            data-target="#c{{det.id}}" id='m{{det.id}}'>&times;</button>
         <div class="modal fade" id='c{{det.id}}' tabindex="-1" role="dialog" aria-labelledby="c{{det.id}}Label"
-            aria-hidden="true" id='m{{det.id}}'>
+            aria-hidden="true" >
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header text-center">

@@ -21,6 +21,9 @@
                 </div>
             </div>
         </div>
+        {%if 'Admin' in roles%}
+        <button class="btn btn-success mt-2 col btn-sm" id='reload'>Обновить</button>
+        {%endif%}
     </div>
     <div class="col-12 col-sm-10 col-md-10 col-xl-10 grid-margin stretch-card px-0">
         <div class="card">
@@ -52,6 +55,9 @@
                 $('.table-responsive').html(data);
             });
         });
+        $(document).on('click', '#reload', function () {
+            window.location.reload();
+        });
         $('#shop1').click();
         $(document).on('click', '.report', function () {
             stock = $(this).attr('stock_id');
@@ -75,4 +81,19 @@
 
     });
 </script>
+<script>
+        var time = new Date().getTime();
+        $(document.body).bind("mousemove keypress", function(e) {
+            time = new Date().getTime();
+        });
+   
+        function refresh() {
+            if(new Date().getTime() - time >= 1800000) 
+                window.location.reload(true);
+            else 
+                setTimeout(refresh, 10000);
+        }
+   
+        setTimeout(refresh, 10000);
+   </script>
 {%endblock%}
