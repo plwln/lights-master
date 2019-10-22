@@ -88,7 +88,7 @@
         });
    
         function refresh() {
-            if(new Date().getTime() - time >= 1800000) 
+            if(new Date().getTime() - time >= 120000) 
                 window.location.reload(true);
             else 
                 setTimeout(refresh, 10000);

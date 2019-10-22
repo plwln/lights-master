@@ -629,12 +629,9 @@ def order(doc):
     if request.method == 'POST':
         if form.id.data == 'comment':
 
-            startdate = document.date.split(' ')[0].split('/')
-            year, month, day = int(startdate[0]), int(
-                startdate[1]), int(startdate[2])
-            if (form1.entrydate.data-date(year=year, month=month, day=day)).days < 2:
-                flash('Срок слишком мал. Не менее двух дней!')
-                return redirect(url_for('order', doc=doc, form1=form1, added=added, form=form, products=product))
+            # startdate = document.date.split(' ')[0].split('/')
+            # year, month, day = int(startdate[0]), int(
+            #     startdate[1]), int(startdate[2])
             document.endtime = form1.entrydate.data
             db.session.commit()
             current_user.order = []
