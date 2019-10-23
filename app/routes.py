@@ -1152,4 +1152,9 @@ def workflow_count():
         print(stock.workflow_count)
     
     return render_template('workflow_row.html', stock = stock)
+@app.route('/executed_orders', methods=['GET', 'POST'])
+def executed_orders():
+    executed_orders = Document.query.filter(Document.order_status=='выполнен').all()
+    roles = [x.name for x in current_user.roles]
+    return render_template('executed_orders.html', orders=sorted(executed_orders, key=lambda x: x.id)[::-1], roles=roles)
 
