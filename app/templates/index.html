@@ -235,13 +235,6 @@
 </main>
 <script>
   $(document).ready(function () {
-    req = $.ajax({
-      url: '/workshop_orders',
-      type: 'POST',
-      data: {
-        'shop': 'Распиловка',
-      }
-    });
     $(document).on('click', '.updateAllButton', function () {
       let order_id = $(this).attr('order_id')
       $('#orders').fadeOut(1000);
@@ -255,9 +248,8 @@
         $('#orders').html(data.card);
         $('#table').html(data.table)
         $('.bbody').removeClass('loading');
-
+        window.location.reload(true);
       });
-      location.reload();
     });
 
     $(document).on('click', '.updateButton', function () {

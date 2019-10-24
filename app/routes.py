@@ -33,15 +33,13 @@ def delete_old_stocks(items):
         db.session.commit()
 
 
-@app.route('/update_thread', methods=['POST', 'GET'])
+@app.route('/update_thread', methods=['POST'])
 def update_thread():
     start_time = time.time()
     orders = Document.query.filter(Document.product_orders).filter(
         Document.order_item).all()[::-1]
-    docs = [x.id for x in orders if x.order_status not in [
-        'Обработка', 'в производстве', 'отгружен', 'выполнен', 'Завершен']]
-    print(docs)
-    items = []
+    docs = [x.id for x in orders if x.order_status!='выполнен']
+    cnt = 0
     count = len(docs)//2
     if count == 1:
         count = 2
@@ -53,9 +51,10 @@ def update_thread():
     pool.map(order_processor, docs)
     pool.close()
     pool.join()
+    cnt+=1
     print("--- %s seconds ---" % (time.time() - start_time))
     return jsonify({'card': render_template('all_orders_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles]),
-                    'table': render_template('all_table_order_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles])})
+                'table': render_template('all_table_order_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles])})
 
 
 @app.route('/get_count_all')
@@ -872,13 +871,13 @@ def order_processor(doc):
         if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
                 cmpnnt = Component.query.filter(Component.component_name == key).first().id
-                stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt.id).first()
+                stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()
                 if stck:
                     stck.count = math.ceil(dets[key]*(order.count-pstock(product.pstock_count)))
                     db.session.commit()
                     stck.get_count()
                 else:
-                    new_stck = Stock(order.doc_id, None, cmpnnt.id,
+                    new_stck = Stock(order.doc_id, None, cmpnnt,
                                         math.ceil(dets[key]*(order.count-pstock(product.pstock_count))))
                     db.session.add(new_stck)
                     db.session.commit()
@@ -887,10 +886,12 @@ def order_processor(doc):
         else:
             p_stock = db.session.query(Product.id).filter(
                 Stock.id_product == product.id).first()
-            db.session.add(
-                Stock(order.doc_id, product[0], None, product.pstock_count))
+            p_stck = Stock(order.doc_id, p_stock[0], None, product.pstock_count)
+            db.session.add(p_stck
+                )
             db.session.commit()
-            p_stock.get_count()
+            p_stck.get_count()
+            
         print("--- %s seconds ---" % (time.time() - start_time))
 
 
