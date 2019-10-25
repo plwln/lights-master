@@ -396,6 +396,15 @@ def stock():
                     db.session.commit
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
         elif form.document_type.data == 'Расход':
+            stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+            stck = stck.filter(Document.order_status is not None).all()
+            cmpnt = stock.get_component()
+            docs = set([x[1] for x in stck])
+            for s in docs:
+                if cmpnt.reserved>=cmpnt.stock_count-stock.count:
+                    order_processor(s.id)
+                    print(s[0].count)
+                    print(s[1])
             if compon.stock_count != 0 and compon.stock_count == last_count:
                 flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(
                     stock.get_name()), 'message')
@@ -443,10 +452,19 @@ def stock_adding(doc_type, doc):
                 flash('Используйте "." вместо ","')
                 return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added=added, last_stocked=last_stocked, form=form, component=components, modal_component=modal_component))
             stock = Stock(document.id, None, form.id.data, form.count.data)
-
             db.session.add(stock)
             db.session.commit()
             current_user.append_stock(stock.id)
+            if document.document_type == 'Расход':
+                stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+                stck = stck.filter(Document.order_status is not None).all()
+                cmpnt = stock.get_component()
+                docs = set([x[1] for x in stck])
+                for s in docs:
+                    if cmpnt.reserved>=cmpnt.stock_count-stock.count:
+                        order_processor(s.id)
+                        print(s[0].count)
+                        print(s[1])
             flash('Деталь {} добавлена в список'.format(
                 stock.get_name()), 'message')
         return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added=added, form=form, last_stocked=last_stocked,  component=components, modal_component=modal_component))
