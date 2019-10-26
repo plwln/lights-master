@@ -381,6 +381,21 @@ def stock():
         last_count = compon.stock_count
         stock.get_count()
         if form.document_type.data == 'Приход':
+            stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+            stck = stck.filter(Document.order_status is not None).all()
+            for s in stck:
+                if s[0].workflow_count:
+                    if s[0].workflow_count<s[0].count:
+                        s[0].workflow_count+=1
+                        db.session.commit()
+                        break
+                    else:
+                        continue
+                else:
+                    s[0].workflow_count=1
+                    db.session.commit()
+
+
             note = Note.query.filter(
                 Note.na_component == stock.component_id).first()
             if note:
@@ -414,26 +429,12 @@ def stock():
                     pool.map(order_processor, docs)
                     pool.close()
                     pool.join()
-            if compon.stock_count != 0 and compon.stock_count == last_count:
-                stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
-                stck = stck.filter(Document.order_status is not None).all()
-                docs = set([x[1].id for x in stck])
-                count = len(docs)//2
-                if count == 1:
-                    count = 2
-                if count == 0:
-                    count = 1
-                if count > 5:
-                    count = 5
-                pool = ThreadPool(count)
-                pool.map(order_processor, docs)
-                pool.close()
-                pool.join()
-                flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(
-                    stock.get_name()), 'message')
-            else:
-                flash('Расход детали {} со склада'.format(
-                    stock.get_name()), 'message')
+                if compon.stock_count != 0 and compon.stock_count == last_count:
+                    flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(
+                        stock.get_name()), 'message')
+                else:
+                    flash('Расход детали {} со склада'.format(
+                        stock.get_name()), 'message')
         else:
             flash('Деталь {} списана'.format(stock.get_name()), 'message')
         return redirect(url_for('stock', form=form, stock=stock, roles=roles))
