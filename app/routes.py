@@ -51,7 +51,6 @@ def update_thread():
     pool.map(order_processor, docs)
     pool.close()
     pool.join()
-    cnt+=1
     print("--- %s seconds ---" % (time.time() - start_time))
     return jsonify({'card': render_template('all_orders_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles]),
                 'table': render_template('all_table_order_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles])})
@@ -351,6 +350,7 @@ def component_info(component):
 @login_required
 def stock():
     roles = [x.name for x in current_user.roles]
+    current_user.added = []
     for item in current_user.get_added():
         db.session.delete(item)
         current_user.added.remove(item)
@@ -395,17 +395,40 @@ def stock():
                     note.n_stock = count
                     db.session.commit
             flash('Приход {} на склад'.format(stock.get_name()), 'message')
-        elif form.document_type.data == 'Расход':
-            stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
-            stck = stck.filter(Document.order_status is not None).all()
-            cmpnt = stock.get_component()
-            docs = set([x[1] for x in stck])
-            for s in docs:
-                if cmpnt.reserved>=cmpnt.stock_count-stock.count:
-                    order_processor(s.id)
-                    print(s[0].count)
-                    print(s[1])
+        elif document.document_type == 'Расход':
+                stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+                stck = stck.filter(Document.order_status is not None).all()
+                cmpnt = stock.get_component()
+                docs = set([x[1].id for x in stck])
+                print(docs)
+                d_count = cmpnt.stock_count-stock.count
+                if cmpnt.unfired>=d_count:
+                    count = len(docs)//2
+                    if count == 1:
+                        count = 2
+                    if count == 0:
+                        count = 1
+                    if count > 5:
+                        count = 5
+                    pool = ThreadPool(count)
+                    pool.map(order_processor, docs)
+                    pool.close()
+                    pool.join()
             if compon.stock_count != 0 and compon.stock_count == last_count:
+                stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+                stck = stck.filter(Document.order_status is not None).all()
+                docs = set([x[1].id for x in stck])
+                count = len(docs)//2
+                if count == 1:
+                    count = 2
+                if count == 0:
+                    count = 1
+                if count > 5:
+                    count = 5
+                pool = ThreadPool(count)
+                pool.map(order_processor, docs)
+                pool.close()
+                pool.join()
                 flash('Расход детали {} со склада невозможен. Недостаточно деталей'.format(
                     stock.get_name()), 'message')
             else:
@@ -455,16 +478,27 @@ def stock_adding(doc_type, doc):
             db.session.add(stock)
             db.session.commit()
             current_user.append_stock(stock.id)
+            stock.get_count()
             if document.document_type == 'Расход':
                 stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
                 stck = stck.filter(Document.order_status is not None).all()
                 cmpnt = stock.get_component()
-                docs = set([x[1] for x in stck])
-                for s in docs:
-                    if cmpnt.reserved>=cmpnt.stock_count-stock.count:
-                        order_processor(s.id)
-                        print(s[0].count)
-                        print(s[1])
+                docs = set([x[1].id for x in stck])
+                print(docs)
+                d_count = cmpnt.stock_count-stock.count
+                if cmpnt.unfired>=d_count:
+                    print('tut')
+                    count = len(docs)//2
+                    if count == 1:
+                        count = 2
+                    if count == 0:
+                        count = 1
+                    if count > 5:
+                        count = 5
+                    pool = ThreadPool(count)
+                    pool.map(order_processor, docs)
+                    pool.close()
+                    pool.join()
             flash('Деталь {} добавлена в список'.format(
                 stock.get_name()), 'message')
         return redirect(url_for('stock_adding', doc=doc, doc_type=doc_type, stock=stock, form1=form1, added=added, form=form, last_stocked=last_stocked,  component=components, modal_component=modal_component))
