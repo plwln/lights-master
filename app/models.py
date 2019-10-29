@@ -496,7 +496,8 @@ class Order(db.Model):
     prod_id = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
     count =  db.Column(db.Float())
     status = db.Column(db.String())
-
+    pshop_id = db.Column(db.Float())
+    pworkflow_count = db.Column(db.Float())
     def __init__(self, doc_id, prod_id, count):
         self.doc_id = doc_id
         self.prod_id = prod_id

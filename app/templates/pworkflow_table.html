@@ -1,0 +1,53 @@
+{%for time in times%}
+{%if components[time][0].pworkflow_count is none or components[time][0].pworkflow_count < components[time][0].count%}
+<p class='mb-0'>
+    <b class='text-primary'>{{time}}</b>
+</p>
+<table class="table table-sm">
+    <tbody>
+        {%if components[time][0].pworkflow_count is none or components[time][0].pworkflow_count < components[time][0].count%}
+        <tr id='row{{components[time][0].id}}'>
+            <td>
+                {{components[time][2].product_name}}
+            </td>
+            <td><span class=""> {{components[time][0].count}}</span>
+                {%if components[time][0].pworkflow_count%}
+                / {{components[time][0].pworkflow_count}}
+                {%endif%}
+            </td>
+            <td class=p-1>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
+                    data-target="#c{{components[time][2].id}}">
+                    Приход
+                </button>
+                <div class="modal fade" id="c{{components[time][2].id}}" tabindex="-1" role="dialog"
+                    aria-labelledby="exModal" style="display: none;" aria-hidden="true">
+                    <div class="modal-dialog modal-sm" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exModal">Сделано</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="text" id='wc{{components[time][0].id}}'
+                                    class="form-control form-control-sm wf_count" placeholder="Кол-во"
+                                    aria-label="Username">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" stock_id='{{components[time][0].id}}'
+                                    class="btn btn-sm btn-success report">Оформить</button>
+                                <button type="button" class="btn btn-sm btn-light"
+                                    data-dismiss="modal">Отменить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {%endif%}
+    </tbody>
+</table>
+{%endif%}
+{%endfor%}

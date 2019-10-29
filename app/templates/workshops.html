@@ -36,6 +36,10 @@
                     <div class="mt-2 ml-2  px-0"><button type="button" class="btn btn-success  " id='detailAdding'
                             data-toggle="modal" data-target="#addDetail" shop="" disabled=true>Добавить деталь</button>
                     </div>
+                    <div class="mt-2 ml-2  px-0"><button type="button" class="btn btn-success  " id='productAdding'
+                            data-toggle="modal" data-target="#addProduct" shop="" disabled=true>Добавить товар</button>
+                    </div>
+
 
                 </div>
             </div>
@@ -81,6 +85,27 @@
                     </div>
                 </div>
             </div>
+            <div class="modal fade" id='addProduct' tabindex="-1" role="dialog" aria-labelledby="addDetail"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header text-center" style='border-bottom: none;'>
+                            <h5 class="modal-title">Добавить товар</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="col-4 mt-2 ml-2  px-0"><input type="text" class="form-control search"
+                                placeholder="Поиск по таблице">
+
+                        </div>
+                        <div class="row">
+                            <div class="modal-body" id='component_list'>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card-body" id=components>
 
             </div>
@@ -92,7 +117,7 @@
     $(document).ready(function () {
         $(document).on('click', '.delete_component_shop', function () {
             let component = $(this).attr('component')
-            $('#d'+component).fadeOut(500);
+            $('#d' + component).fadeOut(500);
             req = $.ajax({
                 url: '/delete_component_shop',
                 type: 'POST',
@@ -102,7 +127,25 @@
             });
 
             req.done(function (data) {
-                $('#d'+component).remove();
+                $('#d' + component).remove();
+                $('body').removeClass('modal-open')
+                $('.modal-backdrop').remove();
+            });
+
+        });
+        $(document).on('click', '.delete_product_shop', function () {
+            let product = $(this).attr('product')
+            $('#p' + product).fadeOut(500);
+            req = $.ajax({
+                url: '/delete_product_shop',
+                type: 'POST',
+                'data': {
+                    'id': product,
+                }
+            });
+
+            req.done(function (data) {
+                $('#p' + product).remove();
                 $('body').removeClass('modal-open')
                 $('.modal-backdrop').remove();
             });
@@ -112,6 +155,8 @@
             let workshop = $(this).attr('workshop')
             $('#detailAdding').attr('disabled', false);
             $("#detailAdding").attr("shop", workshop)
+            $('#productAdding').attr('disabled', false);
+            $("#productAdding").attr("shop", workshop)
             req = $.ajax({
                 url: '/show_workshop',
                 type: 'POST',
@@ -140,12 +185,12 @@
                 $('#nav-tab').html(data);
             });
 
-        });
+        }); pAddingButton
         $(document).on('click', '.addingButton', function () {
 
             let component_id = $(this).attr('component_id')
             let workshop_id = $('#detailAdding').attr('shop')
-            $("#d"+component_id).fadeOut(500)
+            $("#d" + component_id).fadeOut(500)
             req = $.ajax({
                 url: '/add_component',
                 type: 'POST',
@@ -154,14 +199,49 @@
                     'workshop_id': workshop_id,
                 }
             });
-            
-            $("#d"+component_id).remove()
+
+            $("#d" + component_id).remove()
+            req.done(function (data) {
+                $('#components table').prepend(data);
+            });
+
+        });
+        $(document).on('click', '.pAddingButton', function () {
+
+            let product_id = $(this).attr('product_id')
+            let workshop_id = $('#productAdding').attr('shop')
+            $("#p" + product_id).fadeOut(500)
+            req = $.ajax({
+                url: '/add_product',
+                type: 'POST',
+                'data': {
+                    'product_id': product_id,
+                    'workshop_id': workshop_id,
+                }
+            });
+
+            $("#p" + product_id).remove()
             req.done(function (data) {
                 $('#components table').prepend(data);
             });
 
         });
         $(document).on('click', '#detailAdding', function () {
+
+            req = $.ajax({
+                url: '/component_list',
+                type: 'POST',
+                'data': {
+                    'type': 'add',
+                }
+            });
+
+            req.done(function (data) {
+                $('#component_list').html(data);
+            });
+
+        });
+        $(document).on('click', '#productAdding', function () {
 
             req = $.ajax({
                 url: '/component_list',

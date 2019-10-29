@@ -1,0 +1,27 @@
+<tr id='p{{prod.id}}'>
+    <td colspan=2 class='py-0' colspan2>{{prod.product_name}}</td>
+    <td class='py-0'>{{prod.product_item}}</td>
+    {%if type=='add'%}
+    <td class='py-0'><button type="button" class="btn btn-success btn-sm mr-2 py-0 pAddingButton"
+            product_id={{prod.id}}>+</button></td>
+    {%else%}
+    <td class='py-0'><button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal"
+            data-target="#cp{{prod.id}}" id='mp{{prod.id}}'>&times;</button>
+        <div class="modal fade" id='cp{{prod.id}}' tabindex="-1" role="dialog" aria-labelledby="cp{{prod.id}}Label"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header text-center">
+                        <h5 class="modal-title">Удалить товар?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-danger delete_product_shop"
+                            product='{{prod.id}}'>Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </td>
+</tr>

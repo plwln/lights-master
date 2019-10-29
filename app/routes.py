@@ -1143,14 +1143,46 @@ def add_component():
         return render_template('workshop_details.html', details=details, type='list')
     return render_template('component_row.html', det=component)
 
+@app.route('/add_product', methods=['POST'])
+@roles_required('Admin')
+def add_product():
+    product = Order.query.filter(
+        Order.prod_id == request.form['product_id']).first()
+    product.pshop_id = request.form['workshop_id']
+    db.session.commit()
+    products = db.session.query(Product).join(Order).filter(
+        Product.id == Order.prod_id).filter(shop.id == Order.pshop_id).all()
+    if len(details) <= 1:
+        return render_template('workshop_details.html', details=details, type='list')
+    return render_template('product_row.html', prod=product)
 
 @app.route('/show_workshop', methods=['POST'])
 @roles_required('Admin')
 def show_workshop():
     details = db.session.query(Component).join(ComponentShop).filter(
         Component.id == ComponentShop.com_id).filter(request.form['workshop'] == ComponentShop.shop_id).all()
-    return render_template('workshop_details.html', details=details, type='list')
+    products = db.session.query(Product).join(Order).filter(
+        Product.id == Order.prod_id).filter(request.form['workshop'] == Order.pshop_id).all()
+    
+    return render_template('workshop_details.html', details=details, products = product,  type='list')
 
+
+@app.route('/pworkshop_orders', methods=['GET', 'POST'])
+@roles_required('Admin')
+def pworkshop_orders():
+    prods = db.session.query(Order, Document, Product).filter(Document.order_status == 'в производстве').filter(
+        Order.doc_id == Document.id).filter(Order.prod_id==Product.id).all()
+    products = {}
+    for prod in products:
+        if det[0]:
+            if det[0].pshop_id==int(request.form['shop']):
+                endtime = datetime.strptime(det[1].endtime,"%Y-%m-%d")
+                if endtime not in products:
+                    components[det[1].endtime] = det
+                else:
+                    components[det[1].endtime].append(det)
+    times=sorted(products, key=lambda x: x)
+    return render_template('pworkflow_table.html', times = times, components = products)
 
 @app.route('/workshop_orders', methods=['GET', 'POST'])
 @roles_required('Admin')
@@ -1160,9 +1192,9 @@ def workshop_orders():
         Document.order_status == 'в производстве').all()
     dets = db.session.query(Stock, Document, Component).filter(Document.order_status == 'в производстве').filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).all()
+    print(dets)
     components = {}
     for det in dets:
-        print(det[1].product_orders)
         if det[2].shop_name() :
             if det[2].shop_name()==request.form['shop']:
                 endtime = datetime.strptime(det[1].endtime,"%Y-%m-%d")
@@ -1170,6 +1202,8 @@ def workshop_orders():
                     components[det[1].endtime] = det
                 else:
                     components[det[1].endtime].append(det)
+    if components == {}:
+        return redirect(url_for('pworkshop_orders'))
     times=sorted(components, key=lambda x: x)
     return render_template('workflow_table.html', docs = query, times = times, components = components)
 
