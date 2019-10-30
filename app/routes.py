@@ -87,8 +87,8 @@ def home_page():
     #     role.name = name
     #     db.session.commit()
     roles = [x.name for x in current_user.roles]
-    docs = [Document.query.filter(Document.id == x[0]).first(
-    ) for x in list(set(db.session.query(Order.doc_id).all()))]
+    docs = [Document.query.filter(Document.id == x.doc_id).first(
+    ) for x in list(set(db.session.query(Order).filter(Order.doc_id).all()))]
     return render_template('index.html', orders=sorted(docs, key=lambda x: x.id)[::-1], roles=roles)
 
 
@@ -1159,7 +1159,7 @@ def add_product():
     products = db.session.query(Product).join(Order).filter(
         Product.id == Order.prod_id).filter(request.form['workshop_id'] == Order.pshop_id).all()
     if len(products) <= 1:
-        return render_template('workshop_details.html', details=details, type='list')
+        return render_template('workshop_details.html', products=products, type='list')
     return render_template('product_row.html', prod=product)
 
 @app.route('/show_workshop', methods=['POST'])
