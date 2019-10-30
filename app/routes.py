@@ -1150,13 +1150,17 @@ def add_component():
 def add_product():
     product = Order.query.filter(
         Order.prod_id == request.form['product_id']).first()
+    if product is None:
+        product = Order(None ,request.form['product_id'], None)
+        db.session.add(product)
+        db.session.commit()
     product.pshop_id = request.form['workshop_id']
     db.session.commit()
     products = db.session.query(Product).join(Order).filter(
         Product.id == Order.prod_id).filter(request.form['workshop_id'] == Order.pshop_id).all()
     if len(products) <= 1:
         return render_template('workshop_details.html', details=details, type='list')
-    return render_template('product_row.html', prod=products)
+    return render_template('product_row.html', prod=product)
 
 @app.route('/show_workshop', methods=['POST'])
 def show_workshop():

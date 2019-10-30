@@ -1,6 +1,6 @@
 <tr id='p{{prod.id}}'>
-    <td colspan=2 class='py-0' colspan2>{{prod.product_name}}</td>
-    <td class='py-0'>{{prod.product_item}}</td>
+    <td colspan=2 class='py-0' colspan2>{{prod.get_product().product_name}}</td>
+    <td class='py-0'>{{prod.get_product().product_item}}</td>
     {%if type=='add'%}
     <td class='py-0'><button type="button" class="btn btn-success btn-sm mr-2 py-0 pAddingButton"
             product_id={{prod.id}}>+</button></td>
@@ -24,4 +24,5 @@
             </div>
         </div>
     </td>
+    {%endif%}
 </tr>
