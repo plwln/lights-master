@@ -100,7 +100,7 @@
 
                         </div>
                         <div class="row">
-                            <div class="modal-body" id='component_list'>
+                            <div class="modal-body" id='product_list'>
                             </div>
                         </div>
                     </div>
@@ -115,6 +115,36 @@
 
 <script>
     $(document).ready(function () {
+        $(document).on('click', '#detailAdding', function () {
+
+            req = $.ajax({
+                url: '/component_list',
+                type: 'POST',
+                'data': {
+                    'type': 'add',
+                }
+            });
+
+            req.done(function (data) {
+                $('#component_list').html(data);
+            });
+
+        });
+        $(document).on('click', '#productAdding', function () {
+
+            req = $.ajax({
+                url: '/product_list',
+                type: 'POST',
+                'data': {
+                    'type': 'add',
+                }
+            });
+
+            req.done(function (data) {
+                $('#product_list').html(data);
+            });
+
+        });
         $(document).on('click', '.delete_component_shop', function () {
             let component = $(this).attr('component')
             $('#d' + component).fadeOut(500);
@@ -185,7 +215,7 @@
                 $('#nav-tab').html(data);
             });
 
-        }); pAddingButton
+        });
         $(document).on('click', '.addingButton', function () {
 
             let component_id = $(this).attr('component_id')
@@ -226,36 +256,7 @@
             });
 
         });
-        $(document).on('click', '#detailAdding', function () {
 
-            req = $.ajax({
-                url: '/component_list',
-                type: 'POST',
-                'data': {
-                    'type': 'add',
-                }
-            });
-
-            req.done(function (data) {
-                $('#component_list').html(data);
-            });
-
-        });
-        $(document).on('click', '#productAdding', function () {
-
-            req = $.ajax({
-                url: '/component_list',
-                type: 'POST',
-                'data': {
-                    'type': 'add',
-                }
-            });
-
-            req.done(function (data) {
-                $('#component_list').html(data);
-            });
-
-        });
     });
 </script>
 

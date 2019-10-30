@@ -18,7 +18,7 @@
             <td class=p-1>
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
                     data-target="#c{{components[time][2].id}}">
-                    Приход
+                    Добавить
                 </button>
                 <div class="modal fade" id="c{{components[time][2].id}}" tabindex="-1" role="dialog"
                     aria-labelledby="exModal" style="display: none;" aria-hidden="true">
@@ -36,8 +36,8 @@
                                     aria-label="Username">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" stock_id='{{components[time][0].id}}'
-                                    class="btn btn-sm btn-success report">Оформить</button>
+                                <button type="button" order_id='{{components[time][0].id}}'
+                                    class="btn btn-sm btn-success pReport">Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
                             </div>

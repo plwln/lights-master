@@ -1,0 +1,40 @@
+{%if order.pworkflow_count is none or order.pworkflow_count < order.count%}
+<tr id = 'row{{order.id}}'>
+    <td>
+        {{order.get_product().product_name}}
+    </td>
+    <td><span class=""> {{order.count}}</span>
+    {%if order.pworkflow_count%}
+        / {{order.pworkflow_count}}
+    {%endif%}
+</td>
+    <td class=p-1>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
+                data-target="#cp{{order.get_product().id}}">
+                Добавить
+            </button>
+        <div class="modal fade" id="cp{{order.get_product().id}}" tabindex="-1" role="dialog"
+            aria-labelledby="exModal" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-sm" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exModal">Сделано</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id='wc{{order.id}}' class="form-control form-control-sm wf_count" placeholder="Кол-во"
+                            aria-label="Username">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" order_id='{{order.id}}' class="btn btn-sm btn-success report">Оформить</button>
+                        <button type="button" class="btn btn-sm btn-light"
+                            data-dismiss="modal">Отменить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </td>
+</tr>
+{%endif%}
