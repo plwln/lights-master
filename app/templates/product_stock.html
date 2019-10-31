@@ -34,10 +34,10 @@
       {%if stock!=[]%}
       {% for item in stock%}
       {%if item.get_product().pstock_count!=0 or (item.get_product().p_infired!=0 and item.get_product().p_unfired)%}
+      {%if item.get_product()%} 
         <tr>
           <td class="py-0" >{{item.get_product().product_name}}</td>
           <td class="py-0">{{item.get_product().product_item}}</td>
-          
           {%if item.get_product().pstock_count<=0%}
           <td class="py-0">Списан
               {%if item.get_product().p_unfired%}
@@ -45,7 +45,7 @@
               {%endif%}
           </td>
           {%else%}
-          <td class="py-0">{{(item.get_product().pstock_count)|int}}
+          <td class="py-0">{{(item.get_product().pstock_count+item.get_product().p_unfired)|int}}
             {%if item.get_product().p_unfired and item.get_product().p_unfired!=0%}
             /{{(item.get_product().p_unfired)|int}}
             {%endif%}
@@ -60,6 +60,7 @@
             {%endif%}
           </td>
         </tr>
+
         <div class="modal fade" id='p{{item.get_product().id}}' tabindex="-1" role="dialog" aria-labelledby="{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
@@ -95,6 +96,7 @@
                   </div>
                 </div>
               </div>
+              {%endif%}
       {%endif%}
       {%endfor%}
       {%endif%}

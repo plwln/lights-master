@@ -455,7 +455,9 @@ class Stock(db.Model):
         if self.id_product:
             stocks = Stock.query.filter(Stock.id_product==self.id_product).all()
             stocks = db.session.query(Stock, Document).filter(Stock.id_product==self.id_product).join(Document, Stock.document_id==Document.id).all()
-            stock_count = Product.query.filter(Product.id==self.id_product).first().pstock_count 
+            stock_count = Product.query.filter(Product.id==self.id_product).first()
+            if stock_count:
+                stock_count = stock_count.pstock_count 
         if self.component_id:
             stocks = db.session.query(Stock, Document).filter(Stock.component_id==self.component_id).join(Document, Stock.document_id==Document.id).all()
             stock_count = Component.query.filter(Component.id==self.component_id).first().stock_count
@@ -472,12 +474,14 @@ class Stock(db.Model):
                 count=0
             
         if self.id_product:
-            Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
-            Product.query.filter(Product.id==self.id_product).first().pstock_count=count
+            if stock_count is not None:
+                Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
+                Product.query.filter(Product.id==self.id_product).first().pstock_count=count
+                db.session.commit()
         else:
             Component.query.filter(Component.id==self.component_id).first().unfired = reserved
             Component.query.filter(Component.id==self.component_id).first().stock_count = count
-        db.session.commit()
+            db.session.commit()
 
 
     def get_component(self):

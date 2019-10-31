@@ -87,6 +87,9 @@ def home_page():
     #     db.session.commit()
     #     role.name = name
     #     db.session.commit()
+    # stcks = Stock.query.filter(Stock.id_product).all()
+    # for stck in stcks:
+    #     stck.get_count() 
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x.doc_id).first(
     ) for x in list(set(db.session.query(Order).filter(Order.doc_id).all()))]
@@ -437,6 +440,24 @@ def stock():
                     flash('Расход детали {} со склада'.format(
                         stock.get_name()), 'message')
         else:
+            stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+            stck = stck.filter(Document.order_status is not None).all()
+            cmpnt = stock.get_component()
+            docs = set([x[1].id for x in stck])
+            print(docs)
+            d_count = cmpnt.stock_count-stock.count
+            if cmpnt.unfired>=d_count:
+                count = len(docs)//2
+                if count == 1:
+                    count = 2
+                if count == 0:
+                    count = 1
+                if count > 5:
+                    count = 5
+                pool = ThreadPool(count)
+                pool.map(order_processor, docs)
+                pool.close()
+                pool.join()
             flash('Деталь {} списана'.format(stock.get_name()), 'message')
         return redirect(url_for('stock', form=form, stock=stock, roles=roles))
     return render_template('stock.html', form=form, stock=stock, roles=roles)
@@ -481,7 +502,7 @@ def stock_adding(doc_type, doc):
             db.session.commit()
             current_user.append_stock(stock.id)
             stock.get_count()
-            if document.document_type == 'Расход':
+            if document.document_type == 'Расход' or document.document_type =='Списание':
                 stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
                 stck = stck.filter(Document.order_status is not None).all()
                 cmpnt = stock.get_component()
@@ -546,7 +567,8 @@ def stock_product():
             note = Note.query.filter(
                 Note.na_product == stock.id_product).first()
             if note:
-                count = Note.n_count-stock.get_product().pstock_count
+                count = note.n_count-stock.get_product().pstock_count
+                print(count)
                 if count <= 0:
                     Note.query.filter(Note.na_product ==
                                       stock.id_product).delete()
@@ -1182,7 +1204,7 @@ def pworkshop_orders(shop):
         print(prod)
         if prod[0]:
             print(prod[0].pshop_id)
-            if prod[0].pshop_id==int(shop):
+            if prod[0].pshop_id==int(shop) and prod[0].status == 'Заказ':
                 print('tut')
                 if prod[1].endtime:
                     endtime = datetime.strptime(prod[1].endtime,"%Y-%m-%d")
@@ -1197,12 +1219,11 @@ def pworkshop_orders(shop):
 @app.route('/workshop_orders', methods=['GET', 'POST'])
 def workshop_orders():
     print(request.form['shop'])
-    query = Document.query.filter(
-        Document.order_status == 'в производстве').all()
     dets = db.session.query(Stock, Document, Component).filter(
-        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).all()
+        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').all()
     components = {}
     for det in dets:
+        print(det[1].order_status)
         if det[2].shop :
             if det[2].shop[0].id==int(request.form['shop']):
                 if det[1].endtime:
@@ -1211,10 +1232,11 @@ def workshop_orders():
                         components[det[1].endtime] = det
                     else:
                         components[det[1].endtime].append(det)
+    print(components)
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
     times=sorted(components, key=lambda x: x)
-    return render_template('workflow_table.html', docs = query, times = times, components = components)
+    return render_template('workflow_table.html', times = times, components = components)
 
 @app.route('/delete_component_shop', methods=['GET', 'POST'])
 def delete_component_shop():
