@@ -39,7 +39,7 @@
           <td class="py-0">{{item.get_component().component_name}}</td>
           <td class="py-0">{{item.get_component().component_unit}}</td>
           <td class="py-0">{{item.get_component().component_item}}</td>
-          {%if item.get_component().stock_count+item.get_component().unfired<=0%}
+          {%if item.get_component().stock_count+item.get_component().unfired==item.get_component().unfired and item.get_component().stock_count+item.get_component().unfired<=0%}
           <td class="py-0">Списан
             {%if item.get_component().unfired%}
             /{{item.get_component().unfired|round(6)}}

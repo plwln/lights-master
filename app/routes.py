@@ -40,6 +40,7 @@ def update_thread():
         Document.order_item).all()[::-1]
     docs = [x.id for x in orders if x.order_status!='выполнен']
     cnt = 0
+    print(len(docs))
     count = len(docs)//2
     if count == 1:
         count = 2
@@ -841,8 +842,7 @@ def get_report_order():
 
 def order_processor(doc):
     doc = Document.query.filter(Document.id == doc).first()
-    print(doc.id)
-    print(doc.document_type)
+    print(doc)
     doc_type = 'Заказ'
     if doc.order_status is None:
         order_status = 'Обработка'

@@ -10,7 +10,14 @@
             <td>
                 {{components[time][2].component_name}}
             </td>
-            <td><span class=""> {{components[time][0].count}}</span>
+            <td><span class="">
+                {%if components[time][0].get_component().stock_count<components[time][0].count and components[time][0].get_component().stock_count>0%} 
+                {{components[time][0].count-components[time][0].get_component().stock_count}}
+                {%else%}
+                {{components[time][0].count}}
+                {%endif%}
+            </span>
+
                 {%if components[time][0].workflow_count%}
                 / {{components[time][0].workflow_count}}
                 {%endif%}
