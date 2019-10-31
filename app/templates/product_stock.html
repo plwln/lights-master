@@ -38,8 +38,8 @@
         <tr>
           <td class="py-0" >{{item.get_product().product_name}}</td>
           <td class="py-0">{{item.get_product().product_item}}</td>
-          {%if item.get_product().pstock_count<=0%}
-          <td class="py-0">Списан
+          {%if item.get_product().pstock_count+item.get_product().p_unfired==item.get_product().p_unfired or item.get_product().pstock_count+item.get_product().p_unfired<=0%}
+          <td class="py-0">{{item.get_product().pstock_count}}  Списан
               {%if item.get_product().p_unfired%}
               /{{(item.get_product().p_unfired)|int}}
               {%endif%}
