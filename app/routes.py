@@ -702,6 +702,9 @@ def order(doc):
         document = Document.query.filter(Document.id == doc).first()
     orders = document.product_orders
     if request.method == 'POST':
+        if doc != 'False':
+            document = Document.query.filter(Document.id == doc).first()
+            orders = document.product_orders
         if form.id.data == 'comment':
 
             # startdate = document.date.split(' ')[0].split('/')
@@ -831,6 +834,8 @@ def update_status():
         db.session.commit()
     elif doc.order_status == 'отгружен':
         doc.order_status = 'выполнен'
+        db.session.commit()
+        doc.document_type='Расход'
         db.session.commit()
     else:
         doc.order_status = 'Завершен'
@@ -978,6 +983,7 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
     if names == []:
         return
     for name in names:
+        new_md.update({name: details_new[name]['count']})
         for det in details_new[name]:
 
             if type(details_new[name][det]) == dict and details_new[name]['count'] > 1:
@@ -988,7 +994,6 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
         if item:
             item.get_count()
         if item and component.stock_count > 0:
-            new_md.update({name: details_new[name]['count']})
             if component.stock_count < (details_new[name]['count']*(order.count-pstock(product.pstock_count))):
                 count = details_new[name].pop('count')
                 for det in details_new[name].keys():
@@ -1188,6 +1193,8 @@ def add_product():
 def show_workshop():
     details = db.session.query(Component).join(ComponentShop).filter(
         Component.id == ComponentShop.com_id).filter(request.form['workshop'] == ComponentShop.shop_id).all()
+    for d in details:
+        print(d[0].component_name)
     products = db.session.query(Product).join(Order).filter(
         Product.id == Order.prod_id).filter(request.form['workshop'] == Order.pshop_id).all()
     
@@ -1201,7 +1208,6 @@ def pworkshop_orders(shop):
     print(prods)
     products = {}
     for prod in prods:
-        print(prod)
         if prod[0]:
             print(prod[0].pshop_id)
             if prod[0].pshop_id==int(shop) and prod[0].status == 'Заказ':
@@ -1218,12 +1224,10 @@ def pworkshop_orders(shop):
 
 @app.route('/workshop_orders', methods=['GET', 'POST'])
 def workshop_orders():
-    print(request.form['shop'])
     dets = db.session.query(Stock, Document, Component).filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').all()
     components = {}
     for det in dets:
-        print(det[1].order_status)
         if det[2].shop :
             if det[2].shop[0].id==int(request.form['shop']):
                 if det[1].endtime:
@@ -1232,7 +1236,8 @@ def workshop_orders():
                         components[det[1].endtime] = det
                     else:
                         components[det[1].endtime].append(det)
-    print(components)
+    for c in components.keys():
+        print(components[c][2].component_name)
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
     times=sorted(components, key=lambda x: x)
