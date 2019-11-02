@@ -90,6 +90,10 @@ def home_page():
     # stcks = Stock.query.filter(Stock.id_product).all()
     # for stck in stcks:
     #     stck.get_count() 
+    stck = Stock.query.filter(Stock.id_product==133).first()
+    stck.get_count()
+    prod = Product.query.filter(Product.id==133).first()
+    print(prod.pstock_count)
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x.doc_id).first(
     ) for x in list(set(db.session.query(Order).filter(Order.doc_id).all()))]
@@ -1193,8 +1197,6 @@ def add_product():
 def show_workshop():
     details = db.session.query(Component).join(ComponentShop).filter(
         Component.id == ComponentShop.com_id).filter(request.form['workshop'] == ComponentShop.shop_id).all()
-    for d in details:
-        print(d[0].component_name)
     products = db.session.query(Product).join(Order).filter(
         Product.id == Order.prod_id).filter(request.form['workshop'] == Order.pshop_id).all()
     
