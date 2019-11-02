@@ -1,38 +1,37 @@
 {%for time in times%}
-{%if components[time][0].workflow_count is none or components[time][0].workflow_count < components[time][0].count%}
 <p class='mb-0'>
     <b class='text-primary'>{{time}}</b>
 </p>
 <table class="table table-sm">
     <tbody>
-        {%if components[time][0].workflow_count is none or components[time][0].workflow_count < components[time][0].count%}
-        <tr id='row{{components[time][0].id}}'>
+        {%for component in components[time]%}
+        <tr id='row{{component[0].id}}'>
             <td>
-                {{components[time][2].component_name}}
+                {{component[2].component_name}}
             </td>
             <td><span class="">
-                {%if components[time][0].get_component().stock_count<components[time][0].count and components[time][0].get_component().stock_count>0%} 
-                {{components[time][0].count-components[time][0].get_component().stock_count}}
-                {%else%}
-                {{components[time][0].count}}
-                {%endif%}
-            </span>
+                    {%if component[0].get_component().stock_count<component[0].count and component[0].get_component().stock_count>0%}
+                    {{component[0].count-component[0].get_component().stock_count}}
+                    {%else%}
+                    {{component[0].count}}
+                    {%endif%}
+                </span>
 
-                {%if components[time][0].workflow_count%}
-                / {{components[time][0].workflow_count}}
+                {%if component[0].workflow_count%}
+                / {{component[0].workflow_count}}
                 {%endif%}
             </td>
             <td class=p-1>
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                    data-target="#c{{components[time][2].id}}">
+                    data-target="#c{{component[2].id}}">
                     Приход
                 </button>
                 <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
-                    data-target="#col{{components[time][0].id}}" aria-expanded="false" aria-controls="collapseExample">
+                    data-target="#col{{component[0].id}}" aria-expanded="false" aria-controls="collapseExample">
                     Товар
                 </button>
-                <div class="modal fade" id="c{{components[time][2].id}}" tabindex="-1" role="dialog"
-                    aria-labelledby="exModal" style="display: none;" aria-hidden="true">
+                <div class="modal fade" id="c{{component[2].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
+                    style="display: none;" aria-hidden="true">
                     <div class="modal-dialog modal-sm" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -42,12 +41,12 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <input type="text" id='wc{{components[time][0].id}}'
+                                <input type="text" id='wc{{component[0].id}}'
                                     class="form-control form-control-sm wf_count" placeholder="Кол-во"
                                     aria-label="Username">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" stock_id='{{components[time][0].id}}'
+                                <button type="button" stock_id='{{component[0].id}}'
                                     class="btn btn-sm btn-success report">Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
@@ -57,15 +56,14 @@
                 </div>
             </td>
         </tr>
-        {%endif%}
     </tbody>
 </table>
-<div class="collapse py-0" id="col{{components[time][0].id}}">
+<div class="collapse py-0" id="col{{component[0].id}}">
     <div class="card card-body py-0">
-        {%for order in components[time][1].product_orders%}
+        {%for order in component[1].product_orders%}
         <li>{{order.get_product().product_name}}</li>
         {%endfor%}
     </div>
 </div>
-{%endif%}
+{%endfor%}
 {%endfor%}

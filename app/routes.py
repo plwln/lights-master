@@ -90,10 +90,6 @@ def home_page():
     # stcks = Stock.query.filter(Stock.id_product).all()
     # for stck in stcks:
     #     stck.get_count() 
-    stck = Stock.query.filter(Stock.id_product==133).first()
-    stck.get_count()
-    prod = Product.query.filter(Product.id==133).first()
-    print(prod.pstock_count)
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x.doc_id).first(
     ) for x in list(set(db.session.query(Order).filter(Order.doc_id).all()))]
@@ -836,10 +832,15 @@ def update_status():
     elif doc.order_status == 'в производстве':
         doc.order_status = 'отгружен'
         db.session.commit()
+        doc.document_type='Заказ'
+        db.session.commit()
+        stck = Stock.query.filter(Stock.document_id==doc.id).all()
+        for s in stck:
+            s.get_component().unfired=0
+            db.session.commit()
+        stck[0].get_component().get_count()
     elif doc.order_status == 'отгружен':
         doc.order_status = 'выполнен'
-        db.session.commit()
-        doc.document_type='Расход'
         db.session.commit()
     else:
         doc.order_status = 'Завершен'
@@ -1231,15 +1232,15 @@ def workshop_orders():
     components = {}
     for det in dets:
         if det[2].shop :
-            if det[2].shop[0].id==int(request.form['shop']):
+            if int(request.form['shop']) in [x.id for x in det[2].shop]:
                 if det[1].endtime:
                     endtime = datetime.strptime(det[1].endtime,"%Y-%m-%d")
                     if endtime not in components:
-                        components[det[1].endtime] = det
+                        components[det[1].endtime]=[]
+                        components[det[1].endtime].append(det)
+                        print(components[det[1].endtime])
                     else:
                         components[det[1].endtime].append(det)
-    for c in components.keys():
-        print(components[c][2].component_name)
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
     times=sorted(components, key=lambda x: x)

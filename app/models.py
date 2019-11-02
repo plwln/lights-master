@@ -442,11 +442,14 @@ class Stock(db.Model):
                 count=0
         if self.id_product:
             Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
+            db.session.commit()
             Product.query.filter(Product.id==self.id_product).first().pstock_count=count
+            db.session.commit()
         else: 
             Component.query.filter(Component.id==self.component_id).first().unfired = reserved
+            db.session.commit()
             Component.query.filter(Component.id==self.component_id).first().stock_count = count
-        db.session.commit()
+            db.session.commit()
 
     def get_count(self):
         count=0
@@ -470,16 +473,18 @@ class Stock(db.Model):
             elif item[1].document_type == 'Резерв':
                 count-=item[0].count
                 reserved += item[0].count
-            else:
+            elif item[1].document_type=='Списание':
                 count=0
             
         if self.id_product:
             if stock_count is not None:
                 Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
+                db.session.commit()
                 Product.query.filter(Product.id==self.id_product).first().pstock_count=count
                 db.session.commit()
         else:
             Component.query.filter(Component.id==self.component_id).first().unfired = reserved
+            db.session.commit()
             Component.query.filter(Component.id==self.component_id).first().stock_count = count
             db.session.commit()
 
