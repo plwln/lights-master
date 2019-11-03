@@ -1228,19 +1228,29 @@ def pworkshop_orders(shop):
 @app.route('/workshop_orders', methods=['GET', 'POST'])
 def workshop_orders():
     dets = db.session.query(Stock, Document, Component).filter(
-        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').all()
+        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).all()   
+    print(dets)
     components = {}
     for det in dets:
         if det[2].shop :
             if int(request.form['shop']) in [x.id for x in det[2].shop]:
                 if det[1].endtime:
                     endtime = datetime.strptime(det[1].endtime,"%Y-%m-%d")
-                    if endtime not in components:
-                        components[det[1].endtime]=[]
-                        components[det[1].endtime].append(det)
+                    if det[1].endtime not in components:
+                        components[det[1].endtime]={}
+                        components[det[1].endtime]['count']=0
+                        components[det[1].endtime]['obj']=[]
+                        components[det[1].endtime]['obj'].append(det)
+                        components[det[1].endtime]['count']+=det[0].count
                         print(components[det[1].endtime])
                     else:
-                        components[det[1].endtime].append(det)
+                        for cmpnnt in components[det[1].endtime]['obj']:
+                            if det[2]==cmpnnt[2]:
+                                components[det[1].endtime]['count']+=det[0].count
+                                break
+                        else:
+                            components[det[1].endtime]['obj'].append(det)
+    print(components)
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
     times=sorted(components, key=lambda x: x)
