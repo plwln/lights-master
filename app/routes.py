@@ -1208,20 +1208,24 @@ def show_workshop():
 def pworkshop_orders(shop):
     prods = db.session.query(Order, Document, Product).filter(
         Order.doc_id == Document.id).filter(Order.prod_id==Product.id).all()
-    print(prods)
     products = {}
     for prod in prods:
         if prod[0]:
-            print(prod[0].pshop_id)
             if prod[0].pshop_id==int(shop) and prod[0].status == 'Заказ':
-                print('tut')
                 if prod[1].endtime:
-                    endtime = datetime.strptime(prod[1].endtime,"%Y-%m-%d")
-                    if endtime not in products:
-                        products[prod[1].endtime] = prod
+                    if prod[1].endtime not in products:
+                        products[prod[1].endtime]={}
+                        products[prod[1].endtime]['count']=0
+                        products[prod[1].endtime]['obj']=[]
+                        products[prod[1].endtime]['obj'].append(prod)
+                        products[prod[1].endtime]['count']+=prod[0].count
                     else:
-                        products[prod[1].endtime].append(prod)
-    print(products)
+                        for prdct in products[prod[1].endtime]['obj']:
+                            if prod[2]==prdct[2]:
+                                products[prod[1].endtime]['count']+=det[0].count
+                                break
+                        else:
+                            products[prod[1].endtime]['obj'].append(prod)
     times=sorted(products, key=lambda x: x)
     return render_template('pworkflow_table.html', times = times, components = products)
 
@@ -1242,7 +1246,6 @@ def workshop_orders():
                         components[det[1].endtime]['obj']=[]
                         components[det[1].endtime]['obj'].append(det)
                         components[det[1].endtime]['count']+=det[0].count
-                        print(components[det[1].endtime])
                     else:
                         for cmpnnt in components[det[1].endtime]['obj']:
                             if det[2]==cmpnnt[2]:
