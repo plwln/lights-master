@@ -81,6 +81,12 @@ class ComponentShop(db.Model):
     com_id = db.Column(db.Integer(), db.ForeignKey('component.id', ondelete='CASCADE'))
     shop_id = db.Column(db.Integer(), db.ForeignKey('shop.id', ondelete='CASCADE'))
 
+class ProductShop(db.Model):
+    __tablename__ = 'product_shop'
+    id = db.Column(db.Integer(), primary_key=True)
+    pr_id = db.Column(db.Integer(), db.ForeignKey('product.id', ondelete='CASCADE'))
+    prod_shop_id = db.Column(db.Integer(), db.ForeignKey('shop.id', ondelete='CASCADE'))
+
 # Define the UserRoles association table
 class UserRoles(db.Model):
     __tablename__ = 'user_roles'
@@ -110,6 +116,7 @@ class Product(db.Model):
     product_material = db.Column(db.String(255, collation='NOCASE'))
     pstock_count = db.Column(db.Float())
     p_unfired = db.Column(db.Float())
+    product_shop_id = db.relationship('Shop', secondary='product_shop')
     def __init__(self, product_name, product_power, product_item, product_weight, product_material):
         self.product_name = product_name
         self.product_power = product_power
@@ -428,18 +435,19 @@ class Stock(db.Model):
             stocks = Stock.query.filter(Stock.component_id==self.component_id).all()
             stock_count = Component.query.filter(Component.id==self.component_id).first().stock_count
         for item in stocks:
-            if item.get_document() and item.get_document().document_type=='Приход':
-                count+=item.count
-            elif item.get_document() and item.get_document().document_type=='Расход':
-                count-=item.count
-            elif item.get_document().document_type=='Резерв' or  item.get_document().document_type=='Заказ':
-                count -= item.count
-                if reserved is None:
-                    reserved = item.count
-                else:
-                    reserved += item.count
-            elif item.get_document():
-                count=0
+            if item.get_document():
+                if item.get_document().document_type=='Приход':
+                    count+=item.count
+                elif item.get_document() and item.get_document().document_type=='Расход':
+                    count-=item.count
+                elif item.get_document().document_type=='Резерв':
+                    count -= item.count
+                    if reserved is None:
+                        reserved = item.count
+                    else:
+                        reserved += item.count
+                elif item.get_document().document_type=='Списание':
+                    count=0
         if self.id_product:
             Product.query.filter(Product.id==self.id_product).first().p_unfired = reserved
             db.session.commit()

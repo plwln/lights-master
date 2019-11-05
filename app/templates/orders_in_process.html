@@ -11,7 +11,7 @@
         {%endif%}
         {%if 'Продажники' in roles or 'Admin' in roles%}
         <div class="col ml-3 "><button type="button" class="py-0 px-1 btn btn-sm btn-outline-primary updateButton"
-            order_id={{order.id}}>Обновить ( and order.order_status=='Обработка')</button>
+            order_id={{order.id}}>Обновить</button>
         </div>
         {%endif%}
         {%if order.order_status=='Обработка'%}<button type="button"

@@ -4,33 +4,34 @@
 </p>
 <table class="table table-sm">
     <tbody>
-        {%for component in components[time]['obj']%}
-        <tr id='row{{component[0].id}}'>
+        {%for component in components[time]%}
+        {%if component['obj'][0].workflow_count is none or component['obj'][0].pworkflow_count < component['count']%}
+        <tr id='row{{component["obj"][0].id}}'>
             <td>
-                {{component[2].component_name}}
+                {{component['obj'][2].component_name}}
             </td>
             <td><span class="">
-                    {%if component[2].stock_count<components[time]['count'] and component[2].stock_count>0%}
-                    {{components[time]['count']-component[2].stock_count}}
+                    {%if component['obj'][2].stock_count<component['count'] and component['obj'][2].stock_count>0%}
+                    {{component['count']-component['obj'][2].stock_count}}
                     {%else%}
-                    {{components[time]['count']}}
+                    {{component['count']}}
                     {%endif%}
                 </span>
 
-                {%if component[0].workflow_count%}
-                / {{component[0].workflow_count}}
+                {%if component['obj'][0].workflow_count%}
+                / {{component['obj'][0].workflow_count}}
                 {%endif%}
             </td>
             <td class=p-1>
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                    data-target="#c{{component[2].id}}" disabled='True'>
+                    data-target="#c{{component['obj'][2].id}}" disabled='True'>
                     Приход
                 </button>
                 <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
-                    data-target="#col{{component[0].id}}" aria-expanded="false" aria-controls="collapseExample">
+                    data-target="#col{{component['obj'][0].id}}" aria-expanded="false" aria-controls="collapseExample">
                     Товар
                 </button>
-                <div class="modal fade" id="c{{component[2].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
+                <div class="modal fade" id="c{{component['obj'][2].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
                     style="display: none;" aria-hidden="true">
                     <div class="modal-dialog modal-sm" role="document">
                         <div class="modal-content">
@@ -41,12 +42,12 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <input type="text" id='wc{{component[0].id}}'
+                                <input type="text" id='wc{{component["obj"][0].id}}'
                                     class="form-control form-control-sm wf_count" placeholder="Кол-во"
                                     aria-label="Username">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" stock_id='{{component[0].id}}'
+                                <button type="button" stock_id='{{component["obj"][0].id}}'
                                     class="btn btn-sm btn-success report">Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
@@ -56,13 +57,14 @@
                 </div>
             </td>
         </tr>
+        {%endif%}
         {%endfor%}
     </tbody>
 </table>
-{%for order in components[time]["obj"]%}
-<div class="collapse py-0" id="col{{order[0].id}}">
+{%for order in components[time]%}
+<div class="collapse py-0" id="col{{order['obj'][0].id}}">
     <div class="card card-body py-0">
-        {%for o in order[1].product_orders%}
+        {%for o in order['obj'][1].product_orders%}
         <li>{{o.get_product().product_name}}</li>
         {%endfor%}
     </div>

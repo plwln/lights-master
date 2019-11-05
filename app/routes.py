@@ -7,7 +7,7 @@ from flask import render_template, flash, redirect, url_for, request, send_from_
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from werkzeug.utils import secure_filename
 from werkzeug.urls import url_parse
-from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note, Shop, ComponentShop
+from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note, Shop, ComponentShop, ProductShop
 from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm, NoteForm
 from datetime import datetime, date, time
 import datetime as dt
@@ -836,16 +836,14 @@ def update_status():
         db.session.commit()
         stck = Stock.query.filter(Stock.document_id==doc.id).all()
         for s in stck:
-            s.get_component().unfired=0
-            db.session.commit()
-        stck[0].get_component().get_count()
+            s.get_count()
     elif doc.order_status == 'отгружен':
         doc.order_status = 'выполнен'
         db.session.commit()
     else:
         doc.order_status = 'Завершен'
         db.session.commit()
-    return jsonify({'cards': render_template('orders_in_process.html',  order=doc),
+    return jsonify({'cards': render_template('orders_in_process.html',  order=doc, roles=[x.name for x in current_user.roles]),
                     'table': render_template('table_order_in_process.html',  order=doc, roles=[x.name for x in current_user.roles])})
 
 
@@ -1180,16 +1178,14 @@ def add_component():
 
 @app.route('/add_product', methods=['POST'])
 def add_product():
-    product = Order.query.filter(
-        Order.prod_id == request.form['product_id']).first()
-    if product is None:
-        product = Order(None ,request.form['product_id'], None)
-        db.session.add(product)
-        db.session.commit()
-    product.pshop_id = request.form['workshop_id']
+    product = Product.query.filter(Product.id==request.form['product_id']).first()
+    shop = Shop.query.filter(Shop.id == request.form['workshop_id']).first()
+    product.product_shop_id.append(shop)
     db.session.commit()
-    products = db.session.query(Product).join(Order).filter(
-        Product.id == Order.prod_id).filter(request.form['workshop_id'] == Order.pshop_id).all()
+    print(product.product_shop_id)
+    products = db.session.query(Product).join(ProductShop).filter(
+        Product.id == ProductShop.pr_id).filter(shop.id == ProductShop.prod_shop_id).all()
+    print(products)
     if len(products) <= 1:
         return render_template('workshop_details.html', products=products, type='list')
     return render_template('product_row.html', prod=product)
@@ -1198,34 +1194,34 @@ def add_product():
 def show_workshop():
     details = db.session.query(Component).join(ComponentShop).filter(
         Component.id == ComponentShop.com_id).filter(request.form['workshop'] == ComponentShop.shop_id).all()
-    products = db.session.query(Product).join(Order).filter(
-        Product.id == Order.prod_id).filter(request.form['workshop'] == Order.pshop_id).all()
-    
+    products = db.session.query(Product).join(ProductShop).filter(
+        Product.id == ProductShop.pr_id).filter(request.form['workshop'] == ProductShop.prod_shop_id).all()
+    print(products)
     return render_template('workshop_details.html', details=details, products = products,  type='list')
 
 
 @app.route('/pworkshop_orders/<shop>', methods=['GET', 'POST'])
 def pworkshop_orders(shop):
     prods = db.session.query(Order, Document, Product).filter(
-        Order.doc_id == Document.id).filter(Order.prod_id==Product.id).all()
+        Order.doc_id == Document.id).filter(Order.prod_id==Product.id).filter(Document.order_status=='в производстве').all()
     products = {}
-    for prod in prods:
-        if prod[0]:
-            if prod[0].pshop_id==int(shop) and prod[0].status == 'Заказ':
-                if prod[1].endtime:
-                    if prod[1].endtime not in products:
-                        products[prod[1].endtime]={}
-                        products[prod[1].endtime]['count']=0
-                        products[prod[1].endtime]['obj']=[]
-                        products[prod[1].endtime]['obj'].append(prod)
-                        products[prod[1].endtime]['count']+=prod[0].count
+    for det in prods:
+        if det[0]:
+            if int(shop) in [x.id for x in det[2].product_shop_id]:
+                if det[1].endtime:
+                    if det[1].endtime not in products:
+                        products[det[1].endtime]=[]
+                        products[det[1].endtime].append({'count':det[0].count,
+                        'obj':det})
                     else:
-                        for prdct in products[prod[1].endtime]['obj']:
-                            if prod[2]==prdct[2]:
-                                products[prod[1].endtime]['count']+=det[0].count
+                        for cmpnnt in products[det[1].endtime]:
+                            if det[2]==cmpnnt['obj'][2]:
+                                cmpnnt['count']+=det[0].count
                                 break
                         else:
-                            products[prod[1].endtime]['obj'].append(prod)
+                            products[det[1].endtime].append({'count':det[0].count,
+                        'obj':det})
+    print(products)
     times=sorted(products, key=lambda x: x)
     return render_template('pworkflow_table.html', times = times, components = products)
 
@@ -1239,20 +1235,18 @@ def workshop_orders():
         if det[2].shop :
             if int(request.form['shop']) in [x.id for x in det[2].shop]:
                 if det[1].endtime:
-                    endtime = datetime.strptime(det[1].endtime,"%Y-%m-%d")
                     if det[1].endtime not in components:
-                        components[det[1].endtime]={}
-                        components[det[1].endtime]['count']=0
-                        components[det[1].endtime]['obj']=[]
-                        components[det[1].endtime]['obj'].append(det)
-                        components[det[1].endtime]['count']+=det[0].count
+                        components[det[1].endtime]=[]
+                        components[det[1].endtime].append({'count':det[0].count,
+                        'obj':det})
                     else:
-                        for cmpnnt in components[det[1].endtime]['obj']:
-                            if det[2]==cmpnnt[2]:
-                                components[det[1].endtime]['count']+=det[0].count
+                        for cmpnnt in components[det[1].endtime]:
+                            if det[2]==cmpnnt['obj'][2]:
+                                cmpnnt['count']+=det[0].count
                                 break
                         else:
-                            components[det[1].endtime]['obj'].append(det)
+                            components[det[1].endtime].append({'count':det[0].count,
+                        'obj':det})
     print(components)
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
@@ -1267,7 +1261,7 @@ def delete_component_shop():
 
 @app.route('/delete_product_shop', methods=['GET', 'POST'])
 def delete_product_shop():
-    Order.query.filter(Order.prod_id==request.form['id']).filter(Order.pshop_id is not None).first().pshop_id=None
+    Product.query.filter(Product.id==request.form['id']).first().shop=[]
     db.session.commit()
     return '', 204
 
