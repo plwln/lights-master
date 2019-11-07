@@ -933,7 +933,8 @@ def order_processor(doc):
             for name in new_md:
                 query2 = db.session.query(Component, Stock).filter(
                     Component.component_name == name).filter(Stock.component_id == Component.id).first()
-                query2[1].get_count()
+                if query2:
+                    query2[1].get_count()
         order.status = doc_type
         db.session.commit()
         order.get_document().order_status = order_status
