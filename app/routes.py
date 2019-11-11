@@ -924,8 +924,11 @@ def order_processor(doc):
                     query[1].get_count()
                 if query[1] is None or query[0].stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
                     doc_type = 'Резерв'
-                    note = Note(query[0].id, product.id, order.id, math.fabs(
-                        (query[0].stock_count+query[0].unfired)-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
+                    if query[0].stock_count>0:
+                        count = math.fabs((query[0].stock_count+query[0].unfired)-(details_new[name]*(order.count-pstock(product.pstock_count))))
+                    else:
+                        count = (details_new[name]*(order.count-pstock(product.pstock_count)))
+                    note = Note(query[0].id, product.id, order.id, count, '')
                     db.session.add(note)
                     db.session.commit()
                     order_status = None
@@ -957,12 +960,13 @@ def order_processor(doc):
                 cmpnnt = Component.query.filter(Component.component_name == key).first().id
                 stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()
                 if stck:
-                    stck.count = math.ceil(dets[key]*(order.count-pstock(product.pstock_count)))
+                    coef = (dets[key]*(order.count-pstock(product.pstock_count)))
+                    stck.count = coef
                     db.session.commit()
                     stck.get_count()
                 else:
-                    new_stck = Stock(order.doc_id, None, cmpnnt,
-                                        math.ceil(dets[key]*(order.count-pstock(product.pstock_count))))
+                    coef = (dets[key]*(order.count-pstock(product.pstock_count)))
+                    new_stck = Stock(order.doc_id, None, cmpnnt, coef)
                     db.session.add(new_stck)
                     db.session.commit()
                     new_stck.get_count()
@@ -1001,12 +1005,14 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
             if component.stock_count < (details_new[name]['count']*(order.count-pstock(product.pstock_count))):
                 count = details_new[name].pop('count')
                 for det in details_new[name].keys():
-                    if type(details_new[name][det]) != dict:
-                        details_new[name][det] *= (
-                            (count*order.count-component.stock_count)/(order.count))
+                    if component.stock_count>0:
+                        coef = ((count*order.count-component.stock_count)/(order.count))
                     else:
-                        details_new[name][det]['count'] *= (
-                            (count*order.count-component.stock_count)/(order.count))
+                        coef = count
+                    if type(details_new[name][det]) != dict:
+                        details_new[name][det] *= coef
+                    else:
+                        details_new[name][det]['count'] *= coef
                 details_new.update(details_new[name])
             details_new.pop(name)
         else:
@@ -1313,3 +1319,21 @@ def executed_orders():
     roles = [x.name for x in current_user.roles]
     return render_template('executed_orders.html', orders=sorted(executed_orders, key=lambda x: x.id)[::-1], roles=roles)
 
+@app.route('/delete_workshop', methods=['GET', 'POST'])
+def delete_workshop():
+    shop = int(request.form['shop'])
+    dets = db.session.query(Component, ComponentShop).filter(Component.id==ComponentShop.com_id).filter(ComponentShop.shop_id==shop).all()
+    prods = db.session.query(Product, ProductShop).filter(Product.id==ProductShop.pr_id).filter(ProductShop.prod_shop_id==shop).all()
+    shop = Shop.query.filter(Shop.id==shop).first()
+    if dets:
+        for det in dets:
+            det[0].shop.remove(shop)
+            db.session.commit()
+    if prods:
+        for prod in prods:
+            prod[0].product_shop_id.remove(shop)
+            db.session.commit()
+    db.session.delete(shop)
+    db.session.commit()
+    
+    return redirect(url_for('workshops'))
