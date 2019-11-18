@@ -5,7 +5,7 @@
 <table class="table table-sm">
     <tbody>
         {%for component in components[time]%}
-        {%if component['obj'][0].workflow_count is none or component['obj'][0].pworkflow_count < component['count']%}
+        {%if component['obj'][0].workflow_count is none or component['count']-component['obj'][2].stock_count>component['obj'][0].workflow_count%}
         <tr id='row{{component["obj"][0].id}}'>
             <td>
                 {{component['obj'][2].component_name}}
@@ -24,7 +24,7 @@
             </td>
             <td class=p-1>
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                    data-target="#c{{component['obj'][2].id}}" disabled='True'>
+                    data-target="#c{{component['obj'][2].id}}" >
                     Приход
                 </button>
                 <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"

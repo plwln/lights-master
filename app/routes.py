@@ -47,7 +47,7 @@ def update_thread():
     if count == 0:
         count = 1
     if count > 5:
-        count = 5
+        count = 4
     pool = ThreadPool(count)
     pool.map(order_processor, docs)
     pool.close()
@@ -922,12 +922,12 @@ def order_processor(doc):
                     Component.component_name == name).first()), None]
                 if query[1]:
                     query[1].get_count()
-                if query[1] is None or query[0].stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
+                if query[1] is None or query[0].stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))) or query[0].stock_count is None:
                     doc_type = 'Резерв'
                     if query[0].stock_count>0:
-                        count = math.fabs((query[0].stock_count+query[0].unfired)-(details_new[name]*(order.count-pstock(product.pstock_count))))
+                        count = math.fabs((query[0].stock_count)-(details_new[name]*(order.count-pstock(product.pstock_count))))
                     else:
-                        count = (details_new[name]*(order.count-pstock(product.pstock_count)))
+                        count = math.ceil(details_new[name]*(order.count-pstock(product.pstock_count)))
                     note = Note(query[0].id, product.id, order.id, count, '')
                     db.session.add(note)
                     db.session.commit()
@@ -958,18 +958,12 @@ def order_processor(doc):
         if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
                 cmpnnt = Component.query.filter(Component.component_name == key).first().id
-                stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()
-                if stck:
-                    coef = (dets[key]*(order.count-pstock(product.pstock_count)))
-                    stck.count = coef
-                    db.session.commit()
-                    stck.get_count()
-                else:
-                    coef = (dets[key]*(order.count-pstock(product.pstock_count)))
-                    new_stck = Stock(order.doc_id, None, cmpnnt, coef)
-                    db.session.add(new_stck)
-                    db.session.commit()
-                    new_stck.get_count()
+                stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
+                coef = math.ceil(details[key]*(order.count-pstock(product.pstock_count)))
+                new_stck = Stock(order.doc_id, None, cmpnnt, coef)
+                db.session.add(new_stck)
+                db.session.commit()
+                new_stck.get_count()
 
         else:
             p_stock = db.session.query(Product.id).filter(
@@ -992,10 +986,6 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
         return
     for name in names:
         new_md.update({name: details_new[name]['count']})
-        for det in details_new[name]:
-
-            if type(details_new[name][det]) == dict and details_new[name]['count'] > 1:
-                details_new[name][det]['count'] *= details_new[name]['count']
         component = Component.query.filter(
             Component.component_name == name).first()
         item = Stock.query.filter(Stock.component_id == component.id).first()
@@ -1006,7 +996,7 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
                 count = details_new[name].pop('count')
                 for det in details_new[name].keys():
                     if component.stock_count>0:
-                        coef = ((count*order.count-component.stock_count)/(order.count))
+                        coef = count
                     else:
                         coef = count
                     if type(details_new[name][det]) != dict:
@@ -1284,6 +1274,10 @@ def workflow_count():
     new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
     db.session.add(new_doc)
     db.session.commit()
+    det = {}
+    modul = ModalComponent.query.filter(ModalComponent.parrent_id==stock.get_component().id).all()
+    report = Product.get_details_report(modul, det)
+    print(report)
     new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))
     db.session.add(new_stck)
     db.session.commit()
@@ -1291,11 +1285,9 @@ def workflow_count():
     if stock.workflow_count:
         stock.workflow_count+=int(request.form['workflow_count'])
         db.session.commit()
-        print(stock.workflow_count)
     else:
         stock.workflow_count=int(request.form['workflow_count'])
         db.session.commit()
-        print(stock.workflow_count)
     
     return render_template('workflow_row.html', stock = stock)
 
