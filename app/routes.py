@@ -1232,7 +1232,7 @@ def workshop_orders():
         if det[2].shop :
             if int(request.form['shop']) in [x.id for x in det[2].shop]:
                 if det[1].endtime:
-                    if det[1].endtime not in components:
+                    if (det[1].endtime not in components):
                         components[det[1].endtime]=[]
                         components[det[1].endtime].append({'count':det[0].count,
                         'obj':det})
@@ -1245,8 +1245,17 @@ def workshop_orders():
                             components[det[1].endtime].append({'count':det[0].count,
                         'obj':det})
     print(components)
+    print(components['2019-10-31'][0])
+    print(components['2019-10-31'][0]['obj'][2].component_name)
+    print(components['2019-10-31'][0]['obj'][2].stock_count)
+    for c in components:
+        for comp in components[c]:
+            if comp['count']<=comp['obj'][2].stock_count:
+                components[c].remove(comp)
+                break
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
+    print(components)
     times=sorted(components, key=lambda x: x)
     return render_template('workflow_table.html', times = times, components = components)
 
@@ -1277,7 +1286,24 @@ def workflow_count():
     det = {}
     modul = ModalComponent.query.filter(ModalComponent.parrent_id==stock.get_component().id).all()
     report = Product.get_details_report(modul, det)
+    details_new=dict()
+    new_md=dict()
+    def pstock(x): return x if x and x > 0 else 0
+    order = stock.get_document().product_orders[0]
+    prod = order.get_product()
+    print(prod)
+    get_mods_rec(report,new_md,prod, pstock, order)
     print(report)
+    print(new_md)
+    for key in details_new.keys():
+        cmpnnt = Component.query.filter(Component.component_name == key).first().id
+        stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
+        coef = math.ceil(details[key]* int(request.form['workflow_count']))
+        new_stck = Stock(order.doc_id, None, cmpnnt, coef)
+        db.session.add(new_stck)
+        db.session.commit()
+        new_stck.get_count()
+
     new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))
     db.session.add(new_stck)
     db.session.commit()

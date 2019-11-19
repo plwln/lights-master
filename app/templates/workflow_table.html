@@ -1,11 +1,12 @@
 {%for time in times%}
+{%if components[time]!=[]%}
 <p class='mb-0'>
     <b class='text-primary'>{{time}}</b>
 </p>
 <table class="table table-sm">
     <tbody>
         {%for component in components[time]%}
-        {%if component['obj'][0].workflow_count is none or component['count']-component['obj'][2].stock_count>component['obj'][0].workflow_count%}
+        {%if component['count']>component['obj'][2].stock_count and (component['obj'][0].workflow_count is none or component['count']-component['obj'][2].stock_count>=component['obj'][0].workflow_count)%}
         <tr id='row{{component["obj"][0].id}}'>
             <td>
                 {{component['obj'][2].component_name}}
@@ -70,4 +71,5 @@
     </div>
 </div>
 {%endfor%}
+{%endif%}
 {%endfor%}
