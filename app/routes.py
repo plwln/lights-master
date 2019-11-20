@@ -39,6 +39,7 @@ def update_thread():
     orders = Document.query.filter(Document.product_orders).filter(
         Document.order_item).all()[::-1]
     docs = [x.id for x in orders if x.order_status!='выполнен']
+    
     cnt = 0
     print(len(docs))
     count = len(docs)//2
@@ -90,6 +91,10 @@ def home_page():
     # stcks = Stock.query.filter(Stock.id_product).all()
     # for stck in stcks:
     #     stck.get_count() 
+    
+    orders = Document.query.filter(Document.product_orders).filter(
+        Document.order_item).all()[::-1]
+    docs = [x.id for x in orders if x.order_status!='выполнен']
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x.doc_id).first(
     ) for x in list(set(db.session.query(Order).filter(Order.doc_id).all()))]
@@ -1281,25 +1286,23 @@ def workflow():
 def workflow_count():
     stock = Stock.query.filter(Stock.id == request.form['stock']).first()
     new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
+    doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
     db.session.add(new_doc)
     db.session.commit()
     det = {}
     modul = ModalComponent.query.filter(ModalComponent.parrent_id==stock.get_component().id).all()
     report = Product.get_details_report(modul, det)
-    details_new=dict()
     new_md=dict()
     def pstock(x): return x if x and x > 0 else 0
     order = stock.get_document().product_orders[0]
     prod = order.get_product()
-    print(prod)
     get_mods_rec(report,new_md,prod, pstock, order)
     print(report)
-    print(new_md)
-    for key in details_new.keys():
+    for key in report.keys():
         cmpnnt = Component.query.filter(Component.component_name == key).first().id
         stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
-        coef = math.ceil(details[key]* int(request.form['workflow_count']))
-        new_stck = Stock(order.doc_id, None, cmpnnt, coef)
+        coef = math.ceil(report[key]* int(request.form['workflow_count']))
+        new_stck = Stock(doc.id, cmpnnt, None, coef)
         db.session.add(new_stck)
         db.session.commit()
         new_stck.get_count()
