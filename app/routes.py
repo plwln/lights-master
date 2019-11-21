@@ -91,7 +91,14 @@ def home_page():
     # stcks = Stock.query.filter(Stock.id_product).all()
     # for stck in stcks:
     #     stck.get_count() 
-    
+    # stck = Stock.query.filter(Stock.component_id==316).all()
+    # stck[0].get_count()
+    # for s in stck:
+    #     if s.get_document():
+    #         print('{} {} {}',s.id, s.count, s.get_document().document_type)
+    #     else:
+    #         db.session.delete(s)
+    #         db.session.commit()
     orders = Document.query.filter(Document.product_orders).filter(
         Document.order_item).all()[::-1]
     docs = [x.id for x in orders if x.order_status!='выполнен']
@@ -1287,6 +1294,8 @@ def workflow_count():
     stock = Stock.query.filter(Stock.id == request.form['stock']).first()
     new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
     doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
+    db.session.add(doc)
+    db.session.commit()
     db.session.add(new_doc)
     db.session.commit()
     det = {}
@@ -1302,7 +1311,7 @@ def workflow_count():
         cmpnnt = Component.query.filter(Component.component_name == key).first().id
         stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
         coef = math.ceil(report[key]* int(request.form['workflow_count']))
-        new_stck = Stock(doc.id, cmpnnt, None, coef)
+        new_stck = Stock(doc.id, None, cmpnnt, coef)
         db.session.add(new_stck)
         db.session.commit()
         new_stck.get_count()
@@ -1323,6 +1332,8 @@ def workflow_count():
 @app.route('/pworkflow_count', methods=['GET', 'POST'])
 def pworkflow_count():
     order = Order.query.filter(Order.id == request.form['order']).first()
+    new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
+    doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
     if order.pworkflow_count:
         order.pworkflow_count+=int(request.form['pworkflow_count'])
         db.session.commit()
