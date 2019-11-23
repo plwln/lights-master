@@ -1257,9 +1257,6 @@ def workshop_orders():
                             components[det[1].endtime].append({'count':det[0].count,
                         'obj':det})
     print(components)
-    print(components['2019-10-31'][0])
-    print(components['2019-10-31'][0]['obj'][2].component_name)
-    print(components['2019-10-31'][0]['obj'][2].stock_count)
     for c in components:
         for comp in components[c]:
             if comp['count']<=comp['obj'][2].stock_count:
@@ -1291,6 +1288,7 @@ def workflow():
 
 @app.route('/workflow_count', methods=['GET', 'POST'])
 def workflow_count():
+       
     stock = Stock.query.filter(Stock.id == request.form['stock']).first()
     new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
     doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
@@ -1315,7 +1313,13 @@ def workflow_count():
         db.session.add(new_stck)
         db.session.commit()
         new_stck.get_count()
-
+    dets = db.session.query(Stock, Document, Component).filter(
+        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).filter(Component.id==stock.component_id).all()
+    component = {'count':0, 'obj':dets[0]}
+    for det in dets:
+        if det[1].endtime==request.form['time']:
+            component['count']+=det[0].count
+    print(component)
     new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))
     db.session.add(new_stck)
     db.session.commit()
@@ -1327,7 +1331,7 @@ def workflow_count():
         stock.workflow_count=int(request.form['workflow_count'])
         db.session.commit()
     
-    return render_template('workflow_row.html', stock = stock)
+    return render_template('workflow_row.html', component = component)
 
 @app.route('/pworkflow_count', methods=['GET', 'POST'])
 def pworkflow_count():

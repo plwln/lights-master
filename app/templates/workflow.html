@@ -61,14 +61,17 @@
         $('#shop1').click();
         $(document).on('click', '.report', function () {
             stock = $(this).attr('stock_id');
-            console.log('#wc' + stock)
+            time = $(this).attr('time');
+            console.log('#wc' + stock);
             workflow_count = $('#wc' + stock).val()
             console.log(workflow_count)
+            $('body').addClass('loading');
             req = $.ajax({
                 url: '/workflow_count',
                 type: 'POST',
                 data: {
                     'stock': stock,
+                    'time': time,
                     'workflow_count': workflow_count,
                 }
             });
@@ -76,6 +79,7 @@
                 $('#row' + stock).html(data);
                 $('body').removeClass('modal-open')
                 $('.modal-backdrop').remove();
+                $('.bbody').removeClass('loading');
             });
         });
         $(document).on('click', '.pReport', function () {
