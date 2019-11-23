@@ -62,6 +62,7 @@
         $(document).on('click', '.report', function () {
             stock = $(this).attr('stock_id');
             time = $(this).attr('time');
+            doc = $(this).attr('doc');
             console.log('#wc' + stock);
             workflow_count = $('#wc' + stock).val()
             console.log(workflow_count)
@@ -73,6 +74,7 @@
                     'stock': stock,
                     'time': time,
                     'workflow_count': workflow_count,
+                    'doc':doc,
                 }
             });
             req.done(function (data) {

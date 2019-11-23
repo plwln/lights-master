@@ -1238,7 +1238,9 @@ def pworkshop_orders(shop):
 def workshop_orders():
     dets = db.session.query(Stock, Document, Component).filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).all()   
-    print(dets)
+    for det in dets:
+        if det[0].count>det[2].stock_count:
+            print(det[0], det[0].document_id, det[1], det[2].component_name, det[0].count, det[1].endtime)
     components = {}
     for det in dets:
         if det[2].shop :
@@ -1253,9 +1255,9 @@ def workshop_orders():
                             if det[2]==cmpnnt['obj'][2]:
                                 cmpnnt['count']+=det[0].count
                                 break
-                        else:
-                            components[det[1].endtime].append({'count':det[0].count,
-                        'obj':det})
+                            else:
+                                components[det[1].endtime].append({'count':det[0].count,
+                            'obj':det})
     print(components)
     for c in components:
         for comp in components[c]:
@@ -1264,7 +1266,6 @@ def workshop_orders():
                 break
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
-    print(components)
     times=sorted(components, key=lambda x: x)
     return render_template('workflow_table.html', times = times, components = components)
 
@@ -1289,7 +1290,7 @@ def workflow():
 @app.route('/workflow_count', methods=['GET', 'POST'])
 def workflow_count():
        
-    stock = Stock.query.filter(Stock.id == request.form['stock']).first()
+    stock = Stock.query.filter(Stock.id == int(request.form['stock'])).first()
     new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
     doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
     db.session.add(doc)
@@ -1304,7 +1305,7 @@ def workflow_count():
     order = stock.get_document().product_orders[0]
     prod = order.get_product()
     get_mods_rec(report,new_md,prod, pstock, order)
-    print(report)
+    print(stock)
     for key in report.keys():
         cmpnnt = Component.query.filter(Component.component_name == key).first().id
         stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
@@ -1315,10 +1316,12 @@ def workflow_count():
         new_stck.get_count()
     dets = db.session.query(Stock, Document, Component).filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).filter(Component.id==stock.component_id).all()
-    component = {'count':0, 'obj':dets[0]}
+    component = {'count':0, 'obj':''}
     for det in dets:
         if det[1].endtime==request.form['time']:
             component['count']+=det[0].count
+            if det[1].id==int(request.form['doc']):
+                component['obj']=det
     print(component)
     new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))
     db.session.add(new_stck)

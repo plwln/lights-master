@@ -12,7 +12,7 @@
                 {{component['obj'][2].component_name}}
             </td>
             <td><span class="">
-                    {%if component['obj'][2].stock_count<component['count'] and component['obj'][2].stock_count>0%}
+                    {%if component['obj'][2].stock_count>0%}
                     {{component['count']-component['obj'][2].stock_count}}
                     {%else%}
                     {{component['count']}}
@@ -25,14 +25,14 @@
             </td>
             <td class=p-1>
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                    data-target="#c{{component['obj'][2].id}}" >
+                    data-target="#c{{component['obj'][0].id}}" >
                     Приход
                 </button>
                 <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
                     data-target="#col{{component['obj'][0].id}}" aria-expanded="false" aria-controls="collapseExample">
                     Товар
                 </button>
-                <div class="modal fade" id="c{{component['obj'][2].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
+                <div class="modal fade" id="c{{component['obj'][0].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
                     style="display: none;" aria-hidden="true">
                     <div class="modal-dialog modal-sm" role="document">
                         <div class="modal-content">
@@ -49,7 +49,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" stock_id='{{component["obj"][0].id}}'
-                                    class="btn btn-sm btn-success report" time={{time}}>Оформить</button>
+                                    class="btn btn-sm btn-success report" time={{time}} doc='{{component["obj"][1].id}}'>Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
                             </div>
