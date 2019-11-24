@@ -21,9 +21,7 @@
                 </div>
             </div>
         </div>
-        {%if 'Admin' in roles%}
         <button class="btn btn-success mt-2 col btn-sm" id='reload'>Обновить</button>
-        {%endif%}
     </div>
     <div class="col-12 col-sm-10 col-md-10 col-xl-10 grid-margin stretch-card px-0">
         <div class="card">
@@ -59,31 +57,6 @@
             window.location.reload();
         });
         $('#shop1').click();
-        $(document).on('click', '.report', function () {
-            stock = $(this).attr('stock_id');
-            time = $(this).attr('time');
-            doc = $(this).attr('doc');
-            console.log('#wc' + stock);
-            workflow_count = $('#wc' + stock).val()
-            console.log(workflow_count)
-            $('body').addClass('loading');
-            req = $.ajax({
-                url: '/workflow_count',
-                type: 'POST',
-                data: {
-                    'stock': stock,
-                    'time': time,
-                    'workflow_count': workflow_count,
-                    'doc':doc,
-                }
-            });
-            req.done(function (data) {
-                $('#row' + stock).html(data);
-                $('body').removeClass('modal-open')
-                $('.modal-backdrop').remove();
-                $('.bbody').removeClass('loading');
-            });
-        });
         $(document).on('click', '.pReport', function () {
             order = $(this).attr('order_id');
             console.log('#wc' + order)
@@ -121,4 +94,33 @@
    
         setTimeout(refresh, 10000);
    </script>
+   <script>
+    $(document).ready(function () {
+        $(document).on('click', '.report', function () {
+            stock = $(this).attr('stock_id');
+            time = $(this).attr('time');
+            doc = $(this).attr('doc');
+            console.log('#wc' + stock);
+            workflow_count = $('#wc' + stock).val()
+            console.log(workflow_count)
+            $('body').addClass('loading');
+            req = $.ajax({
+                url: '/workflow_count',
+                type: 'POST',
+                data: {
+                    'stock': stock,
+                    'time': time,
+                    'workflow_count': workflow_count,
+                    'doc':doc,
+                }
+            });
+            req.done(function (data) {
+                $('#row' + stock).html(data);
+                $('body').removeClass('modal-open')
+                $('.modal-backdrop').remove();
+                $('.bbody').removeClass('loading');
+            });
+        });
+    });
+    </script>
 {%endblock%}

@@ -1252,12 +1252,11 @@ def workshop_orders():
                         'obj':det})
                     else:
                         for cmpnnt in components[det[1].endtime]:
-                            if det[2]==cmpnnt['obj'][2]:
+                            if det[2].id==cmpnnt['obj'][2].id:
                                 cmpnnt['count']+=det[0].count
                                 break
-                            else:
-                                components[det[1].endtime].append({'count':det[0].count,
-                            'obj':det})
+                        if det[2].id not in [x['obj'][2].id for x in components[det[1].endtime]]:
+                            components[det[1].endtime].append({'count':det[0].count,'obj':det})
     print(components)
     for c in components:
         for comp in components[c]:
@@ -1284,8 +1283,7 @@ def delete_product_shop():
 @app.route('/workflow', methods=['GET', 'POST'])
 def workflow():
     workshops = Shop.query.all()
-    roles = [x.name for x in current_user.roles]
-    return render_template('workflow.html', roles=roles, workshops=workshops)
+    return render_template('workflow.html', workshops=workshops)
 
 @app.route('/workflow_count', methods=['GET', 'POST'])
 def workflow_count():
@@ -1306,6 +1304,7 @@ def workflow_count():
     prod = order.get_product()
     get_mods_rec(report,new_md,prod, pstock, order)
     print(stock)
+    print(request.form)
     for key in report.keys():
         cmpnnt = Component.query.filter(Component.component_name == key).first().id
         stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
@@ -1316,11 +1315,12 @@ def workflow_count():
         new_stck.get_count()
     dets = db.session.query(Stock, Document, Component).filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).filter(Component.id==stock.component_id).all()
-    component = {'count':0, 'obj':''}
+    component = {'count':0, 'obj':None}
+    doc = int(request.form['stock'])
     for det in dets:
         if det[1].endtime==request.form['time']:
             component['count']+=det[0].count
-            if det[1].id==int(request.form['doc']):
+            if det[0].id==doc:
                 component['obj']=det
     print(component)
     new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))

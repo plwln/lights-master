@@ -1,3 +1,4 @@
+{%if component['obj']%}
 {%if component['count']>component['obj'][2].stock_count and (component['obj'][0].workflow_count is none or component['count']-component['obj'][2].stock_count>=component['obj'][0].workflow_count)%}
         <tr id='row{{component["obj"][0].id}}'>
             <td>
@@ -41,7 +42,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" stock_id='{{component["obj"][0].id}}'
-                                    class="btn btn-sm btn-success report">Оформить</button>
+                                    class="btn btn-sm btn-success report" time='{{component["obj"][1].endtime}}' doc='{{component["obj"][1].id}}'>Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
                             </div>
@@ -50,4 +51,5 @@
                 </div>
             </td>
         </tr>
+        {%endif%}
         {%endif%}
