@@ -5,11 +5,18 @@
                 {{component['obj'][2].component_name}}
             </td>
             <td><span class="">
-                    {%if component['obj'][2].stock_count>0%}
-                    {{component['count']-component['obj'][2].stock_count}}
-                    {%else%}
-                    {{component['count']}}
-                    {%endif%}
+                {%if component['obj'][2].stock_count>0%}
+                {{component['count']-component['obj'][2].stock_count}}
+                {%if component['obj'][0].workflow_count%}
+                {{component['count']-component['obj'][2].stock_count-component['obj'][0].workflow_count}}
+                {%endif%}
+                {%else%}
+                {%if component['obj'][0].workflow_count%}
+                {{component['count']-component['obj'][0].workflow_count}}
+                {%else%}
+                {{component['count']}}
+                {%endif%}
+                {%endif%}
                 </span>
 
                 {%if component['obj'][0].workflow_count%}
