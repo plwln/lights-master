@@ -1227,7 +1227,7 @@ def pworkshop_orders(shop):
                             if det[2]==cmpnnt['obj'][2]:
                                 cmpnnt['count']+=det[0].count
                                 break
-                        else:
+                        if det[2].id not in [x['obj'][2].id for x in products[det[1].endtime]]:
                             products[det[1].endtime].append({'count':det[0].count,
                         'obj':det})
     print(products)
@@ -1236,11 +1236,9 @@ def pworkshop_orders(shop):
 
 @app.route('/workshop_orders', methods=['GET', 'POST'])
 def workshop_orders():
+    roles = [x.name for x in current_user.roles]
     dets = db.session.query(Stock, Document, Component).filter(
         Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).all()   
-    for det in dets:
-        if det[0].count>det[2].stock_count:
-            print(det[0], det[0].document_id, det[1], det[2].component_name, det[0].count, det[1].endtime)
     components = {}
     for det in dets:
         if det[2].shop :
@@ -1260,13 +1258,28 @@ def workshop_orders():
     print(components)
     for c in components:
         for comp in components[c]:
-            if comp['count']<=comp['obj'][2].stock_count:
+            if comp['count']>comp['obj'][2].stock_count and (comp['obj'][0].workflow_count is None or (comp['obj'][2].stock_count>0 and comp['count']>comp['obj'][0].workflow_count)):
+                continue
+            else:
                 components[c].remove(comp)
-                break
+    
+    for c in components:
+        for comp in components[c]:
+            if comp['count']>comp['obj'][2].stock_count and (comp['obj'][0].workflow_count is None or (comp['obj'][2].stock_count>0 and comp['count']>comp['obj'][0].workflow_count)):
+                continue
+            else:
+                components[c].remove(comp)
+    for c in components:
+        for comp in components[c]:
+            if comp['count']>comp['obj'][2].stock_count and (comp['obj'][0].workflow_count is None or (comp['obj'][2].stock_count>0 and comp['count']>comp['obj'][0].workflow_count)):
+                continue
+            else:
+                components[c].remove(comp)
+    print(components)
     if components == {}:
         return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
     times=sorted(components, key=lambda x: x)
-    return render_template('workflow_table.html', times = times, components = components)
+    return render_template('workflow_table.html', times = times, components = components, roles=roles)
 
 @app.route('/delete_component_shop', methods=['GET', 'POST'])
 def delete_component_shop():
@@ -1287,7 +1300,7 @@ def workflow():
 
 @app.route('/workflow_count', methods=['GET', 'POST'])
 def workflow_count():
-       
+    roles = [x.name for x in current_user.roles]   
     stock = Stock.query.filter(Stock.id == int(request.form['stock'])).first()
     new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
     doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
@@ -1303,8 +1316,6 @@ def workflow_count():
     order = stock.get_document().product_orders[0]
     prod = order.get_product()
     get_mods_rec(report,new_md,prod, pstock, order)
-    print(stock)
-    print(request.form)
     for key in report.keys():
         cmpnnt = Component.query.filter(Component.component_name == key).first().id
         stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
@@ -1322,7 +1333,6 @@ def workflow_count():
             component['count']+=det[0].count
             if det[0].id==doc:
                 component['obj']=det
-    print(component)
     new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))
     db.session.add(new_stck)
     db.session.commit()
@@ -1334,7 +1344,7 @@ def workflow_count():
         stock.workflow_count=int(request.form['workflow_count'])
         db.session.commit()
     
-    return render_template('workflow_row.html', component = component)
+    return render_template('workflow_row.html', component = component, roles=roles)
 
 @app.route('/pworkflow_count', methods=['GET', 'POST'])
 def pworkflow_count():

@@ -1,5 +1,5 @@
 {%if component['obj']%}
-{%if component['count']>component['obj'][2].stock_count and (component['obj'][0].workflow_count is none or component['count']-component['obj'][2].stock_count>=component['obj'][0].workflow_count)%}
+{%if component['count']>component['obj'][2].stock_count and (component['obj'][0].workflow_count is none or (component['obj'][2].stock_count>0 and component['count']>component['obj'][0].workflow_count))%}
         <tr id='row{{component["obj"][0].id}}'>
             <td>
                 {{component['obj'][2].component_name}}
@@ -24,10 +24,12 @@
                 {%endif%}
             </td>
             <td class=p-1>
+                {%if 'Admin' in roles%}
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
                     data-target="#c{{component['obj'][0].id}}" >
                     Приход
                 </button>
+                {%endif%}
                 <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
                     data-target="#col{{component['obj'][0].id}}" aria-expanded="false" aria-controls="collapseExample">
                     Товар
