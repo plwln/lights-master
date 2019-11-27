@@ -1350,7 +1350,11 @@ def workflow_count():
 def pworkflow_count():
     order = Order.query.filter(Order.id == request.form['order']).first()
     new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
+    db.session.add(new_doc)
+    db.session.commit()
     doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
+    db.session.add(doc)
+    db.session.commit()
     if order.pworkflow_count:
         order.pworkflow_count+=int(request.form['pworkflow_count'])
         db.session.commit()
@@ -1359,6 +1363,29 @@ def pworkflow_count():
         order.pworkflow_count=int(request.form['pworkflow_count'])
         db.session.commit()
         print(order.pworkflow_count)
+    product = order.prod_id[0]
+    details = product.get_det()
+    details_new = details.copy()
+    new_md=dict()
+    stock = []
+    mod_stock = []
+    get_mods_rec(details_new, new_md, product, pstock, order)
+    
+    for key in details_new.keys():
+        cmpnnt = Component.query.filter(
+            Component.component_name == key).first()
+        db.session.add(Stock(doc.id, None, cmpnnt.id, details[key]*int(request.form['pworkflow_count'])))
+        db.session.commit()
+        Stock.query.filter(
+            cmpnnt.id == Stock.component_id).first().get_count()
+    for key in new_md.keys():
+        cmpnnt = Component.query.filter(
+            Component.component_name == key).first()
+        db.session.add(Stock(doc.id, None, cmpnnt.id, details[key]*int(request.form['pworkflow_count'])))
+        db.session.commit()
+        Stock.query.filter(
+            cmpnnt.id == Stock.component_id).first().get_count()
+
     
     return render_template('pworkflow_row.html', order = order)
 
