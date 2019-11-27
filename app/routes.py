@@ -99,6 +99,12 @@ def home_page():
     #     else:
     #         db.session.delete(s)
     #         db.session.commit()
+    # documents = Document.query.all()
+    # for doc in documents:
+    #     if doc.order_status=='выполнен':
+    #         if doc.document_type=='Резерв':
+    #             doc.document_type=='Заказ'
+    #             db.session.commit()
     orders = Document.query.filter(Document.product_orders).filter(
         Document.order_item).all()[::-1]
     docs = [x.id for x in orders if x.order_status!='выполнен']
@@ -1120,7 +1126,16 @@ def storekeeper_page():
     roles = [x.name for x in current_user.roles]
     notes = [Note.query.filter(Note.na_component == x[0]).first(
     ) for x in set(db.session.query(Note.na_component).all())]
-    print(notes)
+    component = Component.query.filter(Component.component_name=='Наклейка на светильник 58*30мм').first()
+    # n_notes = Note.query.filter(Note.na_component==component.id).all()
+    # for n in n_notes:
+    #     order = Order.query.filter(Order.id==n.order_id).first()
+    #     doc = order.get_document()
+    #     if doc.order_status=='выполнен':
+    #         db.session.delete(n)
+    #         db.session.commit()
+    # for n in notes:
+    #     n.get_component().get_note_count()
     form = NoteForm()
     if request.method == 'POST':
         Note.query.filter(Note.id == form.id.data).first(
