@@ -1,0 +1,66 @@
+<script>
+        $(document).ready(function () {
+          $(document).on('click', '.selectpicker', function () {
+            if ($(this).val() == 'Списание') {
+              $('.count').attr("value", '0');
+              $('.count_div').hide();
+            }
+            else {
+              $('.count').attr("value", '');
+              $('.count_div').show();
+            }
+          });
+        });
+      </script>
+      <script>
+        $(document).ready(function () {
+          $(document).on('click', '.close', function () {
+            $('.count_div').show();
+            $('.selectpicker').attr("value", 'Приход');
+          });
+        });
+      </script>
+      <script>
+        $(document).ready(function () {
+          $(document).on('click', '#submit', function () {
+            $('#count').show();
+          });
+        });
+      </script>
+      <script>
+        $('.alert').show(200, function () {
+          setTimeout(function () {
+            $('.alert').hide(500);
+          }, 2000);
+        });
+      </script>
+      <script>
+        $(document).ready(function () {
+          $(document).on('click', '.openModal', function () {
+            stock = $(this).attr('item');
+            req = $.ajax({
+              url: '/stock_add_form',
+              type: 'POST',
+              data: {
+                'item': stock,
+              }
+            });
+            req.done(function (data) {
+              $('#modal_inner').html(data);
+            });
+          });
+          $(document).on('click', '.openInfo', function () {
+            stock = $(this).attr('item');
+            req = $.ajax({
+              url: '/document',
+              type: 'POST',
+              data: {
+                'item': stock,
+              }
+            });
+            req.done(function (data) {
+              $('#modal_inner').html(data);
+            });
+          });
+        });
+      </script>

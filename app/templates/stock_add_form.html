@@ -1,0 +1,35 @@
+
+    <div class="modal-content">
+    <div class="modal-header text-center">
+        <h5 class="modal-title">{{item.get_component().component_name}}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+        <div class="modal-body">
+            <form class='form' action="" method=post>
+            <div class="row px-3 py-2">
+                <div class="col">
+                    {{form.document_type(class_="form-control selectpicker mr-3")}}
+                </div>
+                <div class="col count_div" id='count_div'>
+                    {{form.count( class_="mr-2 mb-2 form-control count", placeholder="Кол-во")}}</div>
+            </div>
+
+            <div class="col pl-3 py-0 mt-1 mb-1">
+                Комментарий:
+            </div>
+            <div class="col py-0">
+                {{form.text()}}
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+            
+                <button type="button"
+                class="btn btn-success py-0" id='submit' item ={{item.component_id}} >Ок</button>
+        </div>
+        </form>
+
+</div>

@@ -1,0 +1,138 @@
+{%extends "base.html" %}
+{% block content %}
+{% block flash_messages %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for message in messages %}
+{%if 'success' not in message and 'must' not in message%}
+<div id=message class="alert alert-success">{{ message|safe }}</div>
+{%endif%}
+{% endfor %}
+{% endif %}
+{% endwith %}
+{% endblock %}
+<div class="row">
+  {%if 'Склад' in roles or 'Admin' in roles%}
+  <div class="col"><a href="{{url_for('stock_adding', doc_type='Приход', doc='False')}}"><button
+        class="mt-4 btn btn-primary mr-2">Новый документ</button></a></div>
+  {%endif%}
+  <div class="p-0 form-group ml-2 mt-4 mb-2 mr-2">
+    <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <table id=mytable class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <td>Наименование</td>
+          <td>Единицы измерения</td>
+          <td>Артикул</td>
+          <td>Склад/Резерв</td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody style="overflow: auto; height:100%;">
+          {%if stock!=[]%}
+          {% for item in stock%}
+          {% set component = item.get_component() %}
+          <tr>
+            <td class="py-0">{{component.component_name}}</td>
+            <td class="py-0">{{component.component_unit}}</td>
+            <td class="py-0">{{component.component_item}}</td>
+            {%if component.stock_count+component.unfired==component.unfired or component.stock_count+component.unfired<=0%}
+            <td class="py-0">Списан
+              {%if component.unfired%}
+              /{{component.unfired|round(6)}}
+              {%endif%}
+            </td>
+            {%else%}
+            <td class="py-0">{{(component.stock_count+component.unfired)|round(6)}}
+              {%if component.unfired and component.unfired!=0%}
+              /{{component.unfired|round(6)}}
+              {%endif%}
+            </td>
+            {%endif%}
+
+          </td>
+        </tr>
+        <div class="modal fade" id='stock{{item.id}}' tabindex="-1" role="dialog"
+          aria-labelledby="stock{{item.id}}Label" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header text-center">
+                <h5 class="modal-title">{{item.get_component().component_name}}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <form class='form' action="" method=post>
+                <div class="modal-body">
+                  <div class="row px-3 py-2">
+                    <div class="col">
+                      {{form.document_type(class_="form-control selectpicker mr-3")}}
+                    </div>
+                    <div class="col count_div" id='count_div'>
+                      {{form.count( class_="mr-2 mb-2 form-control count", placeholder="Кол-во")}}</div>
+                  </div>
+
+                  <div class="col pl-3 py-0 mt-1 mb-1">
+                    Комментарий:
+                  </div>
+                  <div class="col py-0">
+                    {{form.text()}}
+                  </div>
+                  {{form.id(value=item.component_id, type="hidden")}}
+
+                </div>
+
+                <div class="modal-footer">
+                  {{form.okSubmit( class_="btn btn-success", text_ = 'Ок')}}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {%endfor%}
+        {%endif%}
+      </tbody>
+    </table>
+  </div>
+</div>
+  <script>
+    $(function () {
+      $('.selectpicker').on('change', function () {
+        if ($(this).val() == 'Списание') {
+          $('.count').attr("value", '0');
+          $('.count_div').hide();
+        }
+        else {
+          $('.count').attr("value", '');
+          $('.count_div').show();
+        }
+      });
+    });
+  </script>
+  <script>
+    $(function () {
+      $('.close').on('click', function () {
+        $('.count_div').show();
+        $('.selectpicker').attr("value", 'Приход');
+      });
+    });
+  </script>
+  <script>
+    $(function () {
+      $('#submit').on('click', function () {
+        $('#count').show();
+      });
+    });
+  </script>
+  <script>
+    $('.alert').show(200, function () {
+      setTimeout(function () {
+        $('.alert').hide(500);
+      }, 2000);
+    });
+  </script>
+  {% endblock %}
