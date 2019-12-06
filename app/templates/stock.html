@@ -56,7 +56,7 @@
           <td>
             {%if 'Склад' in roles or 'Admin' in roles%}
             <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-              <button type="button" class="btn btn-success btn-sm py-0 openInfo" data-toggle="modal" data-target="#mod"
+              <button type="button" class="btn btn-success btn-sm py-0 openInfo" data-toggle="modal" data-target="#modNew"
                 item={{item.component_id}}>...</button>
               <button type="button" class="btn btn-info btn-sm py-0 openModal" data-toggle="modal" data-target="#mod"
                 item={{item.id}}> <img src="static/images/document-16.png" alt="" style="vertical-align:middle">
@@ -77,6 +77,11 @@
 
   </div>
 </div>
+<div class="modal fade" id='modNew' tabindex="-1" role="dialog" aria-labelledby="modLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg"" role="document" id='modNew_inner'>
+  
+    </div>
+  </div>
 <script>
   $(document).ready(function () {
     $(document).on('click', '.selectpicker', function () {
@@ -158,7 +163,7 @@
         }
       });
       req.done(function (data) {
-        $('#modal_inner').html(data);
+        $('#modNew_inner').html(data);
       });
     });
   });

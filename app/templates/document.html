@@ -1,61 +1,76 @@
 <div class="modal-content">
-  <div class="modal-body">
-    <div class="row">
-      <div class="p-0 form-group ml-3 mt-4 mb-2">
-        <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
+  <div class="modal-header text-center">
+      <div class=" col-sm-4 p-0 mt-2 text-left">
+        <h6 class="modal-title">{{stocks[0].get_component().component_name}}</h5>
       </div>
-    </div>
-    <div class="row mb-5">
-      <div class="col">
-        <table id=mytable class="table table-sm table-hover">
-          <thead>
-            <tr>
-              <td>Документ</td>
-              <td>Добавивший</td>
-              <td>Кол-во</td>
-              <td>Время</td>
-              <td>Комментарий</td>
-              <td></td>
-            </tr>
-          </thead>
-          <tbody style="overflow: auto; height:100%;">
-            {% for item in stocks[::-1]%}
-            <tr>
-              <td class="py-0">{{item.get_document().document_type}}</td>
-              <td class="py-0">{{item.get_document().get_maker().username}}</td>
-              <td class="py-0">{{item.count}}</td>
-              <td class="py-0">{{item.get_document().date}}</td>
-              <td class="py-0">{{item.get_document().comment}}</td>
-              <td>
-                <button type="button" class="btn btn-danger btn-sm py-0" data-toggle="modal"
-                  data-target="#d{{item.get_document().id}}"> &times;</button>
+      <div class="col-sm-4 p-0 form-group m-0 ">
+        <input type="text" class="form-control" id="search" placeholder="Поиск">
+      </div>
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="col px-0">
+      <table id=mytable class="table table-sm table-hover table-responsive-sm">
+        <thead>
+          <tr>
+            <td>Документ</td>
+            <td>Добавивший</td>
+            <td>Кол-во</td>
+            <td>Время</td>
+            <td>Комментарий</td>
+            <td></td>
+          </tr>
+        </thead>
+        <tbody style="overflow: auto; height:100%;">
+          {% for item in stocks[::-1]%}
+          {%set document = item.get_document()%}
+          <tr>
+            <td class="py-0">{{document.document_type}}</td>
+            <td class="py-0">{{document.get_maker().username}}</td>
+            <td class="py-0">{{item.count}}</td>
+            <td class="py-0">{{document.date}}</td>
+            <td class="py-0">
+              {%if document.comment%}
+              <button class="btn btn-sm" type="button" data-toggle="collapse" data-target="#col{{document.id}}"
+                aria-expanded="false" aria-controls="collapseExample">
+                ...
+              </button>
+              <div class="collapse" id="col{{document.id}}">
+                {{document.comment}}
+              </div>
+              {%endif%}
+            </td>
+            <td>
+              <button type="button" class="btn btn-danger btn-sm py-0" data-toggle="modal"
+                data-target="#d{{document.id}}"> &times;</button>
 
-                <div class="modal fade" id='d{{item.get_document().id}}' tabindex="-1" role="dialog"
-                  aria-labelledby="d{{item.get_document().id}}Label" aria-hidden="true">
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header text-center">
-                        <h5 class="modal-title">Удалить документ?</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>
+              <div class="modal fade" id='d{{document.id}}' tabindex="-1" role="dialog"
+                aria-labelledby="d{{document.id}}Label" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header text-center">
+                      <h5 class="modal-title">Удалить документ?</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
 
-                      <div class="modal-footer">
-                        <a href="{{url_for('delete_document', s_id=item.id)}}">
-                          <button type="button" class="btn btn-danger">Удалить</button>
-                        </a>
-                      </div>
+                    <div class="modal-footer">
+                      <a href="{{url_for('delete_document', s_id=item.id)}}">
+                        <button type="button" class="btn btn-danger">Удалить</button>
+                      </a>
                     </div>
                   </div>
                 </div>
+              </div>
 
-              </td>
-            </tr>
-            {%endfor%}
-          </tbody>
-        </table>
-      </div>
+            </td>
+          </tr>
+          {%endfor%}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

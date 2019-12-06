@@ -23,7 +23,8 @@
         </div>
         <button class="btn btn-success mt-2 col btn-sm" id='reload'>Обновить</button>
     </div>
-    <div class="col-12 col-sm-10 col-md-10 col-xl-10 grid-margin stretch-card px-0">
+    <div class="col-12 col-sm-10 col-md-10 col-xl-10 grid-margin stretch-card px-0 bbody">
+        <div class="modalLoad"></div>
         <div class="card">
             <div class="card-body px-0 pb-0 border-bottom">
                 <div class="d-flex justify-content-between mb-2 px-2">
@@ -42,6 +43,7 @@
         $(document).on('click', '.workshopLinks', function () {
             shop = $(this).attr('workshop');
             $('#title').text($(this).text());
+            $('.bbody').addClass('loading');
             req = $.ajax({
                 url: '/workshop_orders',
                 type: 'POST',
@@ -51,6 +53,7 @@
             });
             req.done(function (data) {
                 $('.table-responsive').html(data);
+                $('.bbody').removeClass('loading');
             });
         });
         $(document).on('click', '#reload', function () {
@@ -80,21 +83,21 @@
     });
 </script>
 <script>
-        var time = new Date().getTime();
-        $(document.body).bind("mousemove keypress", function(e) {
-            time = new Date().getTime();
-        });
-   
-        function refresh() {
-            if(new Date().getTime() - time >= 120000) 
-                window.location.reload(true);
-            else 
-                setTimeout(refresh, 10000);
-        }
-   
-        setTimeout(refresh, 10000);
-   </script>
-   <script>
+    var time = new Date().getTime();
+    $(document.body).bind("mousemove keypress", function (e) {
+        time = new Date().getTime();
+    });
+
+    function refresh() {
+        if (new Date().getTime() - time >= 120000)
+            window.location.reload(true);
+        else
+            setTimeout(refresh, 10000);
+    }
+
+    setTimeout(refresh, 10000);
+</script>
+<script>
     $(document).ready(function () {
         $(document).on('click', '.report', function () {
             stock = $(this).attr('stock_id');
@@ -103,7 +106,6 @@
             console.log('#wc' + stock);
             workflow_count = $('#wc' + stock).val()
             console.log(workflow_count)
-            $('body').addClass('loading');
             req = $.ajax({
                 url: '/workflow_count',
                 type: 'POST',
@@ -111,16 +113,15 @@
                     'stock': stock,
                     'time': time,
                     'workflow_count': workflow_count,
-                    'doc':doc,
+                    'doc': doc,
                 }
             });
             req.done(function (data) {
                 $('#row' + stock).html(data);
                 $('body').removeClass('modal-open')
                 $('.modal-backdrop').remove();
-                $('.bbody').removeClass('loading');
             });
         });
     });
-    </script>
+</script>
 {%endblock%}

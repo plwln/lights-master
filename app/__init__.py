@@ -35,5 +35,5 @@ if not models.User.query.filter(models.User.username == 'admin').first():
     db.session.commit()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5005)
+    app.run()
 

@@ -6,43 +6,41 @@
 <table class="table table-sm">
     <tbody>
         {%for component in components[time]%}
-        {%if component['count']>component['obj'][2].stock_count and (component['obj'][0].workflow_count is none or (component['obj'][2].stock_count>0 and component['count']>component['obj'][0].workflow_count))%}
-        <tr id='row{{component["obj"][0].id}}'>
+        {%if component['count']>component['obj'][0][2].stock_count%}
+        <tr id='row{{component["obj"][0][0].id}}'>
             <td>
-                {{component['obj'][2].component_name}}
+                {{component['obj'][0][2].component_name}}
             </td>
             <td><span class="">
-                {%if component['obj'][2].stock_count>0%}
-                {{component['count']-component['obj'][2].stock_count}}
-                {%if component['obj'][0].workflow_count%}
-                {{component['count']-component['obj'][2].stock_count-component['obj'][0].workflow_count}}
-                {%endif%}
-                {%else%}
-                {%if component['obj'][0].workflow_count%}
-                {{component['count']-component['obj'][0].workflow_count}}
-                {%else%}
-                {{component['count']}}
-                {%endif%}
-                {%endif%}
+                    {%if component['obj'][0][2].stock_count>0%}
+                    {{component['count']-component['obj'][0][2].stock_count}}
+                    {%else%}
+                    {%if component['obj'][0][0].workflow_count%}
+                    {{component['count']-component['obj'][0][0].workflow_count}}
+                    {%else%}
+                    {{component['count']}}
+                    {%endif%}
+                    {%endif%}
                 </span>
 
-                {%if component['obj'][0].workflow_count%}
-                / {{component['obj'][0].workflow_count}}
+                {%if component['obj'][0][0].workflow_count%}
+                / {{component['obj'][0][0].workflow_count}}
                 {%endif%}
             </td>
             <td class=p-1>
                 {%if 'Admin' in roles%}
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                    data-target="#c{{component['obj'][0].id}}" >
+                    data-target="#c{{component['obj'][0][0].id}}">
                     Приход
                 </button>
                 {%endif%}
                 <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
-                    data-target="#col{{component['obj'][0].id}}" aria-expanded="false" aria-controls="collapseExample">
+                    data-target="#col{{component['obj'][0][0].id}}" aria-expanded="false"
+                    aria-controls="collapseExample">
                     Товар
                 </button>
-                <div class="modal fade" id="c{{component['obj'][0].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
-                    style="display: none;" aria-hidden="true">
+                <div class="modal fade" id="c{{component['obj'][0][0].id}}" tabindex="-1" role="dialog"
+                    aria-labelledby="exModal" style="display: none;" aria-hidden="true">
                     <div class="modal-dialog modal-sm" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -52,13 +50,47 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <input type="text" id='wc{{component["obj"][0].id}}'
+                                <input type="text" id='wc{{component["obj"][0][0].id}}'
                                     class="form-control form-control-sm wf_count" placeholder="Кол-во"
                                     aria-label="Username">
+
+                                <div>
+                                    <!-- Table -->
+                                    <table class="table table-bordered">
+                                        <!-- Table Heading -->
+                                        <tbody>
+                                            <tr class="">
+                                                <th><input type="checkbox" class="custom-control-input"
+                                                        id="customCheck1" checked></th>
+                                                <th>Название</th>
+                                                <th>Заказ</th>
+                                                <th>Нужное кол-во</th>
+                                            </tr>
+                                            {%for o in component['obj']%}
+                                            <tr class="">
+                                                <td>
+                                                        <label class="checkbox">
+                                                                <input type="checkbox">
+                                                                <span class="default"></span>
+                                                            </label>
+                                                </td>
+                                                <!-- Name -->
+                                                <td>
+                                                    {{o[1].product_orders[0].get_product().product_name}}</td>
+                                                <!-- Date Of Birth -->
+                                                <td>№{{o[1].order_item}}</td>
+                                                <!-- Location -->
+                                                <td>{{o[0].count}}</td>
+                                            </tr>
+                                            {%endfor%}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" stock_id='{{component["obj"][0].id}}'
-                                    class="btn btn-sm btn-success report" time={{time}} doc='{{component["obj"][1].id}}'>Оформить</button>
+                                <button type="button" stock_id='{{component["obj"][0][0].id}}'
+                                    class="btn btn-sm btn-success report" time={{time}}
+                                    doc='{{component["obj"][0][1].id}}'>Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
                             </div>
@@ -72,10 +104,10 @@
     </tbody>
 </table>
 {%for order in components[time]%}
-<div class="collapse py-0" id="col{{order['obj'][0].id}}">
+<div class="collapse py-0" id="col{{order['obj'][0][0].id}}">
     <div class="card card-body py-0">
-        {%for o in order['obj'][1].product_orders%}
-        <li>{{o.get_product().product_name}}</li>
+        {%for o in order['obj']%}
+        <li>{{o[1].product_orders[0].get_product().product_name}}</li>
         {%endfor%}
     </div>
 </div>

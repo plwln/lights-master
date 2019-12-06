@@ -389,7 +389,7 @@ class Document(db.Model):
         
         for item in update:
             stock = Stock.query.filter(Stock.id==item[0]).first()
-            if stock and current_user.username==item[1]:
+            if stock:
                 stock.get_count()
         Document.query.filter(Document.id==id).delete()
         db.session.commit()  
@@ -468,7 +468,8 @@ class Stock(db.Model):
             stocks = db.session.query(Stock, Document).filter(Stock.id_product==self.id_product).join(Document, Stock.document_id==Document.id).all()
             stock_count = Product.query.filter(Product.id==self.id_product).first()
             if stock_count:
-                stock_count = stock_count.pstock_count 
+                if stock_count.pstock_count:
+                    stock_count = stock_count 
         if self.component_id:
             stocks = db.session.query(Stock, Document).filter(Stock.component_id==self.component_id).join(Document, Stock.document_id==Document.id).all()
             stock_count = Component.query.filter(Component.id==self.component_id).first().stock_count

@@ -1,1 +1,1 @@
-import routes as application
+from lights import app ass application

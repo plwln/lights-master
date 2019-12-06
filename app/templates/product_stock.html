@@ -2,26 +2,27 @@
 {% block content %}
 {% block flash_messages %}
 {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            {%if 'success' not in message and 'must' not in message%}
-            <div id=message class="alert alert-success">{{ message|safe }}</div>
-            {%endif%}
-        {% endfor %}
-    {% endif %}
+{% if messages %}
+{% for message in messages %}
+{%if 'success' not in message and 'must' not in message%}
+<div id=message class="alert alert-success">{{ message|safe }}</div>
+{%endif%}
+{% endfor %}
+{% endif %}
 {% endwith %}
 {% endblock %}
 <div class="row">
-    {%if 'Склад' in roles or 'Admin' in roles%} 
-    <div class="col"><a href="{{url_for('pstock_adding', doc_type='Приход', doc='False')}}"><button class="mt-4 btn btn-primary mr-2">Новый документ</button></a></div> 
-    {%endif%}
-    <div class="p-0 form-group ml-2 mt-4 mb-2">
-        <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
-    </div>
+  {%if 'Склад' in roles or 'Admin' in roles%}
+  <div class="col"><a href="{{url_for('pstock_adding', doc_type='Приход', doc='False')}}"><button
+        class="mt-4 btn btn-primary mr-2">Новый документ</button></a></div>
+  {%endif%}
+  <div class="p-0 form-group ml-2 mt-4 mb-2">
+    <input type="text" class="form-control" id="search" placeholder="Поиск по таблице">
   </div>
-  <div class="row">
+</div>
+<div class="row">
   <div class="col">
-  <table  id=mytable class="table table-sm table-hover">
+    <table id=mytable class="table table-sm table-hover">
       <thead>
         <tr>
           <td>Наименование</td>
@@ -31,130 +32,150 @@
         </tr>
       </thead>
       <tbody style="overflow: auto; height:100%;">
-      {%if stock!=[]%}
-      {% for item in stock%}
-      {%if item.get_product().pstock_count!=0 or (item.get_product().p_infired!=0 and item.get_product().p_unfired)%}
-      {%if item.get_product()%} 
+        {%if stock!=[]%}
+        {% for item in stock%}
+        {%if item.get_product().pstock_count!=0 or (item.get_product().p_infired!=0 and item.get_product().p_unfired)%}
+        {%if item.get_product()%}
+        {%set product = item.get_product()%}
         <tr>
-          <td class="py-0" >{{item.get_product().product_name}}</td>
-          <td class="py-0">{{item.get_product().product_item}}</td>
-          {%if item.get_product().p_unfired%}
-          {%if item.get_product().pstock_count+item.get_product().p_unfired==item.get_product().p_unfired or item.get_product().pstock_count+item.get_product().p_unfired<=0%}
-          <td class="py-0"> Списан
-              {%if item.get_product().p_unfired%}
-              /{{(item.get_product().p_unfired)|int}}
-              {%endif%}
-          </td>
-          {%else%}
-          <td class="py-0">{{(item.get_product().pstock_count+item.get_product().p_unfired)|int}}
-            {%if item.get_product().p_unfired and item.get_product().p_unfired!=0%}
-            /{{(item.get_product().p_unfired)|int}}
+          <td class="py-0">{{product.product_name}}</td>
+          <td class="py-0">{{product.product_item}}</td>
+          {%if product.p_unfired%}
+          <td class="py-0">
+            {%if product.pstock_count+product.p_unfired>0%}
+            {{(product.pstock_count+product.p_unfired)|int}}
+            {%else%}
+            Списан
+            {%endif%}
+            {%if product.p_unfired and product.p_unfired!=0%}
+            /{{(product.p_unfired)|int}}
             {%endif%}
           </td>
-          {%endif%}
           {%else%}
-          {%if item.get_product().pstock_count==0%}
+          {%if product.pstock_count<=0%}
           <td class="py-0"> Списан
-              {%if item.get_product().p_unfired%}
-              /{{(item.get_product().p_unfired)|int}}
-              {%endif%}
           </td>
           {%else%}
-          <td class="py-0">{{(item.get_product().pstock_count)|int}}
-            {%if item.get_product().p_unfired and item.get_product().p_unfired!=0%}
-            /{{(item.get_product().p_unfired)|int}}
-            {%endif%}
+          <td class="py-0">{{(product.pstock_count)|int}}
           </td>
           {%endif%}
           {%endif%}
 
 
           <td>
-              {%if 'Склад' in roles or 'Admin' in roles%} 
-            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">      
-              <a href="{{url_for('pdocument', product_id=item.id_product)}}"><button type="button" class="btn btn-success btn-sm py-0">...</button></a> 
-                <button type="button" class="btn btn-info btn-sm py-0" data-toggle="modal" data-target="#p{{item.get_product().id}}"> <img src="static/images/document-16.png" alt="" style="vertical-align:middle"> </button>
+            {%if 'Склад' in roles or 'Admin' in roles%}
+            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example"> 
+                <button type="button" class="btn btn-success btn-sm py-0 openInfo" data-toggle="modal" data-target="#modNew"
+                item={{item.id_product}}>...</button>
+              <button type="button" class="btn btn-info btn-sm py-0" data-toggle="modal"
+                data-target="#p{{item.id_product}}"> <img src="static/images/document-16.png" alt=""
+                  style="vertical-align:middle"> </button>
             </div>
             {%endif%}
           </td>
         </tr>
 
-        <div class="modal fade" id='p{{item.get_product().id}}' tabindex="-1" role="dialog" aria-labelledby="{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header text-center">
-                      <h5 class="modal-title">Операции со складом</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <form class='form' action = "" method = post>
-                    <div class="modal-body">
-                      <div class="row px-3 py-2">
-                      <div class="col">
-                          {{form.document_type(class_="form-control selectpicker mr-3")}}
-                      </div>
-                      <div class="col count_div" id = 'count_div'> {{form.count( class_="mr-2 mb-2 form-control count", placeholder="Кол-во")}}</div>
-                      </div>
-                      
-                      <div class="col pl-3 py-0 mt-1 mb-1">
-                          Комментарий:
-                      </div>
-                      <div class="col py-0">
-                          {{form.text()}}
-                      </div>
-                      {{form.id(value=item.get_product().id, type="hidden")}}
-                      
-                    </div>
-                    
-                    <div class="modal-footer">
-                      {{form.submit( class_="btn btn-success")}}
-                    </div>
-                  </form>
-                  </div>
-                </div>
+        <div class="modal fade" id='p{{item.id_product}}' tabindex="-1" role="dialog"
+          aria-labelledby="{{item.get_product().get_name()+'Label'}}" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header text-center">
+                <h5 class="modal-title">Операции со складом</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
               </div>
-              {%endif%}
-      {%endif%}
-      {%endfor%}
-      {%endif%}
+              <form class='form' action="" method=post>
+                <div class="modal-body">
+                  <div class="row px-3 py-2">
+                    <div class="col">
+                      {{form.document_type(class_="form-control selectpicker mr-3")}}
+                    </div>
+                    <div class="col count_div" id='count_div'>
+                      {{form.count( class_="mr-2 mb-2 form-control count", placeholder="Кол-во")}}</div>
+                  </div>
+
+                  <div class="col pl-3 py-0 mt-1 mb-1">
+                    Комментарий:
+                  </div>
+                  <div class="col py-0">
+                    {{form.text()}}
+                  </div>
+                  {{form.id(value=item.get_product().id, type="hidden")}}
+
+                </div>
+
+                <div class="modal-footer">
+                  {{form.submit( class_="btn btn-success")}}
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {%endif%}
+        {%endif%}
+        {%endfor%}
+        {%endif%}
       </tbody>
-  </table>
+    </table>
   </div>
 
+  <div class="modal fade" id='modNew' tabindex="-1" role="dialog" aria-labelledby="modLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg"" role=" document" id='modNew_inner'>
+
+    </div>
+  </div>
+</div>
 <script>
-  $(function() {
-    $('.selectpicker').on('change', function(){
-      if($(this).val()=='Списание'){
-      $('.count').attr("value", '0');
-      $('.count_div').hide();
+  $(document).ready(function () {
+    $(document).on('click', '.openInfo', function () {
+      stock = $(this).attr('item');
+      req = $.ajax({
+        url: '/pdocument',
+        type: 'POST',
+        data: {
+          'item': stock,
+        }
+      });
+      req.done(function (data) {
+        $('#modNew_inner').html(data);
+      });
+    });
+  });
+</script>
+<script>
+  $(function () {
+    $('.selectpicker').on('change', function () {
+      if ($(this).val() == 'Списание') {
+        $('.count').attr("value", '0');
+        $('.count_div').hide();
       }
-      else{
+      else {
         $('.count_div').show();
       }
     });
   });
-  </script>
+</script>
 <script>
-   $(function() {
-    $('.close').on('click', function(){
+  $(function () {
+    $('.close').on('click', function () {
       $('.count_div').show();
       $('.selectpicker').attr("value", 'Приход');
     });
   });
-</script>	
+</script>
 <script>
-    $(function() {
-     $('#submit').on('click', function(){
-       $('#count').show();
-     });
-   });
- </script>	
+  $(function () {
+    $('#submit').on('click', function () {
+      $('#count').show();
+    });
+  });
+</script>
 <script>
-  $('.alert').show(200, function(){
-    setTimeout(function(){
+  $('.alert').show(200, function () {
+    setTimeout(function () {
       $('.alert').hide(500);
     }, 2000);
   });
-  </script>
+</script>
 {% endblock %}
