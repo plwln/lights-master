@@ -1,61 +1,126 @@
 {%if component['obj']%}
-{%if component['count']>component['obj'][0][2].stock_count and (component['obj'][0][0].workflow_count is none or component['count']>component['obj'][0][0].workflow_count)%}
-        <tr id='row{{component["obj"][0][0].id}}'>
-            <td>
-                {{component['obj'][0][2].component_name}}
-            </td>
-            <td><span class="">
-                {%if component['obj'][0][2].stock_count>0%}
-                {{component['count']-component['obj'][0][2].stock_count}}
-                {%else%}
-                {%if component['obj'][0][0].workflow_count%}
-                {{component['count']-component['obj'][0][0].workflow_count}}
-                {%else%}
-                {{component['count']}}
-                {%endif%}
-                {%endif%}
-                </span>
+{%if component['count']>component['obj'][0][2].stock_count and component['count']>component['workflow_count']%}
+<tr id='row{{component["obj"][0][0].id}}'>
+    <td>
+        {{component['obj'][0][2].component_name}}
+    </td>
+    <td><span class="">
+            {%if component['obj'][0][2].stock_count>0%}
+            {{component['count']-component['obj'][0][2].stock_count}}
+            {%else%}
+            {%if component['workflow_count']%}
+            {{component['count']-component['workflow_count']}}
+            {%else%}
+            {{component['count']}}
+            {%endif%}
+            {%endif%}
+        </span>
 
-                {%if component['obj'][0][0].workflow_count%}
-                / {{component['obj'][0][0].workflow_count}}
-                {%endif%}
-            </td>
-            <td class=p-1>
-                {%if 'Admin' in roles%}
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                    data-target="#c{{component['obj'][0][0].id}}" >
-                    Приход
-                </button>
-                {%endif%}
-                <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
-                    data-target="#col{{component['obj'][0][0].id}}" aria-expanded="false" aria-controls="collapseExample">
-                    Товар
-                </button>
-                <div class="modal fade" id="c{{component['obj'][0][0].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
-                    style="display: none;" aria-hidden="true">
-                    <div class="modal-dialog modal-sm" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="exModal">Сделано</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <input type="text" id='wc{{component["obj"][0][0].id}}'
-                                    class="form-control form-control-sm wf_count" placeholder="Кол-во"
-                                    aria-label="Username">
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" stock_id='{{component["obj"][0][0].id}}'
-                                    class="btn btn-sm btn-success report" time='{{component["obj"][0][1].endtime}}' doc='{{component["obj"][0][1].id}}'>Оформить</button>
-                                <button type="button" class="btn btn-sm btn-light"
-                                    data-dismiss="modal">Отменить</button>
-                            </div>
-                        </div>
+        {%if component['workflow_count']%}
+        / {{component['workflow_count']}}
+        {%endif%}
+    </td>
+    <td class=p-1>
+        {%if 'Admin' in roles%}
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
+            data-target="#c{{component['obj'][0][0].id}}">
+            Приход
+        </button>
+        {%endif%}
+        <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
+            data-target="#col{{component['obj'][0][0].id}}" aria-expanded="false" aria-controls="collapseExample">
+            Товар
+        </button>
+        <div class="modal fade" id="c{{component['obj'][0][0].id}}" tabindex="-1" role="dialog"
+            aria-labelledby="exModal" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-sm" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exModal">Сделано</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id='wc{{component["obj"][0][0].id}}'
+                            class="form-control form-control-sm wf_count" placeholder="Кол-во" aria-label="Username">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" count='#wc{{component["obj"][0][0].id}}'
+                            class="btn btn-sm btn-success documentsButton" data-toggle='modal'
+                            data-target="#documents{{component['obj'][0][0].id}}">Оформить</button>
+                        <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">Отменить</button>
                     </div>
                 </div>
-            </td>
-        </tr>
-        {%endif%}
-        {%endif%}
+            </div>
+        </div>
+        <div class="modal fade" id="documents{{component['obj'][0][0].id}}" tabindex="-1" role="dialog"
+            aria-labelledby="exModal" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h6 class="modal-title" id="exModal">Сделано: <span class='counter'
+                                id='counter{{component["obj"][0][0].id}}'></span></h6>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <!-- Table -->
+                            <table class="table table-bordered">
+                                <!-- Table Heading -->
+                                <tbody>
+                                    <tr class="">
+                                        <th><input type="checkbox" class="custom-control-input" id="customCheck1"
+                                                checked></th>
+                                        <th>Название</th>
+                                        <th>Заказ</th>
+                                        <th>Нужное кол-во</th>
+                                    </tr>
+                                    {%for o in component['obj']%}
+                                    <tr class="doccheck">
+                                        <td>
+                                            <input head='{{component["obj"][0][0].id}}' class='checkbox' type="checkbox"
+                                                id="check{{o[1].id}}" value="{{o[1].id}}">
+                                        </td>
+                                        <!-- Name -->
+                                        <td>
+                                            {{o[1].product_orders[0].get_product().product_name}}</td>
+                                        <!-- Date Of Birth -->
+                                        <td>№{{o[1].order_item}}</td>
+                                        <!-- Location -->
+                                        {%if o[0].workflow_count%}
+                                        <td class='count count{{o[1].id}}' check='{{o[1].id}}'>
+                                            {{o[0].count-o[0].workflow_count}}</td>
+                                        {%else%}
+                                        <td class='count count{{o[1].id}}' check='{{o[1].id}}'>{{o[0].count}}</td>
+                                        {%endif%}
+
+                                    </tr>
+                                    {%endfor%}
+                                    <tr class="doccheck">
+                                        <td>
+                                            <input class='checkbox' type="checkbox" id="checkStock" value="stock">
+                                        </td>
+                                        <!-- Name -->
+                                        <td colspan='3'>На склад</td>
+
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" stock_id='{{component["obj"][0][0].id}}'
+                            class="btn btn-sm btn-success report" time='{{component["obj"][0][1].endtime}}'
+                            doc='{{component["obj"][0][1].id}}'>Оформить</button>
+                        <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">Отменить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </td>
+</tr>
+{%endif%}
+{%endif%}

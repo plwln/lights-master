@@ -15,7 +15,7 @@
                 {{component['count']}}
                 {%else%}
                     {%if component['obj'][2].pstock_count<component['count'] and component['obj'][2].pstock_count>0%}
-                    {{component['count']-component[2].pstock_count}}
+                    {{component['count']-component['obj'][2].pstock_count}}
                     {%else%}
                     {{component['count']}}
                     {%endif%}

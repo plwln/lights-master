@@ -248,8 +248,8 @@ class Component(db.Model):
             Stock.query.filter(Stock.component_id==id).delete()
             stock = Stock.query.filter(Stock.component_id==id).first()
         Component.query.filter(Component.id==id).delete()
-        db.session.commit()  
-    
+        db.session.commit()
+
     def get_children(self, id):
         return False
 
@@ -577,5 +577,30 @@ class Note(db.Model):
     def get_component(self):
         return Component.query.filter(Component.id==self.na_component).first()
 
-
-
+class Workflow(db.Model):
+    __tablename__ = 'workflow'
+    id = db.Column(db.Integer(), primary_key=True)
+    order_id = db.Column(db.Integer())
+    component = db.Column(db.Integer())
+    wf_count = db.Column(db.Float())
+    wf_time = db.Column(db.String())
+    def __init__(self, component, wf_time, wf_count, order_id):
+        self.component = component
+        self.wf_time = wf_time
+        self.wf_count = wf_count
+        self.order_id = order_id
+    
+    @staticmethod
+    def get_count(time,component, order):
+        wf=Workflow.query.filter(Workflow.component==component and Workflow.time==time and Workflow.order_id==order).first()
+        if wf:
+            return wf.wf_count
+        else:
+            return None
+    
+    def get_self_count(self, time, component, order):
+        wf=Workflow.query.filter(Workflow.component==component and Workflow.time==time and Workflow.order_id==order).first()
+        if wf:
+            return wf.wf_count
+        else:
+            return None

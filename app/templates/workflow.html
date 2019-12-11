@@ -99,6 +99,8 @@
 </script>
 <script>
     $(document).ready(function () {
+        let docs = [];
+        let stocks = [];
         $(document).on('click', '.report', function () {
             stock = $(this).attr('stock_id');
             time = $(this).attr('time');
@@ -106,22 +108,66 @@
             console.log('#wc' + stock);
             workflow_count = $('#wc' + stock).val()
             console.log(workflow_count)
+            console.log(stocks)
+            console.log(docs)
             req = $.ajax({
-                url: '/workflow_count',
+                url: '/flow_count',
                 type: 'POST',
                 data: {
                     'stock': stock,
                     'time': time,
                     'workflow_count': workflow_count,
-                    'doc': doc,
+                    'docs': docs,
+                    'stocks':stocks,
                 }
             });
+            docs=[];
+            stocks=[];
             req.done(function (data) {
                 $('#row' + stock).html(data);
                 $('body').removeClass('modal-open')
                 $('.modal-backdrop').remove();
             });
         });
+
+        $(document).on('click', '.checkbox', function () {
+            count = $('.count' + $(this).val()).text()
+            _this = $('#counter' + $(this).attr('head')).text();
+            if ($(this).attr('checked') == 'checked') {
+                for (let doc of docs) {
+                    if (doc == +($(this).val())) {
+                        docs.splice(docs.indexOf(doc), 1);
+                        stocks.splice(docs.indexOf(+$(this).attr('head')), 1);
+                    }
+                }
+                _this = (+_this) + (+count);
+                $('.counter').text(_this)
+                $(this).removeAttr('checked');
+            }
+            else {
+
+                _this = (+_this) - (+count);
+                $('.counter').text(_this)
+                $(this).attr("checked", "checked");
+                docs.push(+($(this).val()))
+                stocks.push(+($(this).attr('head')))
+            }
+            console.log(stocks)
+            console.log(docs)
+
+            let items = $('.doccheck .count')
+            for (let item of items) {
+                let count = ($(item).text());
+                if (count > +_this) {
+                    $(item).css('background', 'red');
+                }
+                else {
+                    $(item).css('background', 'green');
+
+                }
+            }
+        });
+        // писать здесь
     });
 </script>
 {%endblock%}

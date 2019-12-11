@@ -7,7 +7,7 @@ from flask import render_template, flash, redirect, url_for, request, send_from_
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from werkzeug.utils import secure_filename
 from werkzeug.urls import url_parse
-from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note, Shop, ComponentShop, ProductShop
+from app.models import User, UserRoles, Role, Product, Component, Specification, ModalComponent, Document, Stock, Order, Note, Shop, ComponentShop, ProductShop, Workflow
 from app.forms import ProductForm, ComponentForm, SpecificationForm, DocumentForm, SubmitForm, NoteForm
 from datetime import datetime, date, time
 import datetime as dt
@@ -18,6 +18,7 @@ import asyncio
 import threading
 import time
 from multiprocessing.dummy import Pool as ThreadPool
+
 
 def delete_old_stocks(items):
     print(items)
@@ -37,8 +38,8 @@ def update_thread():
     start_time = time.time()
     orders = Document.query.filter(Document.product_orders).filter(
         Document.order_item).all()[::-1]
-    docs = [x.id for x in orders if x.order_status!='выполнен']
-    
+    docs = [x.id for x in orders if x.order_status != 'выполнен']
+
     cnt = 0
     print(len(docs))
     count = len(docs)//2
@@ -54,7 +55,7 @@ def update_thread():
     pool.join()
     print("--- %s seconds ---" % (time.time() - start_time))
     return jsonify({'card': render_template('all_orders_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles]),
-                'table': render_template('all_table_order_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles])})
+                    'table': render_template('all_table_order_in_process.html',  orders=orders, roles=[x.name for x in current_user.roles])})
 
 
 @app.route('/get_count_all')
@@ -62,6 +63,7 @@ def update_thread():
 def get_count_all():
     for stck in Stock.query.all():
         stck.get_count()
+
 
 @app.route('/')
 @login_required
@@ -89,7 +91,7 @@ def home_page():
     #     db.session.commit()
     # stcks = Stock.query.filter(Stock.id_product).all()
     # for stck in stcks:
-    #     stck.get_count() 
+    #     stck.get_count()
     # stck = Stock.query.filter(Stock.component_id==316).all()
     # stck[0].get_count()
     # for s in stck:
@@ -108,7 +110,7 @@ def home_page():
         Document.order_item).all()[::-1]
     # for stck in Stock.query.filter(Stock.id_product).all():
     #     stck.get_count()
-    docs = [x.id for x in orders if x.order_status!='выполнен']
+    docs = [x.id for x in orders if x.order_status != 'выполнен']
     roles = [x.name for x in current_user.roles]
     docs = [Document.query.filter(Document.id == x.doc_id).first(
     ) for x in list(set(db.session.query(Order).filter(Order.doc_id).all()))]
@@ -378,10 +380,11 @@ def stock():
         db.session.delete(item)
         current_user.added.remove(item)
         db.session.commit()
-        
+
     start_time = time.time()
-    
-    stock_db = list(set(db.session.query(Stock.component_id).filter(Stock.component_id is not None).all()))
+
+    stock_db = list(set(db.session.query(Stock.component_id).filter(
+        Stock.component_id is not None).all()))
     print("--- %s seconds ---" % (time.time() - start_time))
     stock = []
     start_time = time.time()
@@ -398,12 +401,16 @@ def stock():
         pass
     print("--- %s seconds ---" % (time.time() - start_time))
     return render_template('stock.html', stock=stock, roles=roles)
+
+
 @app.route('/stock_add_form', methods=['POST'])
 @login_required
 def stock_add_form():
     form = SpecificationForm()
-    item = Stock.query.filter(Stock.id==request.form['item']).first()
+    item = Stock.query.filter(Stock.id == request.form['item']).first()
     return render_template('stock_add_form.html', item=item, form=form)
+
+
 @app.route('/stock_adding/<doc_type>/<doc>', methods=['GET', 'POST'])
 @login_required
 def stock_adding(doc_type, doc):
@@ -443,14 +450,15 @@ def stock_adding(doc_type, doc):
             db.session.commit()
             current_user.append_stock(stock.id)
             stock.get_count()
-            if document.document_type == 'Расход' or document.document_type =='Списание':
-                stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+            if document.document_type == 'Расход' or document.document_type == 'Списание':
+                stck = db.session.query(Stock, Document).filter(
+                    Stock.document_id == Document.id).filter(Stock.component_id == form.id.data)
                 stck = stck.filter(Document.order_status is not None).all()
                 cmpnt = stock.get_component()
                 docs = set([x[1].id for x in stck])
                 print(docs)
                 d_count = cmpnt.stock_count-stock.count
-                if cmpnt.unfired>=d_count:
+                if cmpnt.unfired >= d_count:
                     print('tut')
                     count = len(docs)//2
                     if count == 1:
@@ -540,10 +548,12 @@ def pstock_adding(doc_type, doc):
 @login_required
 def document():
     form = SpecificationForm()
-    stocks = Stock.query.filter(Stock.component_id == request.form['item']).all()
+    stocks = Stock.query.filter(
+        Stock.component_id == request.form['item']).all()
     documents = [Document.query.filter(
         Document.id == stock.document_id).first() for stock in stocks]
     return render_template('document.html', form=form, stocks=stocks, documents=documents, product='0')
+
 
 @app.route('/add_document', methods=['POST'])
 @login_required
@@ -553,7 +563,8 @@ def add_document():
         "%Y/%m/%d %H:%M"), current_user.id, request.form['type'], request.form['comment'])
     db.session.add(document)
     db.session.commit()
-    stock = Stock(document.id, None, int(request.form['item']), int(request.form['count']))
+    stock = Stock(document.id, None, int(
+        request.form['item']), int(request.form['count']))
     db.session.add(stock)
     db.session.commit()
     compon = Component.query.filter(
@@ -561,18 +572,19 @@ def add_document():
     last_count = compon.stock_count
     stock.get_count()
     if request.form['type'] == 'Приход':
-        stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==int(request.form['item']))
+        stck = db.session.query(Stock, Document).filter(Stock.document_id == Document.id).filter(
+            Stock.component_id == int(request.form['item']))
         stck = stck.filter(Document.order_status is not None).all()
         for s in stck:
             if s[0].workflow_count:
-                if s[0].workflow_count<s[0].count:
-                    s[0].workflow_count+=1
+                if s[0].workflow_count < s[0].count:
+                    s[0].workflow_count += 1
                     db.session.commit()
                     break
                 else:
                     continue
             else:
-                s[0].workflow_count=1
+                s[0].workflow_count = 1
                 db.session.commit()
         note = Note.query.filter(
             Note.na_component == stock.component_id).first()
@@ -582,20 +594,21 @@ def add_document():
             count = n_count-stck_count
             if count <= 0:
                 Note.query.filter(Note.na_component ==
-                                    stock.component_id).delete()
+                                  stock.component_id).delete()
                 db.session.commit()
             else:
                 note.n_stock = count
                 db.session.commit
         flash('Приход {} на склад'.format(stock.get_name()), 'message')
     elif request.form['type'] == 'Расход':
-        stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==int(request.form['item']))
+        stck = db.session.query(Stock, Document).filter(Stock.document_id == Document.id).filter(
+            Stock.component_id == int(request.form['item']))
         stck = stck.filter(Document.order_status is not None).all()
         cmpnt = stock.get_component()
         docs = set([x[1].id for x in stck])
         print(docs)
         d_count = cmpnt.stock_count-stock.count
-        if cmpnt.unfired>=d_count:
+        if cmpnt.unfired >= d_count:
             count = len(docs)//2
             if count == 1:
                 count = 2
@@ -614,13 +627,14 @@ def add_document():
             flash('Расход детали {} со склада'.format(
                 stock.get_name()), 'message')
     else:
-        stck = db.session.query(Stock, Document).filter(Stock.document_id==Document.id).filter(Stock.component_id==form.id.data)
+        stck = db.session.query(Stock, Document).filter(
+            Stock.document_id == Document.id).filter(Stock.component_id == form.id.data)
         stck = stck.filter(Document.order_status is not None).all()
         cmpnt = stock.get_component()
         docs = set([x[1].id for x in stck])
         print(docs)
         d_count = cmpnt.stock_count-stock.count
-        if cmpnt.unfired>=d_count:
+        if cmpnt.unfired >= d_count:
             count = len(docs)//2
             if count == 1:
                 count = 2
@@ -634,6 +648,7 @@ def add_document():
             pool.join()
         flash('Деталь {} списана'.format(stock.get_name()), 'message')
     return redirect(url_for('stock', stock=stock, roles=roles))
+
 
 @app.route('/pdocument', methods=['POST'])
 @login_required
@@ -745,7 +760,8 @@ def check_order(order):
             for key in details.keys():
                 cmpnnt = Component.query.filter(
                     Component.component_name == key).first()
-                db.session.add(Stock(order.doc_id, None, cmpnnt.id, math.ceil(details[key]*(order.count-pstock(product.pstock_count)))))
+                db.session.add(Stock(order.doc_id, None, cmpnnt.id, math.ceil(
+                    details[key]*(order.count-pstock(product.pstock_count)))))
                 db.session.commit()
                 Stock.query.filter(
                     cmpnnt.id == Stock.component_id).first().get_count()
@@ -753,7 +769,7 @@ def check_order(order):
             p_stock = Stock.query.filter(
                 Stock.id_product == product.id).first()
             db.session.add(Stock(order.doc_id, product.id,
-                                 None, product.pstock_count))
+                                 None, order.count))
             db.session.commit()
             p_stock.get_count()
 
@@ -779,12 +795,13 @@ def check_order(order):
                 if item is None or component.stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))):
                     def check(x): return 'Резерв' if x == 'Заказ' else x
                     doc_type = check(doc_type)
-                    unfired = lambda x: x if x else 0
+                    def unfired(x): return x if x else 0
                     if component.stock_count:
                         note = Note(component.id, product.id, order.id, math.fabs(
                             (component.stock_count+unfired(component.unfired))-(details_new[name]*(order.count-pstock(product.pstock_count)))), '')
                     else:
-                        note = Note(component.id, product.id, order.id, math.fabs((details_new[name]*(order.count-pstock(product.pstock_count)))), '')
+                        note = Note(component.id, product.id, order.id, math.fabs(
+                            (details_new[name]*(order.count-pstock(product.pstock_count)))), '')
                     db.session.add(note)
                     db.session.commit()
                     order_status = None
@@ -822,9 +839,9 @@ def update_status():
     elif doc.order_status == 'в производстве':
         doc.order_status = 'отгружен'
         db.session.commit()
-        doc.document_type='Заказ'
+        doc.document_type = 'Заказ'
         db.session.commit()
-        stck = Stock.query.filter(Stock.document_id==doc.id).all()
+        stck = Stock.query.filter(Stock.document_id == doc.id).all()
         for s in stck:
             s.get_count()
     elif doc.order_status == 'отгружен':
@@ -887,12 +904,14 @@ def order_processor(doc, counting_flag=False):
         start_time = time.time()
         stocks = Stock.query.filter(Stock.document_id == doc.id)
         for stck in stocks.all():
-            s=Stock.query.filter(Stock.component_id==stck.component_id).first()
+            s = Stock.query.filter(Stock.component_id ==
+                                   stck.component_id).first()
             if stck.id_product:
-                s=Stock.query.filter(Stock.id_product==stck.id_product).first()
+                s = Stock.query.filter(
+                    Stock.id_product == stck.id_product).first()
             Stock.query.filter(Stock.id == stck.id).delete()
             db.session.commit()
-            
+
             if counting_flag and s:
                 s.get_count()
         print("--- %s seconds ---" % (time.time() - start_time))
@@ -915,15 +934,17 @@ def order_processor(doc, counting_flag=False):
                     Component.component_name == name).filter(Stock.component_id == Component.id).first()
                 if query is None:
                     query = [(Component.query.filter(
-                    Component.component_name == name).first()), None]
+                        Component.component_name == name).first()), None]
                 if query[1]:
                     query[1].get_count()
                 if query[1] is None or query[0].stock_count < (details_new[name]*(order.count-pstock(product.pstock_count))) or query[0].stock_count is None:
                     doc_type = 'Резерв'
-                    if query[0].stock_count>0:
-                        count = math.fabs((query[0].stock_count)-(details_new[name]*(order.count-pstock(product.pstock_count))))
+                    if query[0].stock_count > 0:
+                        count = math.fabs(
+                            (query[0].stock_count)-(details_new[name]*(order.count-pstock(product.pstock_count))))
                     else:
-                        count = math.ceil(details_new[name]*(order.count-pstock(product.pstock_count)))
+                        count = math.ceil(
+                            details_new[name]*(order.count-pstock(product.pstock_count)))
                     note = Note(query[0].id, product.id, order.id, count, '')
                     db.session.add(note)
                     db.session.commit()
@@ -953,9 +974,12 @@ def order_processor(doc, counting_flag=False):
         start_time = time.time()
         if product.pstock_count is None or product.pstock_count < order.count:
             for key in details.keys():
-                cmpnnt = Component.query.filter(Component.component_name == key).first().id
-                stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
-                coef = math.ceil(details[key]*(order.count-pstock(product.pstock_count)))
+                cmpnnt = Component.query.filter(
+                    Component.component_name == key).first().id
+                stck = Stock.query.filter(Stock.document_id == order.doc_id).filter(
+                    Stock.component_id == cmpnnt).first()
+                coef = math.ceil(
+                    details[key]*(order.count-pstock(product.pstock_count)))
                 new_stck = Stock(order.doc_id, None, cmpnnt, coef)
                 db.session.add(new_stck)
                 db.session.commit()
@@ -964,12 +988,13 @@ def order_processor(doc, counting_flag=False):
         else:
             p_stock = db.session.query(Product.id).filter(
                 Stock.id_product == product.id).first()
-            p_stck = Stock(order.doc_id, p_stock[0], None, product.pstock_count)
+            p_stck = Stock(
+                order.doc_id, p_stock[0], None, order.count)
             db.session.add(p_stck
-                )
+                           )
             db.session.commit()
             p_stck.get_count()
-            
+
         print("--- %s seconds ---" % (time.time() - start_time))
 
 
@@ -991,7 +1016,7 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
             if component.stock_count < (details_new[name]['count']*(order.count-pstock(product.pstock_count))):
                 count = details_new[name].pop('count')
                 for det in details_new[name].keys():
-                    if component.stock_count>0:
+                    if component.stock_count > 0:
                         coef = count
                     else:
                         coef = count
@@ -1026,22 +1051,24 @@ def get_mods_rec(details_new, new_md, product, pstock, order):
 def delete_and_back(id):
     doc = Order.query.filter(Order.id == id).first().doc_id
     order = Order.query.filter(Order.id == id).first()
-    stck = list(db.session.query(Stock.component_id).filter(Stock.document_id==doc).all())
+    stck = list(db.session.query(Stock.component_id).filter(
+        Stock.document_id == doc).all())
     stocks = [x[0] for x in stck]
-    stck_p = list(db.session.query(Stock.id_product).filter(Stock.document_id==doc).filter(Stock.id_product).all())
+    stck_p = list(db.session.query(Stock.id_product).filter(
+        Stock.document_id == doc).filter(Stock.id_product).all())
     stocks_p = [x[0] for x in stck_p]
     order.delete()
     if stocks:
         for stock in stocks:
-            s = Stock.query.filter(Stock.component_id==stock).first()
+            s = Stock.query.filter(Stock.component_id == stock).first()
             if s:
                 s.get_count()
     if stocks_p:
         for stock_p in stocks_p:
-            s_p = Stock.query.filter(Stock.id_product==stock_p).first()
+            s_p = Stock.query.filter(Stock.id_product == stock_p).first()
             if s_p:
                 s_p.get_count()
-    
+
     return redirect(url_for('order', doc=doc))
 
 
@@ -1107,7 +1134,8 @@ def storekeeper_page():
     roles = [x.name for x in current_user.roles]
     notes = [Note.query.filter(Note.na_component == x[0]).first(
     ) for x in set(db.session.query(Note.na_component).all())]
-    component = Component.query.filter(Component.component_name=='Наклейка на светильник 58*30мм').first()
+    component = Component.query.filter(
+        Component.component_name == 'Наклейка на светильник 58*30мм').first()
     # n_notes = Note.query.filter(Note.na_component==component.id).all()
     # for n in n_notes:
     #     order = Order.query.filter(Order.id==n.order_id).first()
@@ -1160,6 +1188,7 @@ def product_list():
     print(products)
     return render_template('workshop_details.html', products=products, type=request.form['type'])
 
+
 @app.route('/component_list', methods=['POST'])
 def component_list():
     details = Component.query.all()
@@ -1181,9 +1210,11 @@ def add_component():
         return render_template('workshop_details.html', details=details, type='list')
     return render_template('component_row.html', det=component)
 
+
 @app.route('/add_product', methods=['POST'])
 def add_product():
-    product = Product.query.filter(Product.id==request.form['product_id']).first()
+    product = Product.query.filter(
+        Product.id == request.form['product_id']).first()
     shop = Shop.query.filter(Shop.id == request.form['workshop_id']).first()
     product.product_shop_id.append(shop)
     db.session.commit()
@@ -1195,6 +1226,7 @@ def add_product():
         return render_template('workshop_details.html', products=products, type='list')
     return render_template('product_row.html', prod=product)
 
+
 @app.route('/show_workshop', methods=['POST'])
 def show_workshop():
     details = db.session.query(Component).join(ComponentShop).filter(
@@ -1202,186 +1234,238 @@ def show_workshop():
     products = db.session.query(Product).join(ProductShop).filter(
         Product.id == ProductShop.pr_id).filter(request.form['workshop'] == ProductShop.prod_shop_id).all()
     print(products)
-    return render_template('workshop_details.html', details=details, products = products,  type='list')
+    return render_template('workshop_details.html', details=details, products=products,  type='list')
 
 
 @app.route('/pworkshop_orders/<shop>', methods=['GET', 'POST'])
 def pworkshop_orders(shop):
     prods = db.session.query(Order, Document, Product).filter(
-        Order.doc_id == Document.id).filter(Order.prod_id==Product.id).filter(Document.order_status=='в производстве').all()
+        Order.doc_id == Document.id).filter(Order.prod_id == Product.id).filter(Document.order_status == 'в производстве').all()
     products = {}
     for det in prods:
         if det[0]:
             if int(shop) in [x.id for x in det[2].product_shop_id]:
                 if det[1].endtime:
                     if det[1].endtime not in products:
-                        products[det[1].endtime]=[]
-                        products[det[1].endtime].append({'count':det[0].count,
-                        'obj':det})
+                        products[det[1].endtime] = []
+                        products[det[1].endtime].append({'count': det[0].count,
+                                                         'obj': det})
                     else:
                         for cmpnnt in products[det[1].endtime]:
-                            if det[2]==cmpnnt['obj'][2]:
-                                cmpnnt['count']+=det[0].count
+                            if det[2] == cmpnnt['obj'][2]:
+                                cmpnnt['count'] += det[0].count
                                 break
                         if det[2].id not in [x['obj'][2].id for x in products[det[1].endtime]]:
-                            products[det[1].endtime].append({'count':det[0].count,
-                        'obj':det})
+                            products[det[1].endtime].append({'count': det[0].count,
+                                                             'obj': det})
     print(products)
-    times=sorted(products, key=lambda x: x)
-    return render_template('pworkflow_table.html', times = times, components = products)
+    times = sorted(products, key=lambda x: x)
+    return render_template('pworkflow_table.html', times=times, components=products)
+
 
 @app.route('/workshop_orders', methods=['GET', 'POST'])
 def workshop_orders():
     roles = [x.name for x in current_user.roles]
     dets = db.session.query(Stock, Document, Component).filter(
-        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).all()   
+        Stock.document_id == Document.id).filter(Stock.component_id == Component.id).filter(Document.order_status == 'в производстве' and Document.document_type=='Резерв').filter(Component.shop).all()
     components = dict()
     for det in dets:
-        if det[2].shop :
+        if det[2].shop:
             if int(request.form['shop']) in [x.id for x in det[2].shop]:
                 if det[1].endtime:
                     if (det[1].endtime not in components):
-                        components[det[1].endtime]=[]
-                        components[det[1].endtime].append({'count':det[0].count,
-                        'obj':[det]})
+                        components[det[1].endtime] = []
+                        if det[0].count > det[2].stock_count+det[0].count:
+                            components[det[1].endtime].append({'count': det[0].count, 'workflow_count': Workflow.get_count(
+                                det[1].endtime, det[2].id, det[1].product_orders[0].id), 'obj': [det]})
                     else:
                         for cmpnnt in components[det[1].endtime]:
-                            if det[2].id==cmpnnt['obj'][0][2].id:
-                                cmpnnt['count']+=det[0].count
+                            if det[2].id == cmpnnt['obj'][0][2].id and det[2].unfired>det[2].stock_count+det[2].unfired:
+                                cmpnnt['count'] += det[0].count
+                                workflow_count = Workflow.get_count(
+                                    det[1].endtime, det[2].id, det[1].product_orders[0].id)
+                                if workflow_count:
+                                    cmpnnt['workflow_count'] += workflow_count
                                 cmpnnt['obj'].append(det)
                                 break
                         print(components[det[1].endtime])
-                        if det[2] not in [x['obj'][0][2] for x in components[det[1].endtime]]:
-                            components[det[1].endtime].append({'count':det[0].count,'obj':[det]})
+                        if det[2] not in [x['obj'][0][2] for x in components[det[1].endtime]] and det[0].count+det[2].unfired > det[2].stock_count+det[2].unfired:
+                            components[det[1].endtime].append(
+                                {'count': det[0].count, 'workflow_count': Workflow.get_count(det[1].endtime, det[2].id, det[1].product_orders[0].id), 'obj': [det]})
     for c in components:
-        components[c]=[comp for comp in components[c] if comp['count']>comp['obj'][0][2].stock_count and (comp['obj'][0][0].workflow_count is None or comp['count']>comp['obj'][0][0].workflow_count)]
+        components[c] = [comp for comp in components[c] if comp['count'] > comp['obj'][0][2].stock_count+det[0].count and (
+            comp['workflow_count'] is None or comp['count'] > comp['workflow_count'])]
     print(components)
     if components == {}:
-        return redirect(url_for('pworkshop_orders', shop = request.form['shop']))
-    times=sorted(components, key=lambda x: x)
-    return render_template('workflow_table.html', times = times, components = components, roles=roles)
+        return redirect(url_for('pworkshop_orders', shop=request.form['shop']))
+    times = sorted(components, key=lambda x: x)
+    workflow = Workflow.query.first()
+    return render_template('workflow_table.html', workflow=workflow, times=times, components=components, roles=roles)
+
 
 @app.route('/delete_component_shop', methods=['GET', 'POST'])
 def delete_component_shop():
-    Component.query.filter(Component.id==request.form['id']).first().shop=[]
+    Component.query.filter(
+        Component.id == request.form['id']).first().shop = []
     db.session.commit()
     return '', 204
 
+
 @app.route('/delete_product_shop', methods=['GET', 'POST'])
 def delete_product_shop():
-    Product.query.filter(Product.id==request.form['id']).first().shop=[]
+    Product.query.filter(Product.id == request.form['id']).first().shop = []
     db.session.commit()
     return '', 204
+
 
 @app.route('/workflow', methods=['GET', 'POST'])
 def workflow():
     workshops = Shop.query.all()
     return render_template('workflow.html', workshops=workshops)
 
-@app.route('/workflow_count', methods=['GET', 'POST'])
+
+@app.route('/flow_count', methods=['GET', 'POST'])
 def workflow_count():
-    roles = [x.name for x in current_user.roles]   
+    component = ''
+    roles = [x.name for x in current_user.roles]
     stock = Stock.query.filter(Stock.id == int(request.form['stock'])).first()
-    new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
-    doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
+    new_doc = Document(datetime.today().strftime(
+        "%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
+    doc = Document(datetime.today().strftime(
+        "%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
     db.session.add(doc)
     db.session.commit()
     db.session.add(new_doc)
     db.session.commit()
     det = {}
-    modul = ModalComponent.query.filter(ModalComponent.parrent_id==stock.get_component().id).all()
+    modul = ModalComponent.query.filter(
+        ModalComponent.parrent_id == stock.get_component().id).all()
     report = Product.get_details_report(modul, det)
-    new_md=dict()
+    new_md = dict()
     def pstock(x): return x if x and x > 0 else 0
     order = stock.get_document().product_orders[0]
     prod = order.get_product()
-    get_mods_rec(report,new_md,prod, pstock, order)
+    get_mods_rec(report, new_md, prod, pstock, order)
     for key in report.keys():
-        cmpnnt = Component.query.filter(Component.component_name == key).first().id
-        stck = Stock.query.filter(Stock.document_id==order.doc_id).filter(Stock.component_id==cmpnnt).first()  
-        coef = math.ceil(report[key]* int(request.form['workflow_count']))
+        cmpnnt = Component.query.filter(
+            Component.component_name == key).first().id
+        stck = Stock.query.filter(Stock.document_id == order.doc_id).filter(
+            Stock.component_id == cmpnnt).first()
+        coef = math.ceil(report[key] * int(request.form['workflow_count']))
         new_stck = Stock(doc.id, None, cmpnnt, coef)
         db.session.add(new_stck)
         db.session.commit()
         new_stck.get_count()
     dets = db.session.query(Stock, Document, Component).filter(
-        Stock.document_id == Document.id).filter(Stock.component_id==Component.id).filter(Document.order_status=='в производстве').filter(Component.shop).filter(Component.id==stock.component_id).all()
-    component = {'count':0, 'obj':[]}
-    doc = int(request.form['stock'])
+        Stock.document_id == Document.id).filter(Stock.component_id == Component.id).filter(Document.order_status == 'в производстве').filter(Component.shop).filter(Component.id == stock.component_id).all()
+    component = {'count': 0, 'workflow_count': 0, 'obj': []}
     for det in dets:
-        if det[1].endtime==request.form['time']:
-            component['count']+=det[0].count
-            if det[2].id==stock.component_id:
+        if det[1].endtime == request.form['time']:
+            component['count'] += det[0].count
+            if det[2].id == stock.component_id and det[0].count > det[2].stock_count+det[0].count:
                 component['obj'].append(det)
-    new_stck = Stock(new_doc.id, None, stock.get_component().id, int(request.form['workflow_count']))
+    for comp in component['obj']:
+        wf = Workflow.query.filter(Workflow.component == comp[2].id and Workflow.wf_time ==
+                                   comp[1].endtime and Workflow.order_id == comp[1].product_orders[0].id).first()
+        if str(comp[0].id) in request.form.getlist('stocks[]'):
+            if wf:
+                wf.wf_count += int(request.form['workflow_count'])
+                db.session.commit()
+            else:
+                wf = Workflow(comp[2].id, comp[1].endtime,
+                              request.form['workflow_count'], comp[1].product_orders[0].id)
+                db.session.add(wf)
+                db.session.commit()
+            component['workflow_count'] += wf.wf_count
+    new_stck = Stock(new_doc.id, None, stock.get_component().id,
+                     int(request.form['workflow_count']))
     db.session.add(new_stck)
     db.session.commit()
     new_stck.get_count()
-    if stock.workflow_count:
-        stock.workflow_count+=int(request.form['workflow_count'])
-        db.session.commit()
-    else:
-        stock.workflow_count=int(request.form['workflow_count'])
-        db.session.commit()
-    print(component)
-    order_processor(component['obj'][0][1].id, counting_flag=True)
-    return render_template('workflow_row.html', component = component, roles=roles)
+    for doc in request.form.getlist('docs[]'):
+        if doc == '-1':
+            wf = Workflow.query.filter(Workflow.component == component['obj'][0][2].id and Workflow.wf_time == component['obj']
+                                       [0][1].endtime and Workflow.order_id == component['obj'][0][1].product_orders[0].id).first()
+            if wf:
+                wf.wf_count += int(request.form['workflow_count'])
+                db.session.commit()
+            else:
+                wf = Workflow(component['obj'][0][2].id, component['obj'][0][1].endtime,
+                              request.form['workflow_count'], component['obj'][0][1].product_orders[0].id)
+                db.session.add(wf)
+                db.session.commit()
+            component['workflow_count'] += wf.wf_count
+        else:
+            order_processor(doc, counting_flag=True)
+    workflow = Workflow.query.first()
+    return render_template('workflow_row.html', workflow=workflow, component=component, roles=roles)
+
 
 @app.route('/pworkflow_count', methods=['GET', 'POST'])
 def pworkflow_count():
     order = Order.query.filter(Order.id == request.form['order']).first()
-    new_doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
+    new_doc = Document(datetime.today().strftime(
+        "%Y/%m/%d %H:%M"), current_user.id, 'Приход', '')
     db.session.add(new_doc)
     db.session.commit()
-    doc = Document(datetime.today().strftime("%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
+    doc = Document(datetime.today().strftime(
+        "%Y/%m/%d %H:%M"), current_user.id, 'Расход', '')
     db.session.add(doc)
     db.session.commit()
     if order.pworkflow_count:
-        order.pworkflow_count+=int(request.form['pworkflow_count'])
+        order.pworkflow_count += int(request.form['pworkflow_count'])
         db.session.commit()
         print(order.pworkflow_count)
     else:
-        order.pworkflow_count=int(request.form['pworkflow_count'])
+        order.pworkflow_count = int(request.form['pworkflow_count'])
         db.session.commit()
         print(order.pworkflow_count)
-    product = Product.query.filter(Product.id==order.prod_id).first()
+    product = Product.query.filter(Product.id == order.prod_id).first()
     details = product.get_det()
     details_new = details.copy()
-    new_md=dict()
+    new_md = dict()
     stock = []
     mod_stock = []
-    get_mods_rec(details_new, new_md, product, lambda x:1, order)
-    
+    get_mods_rec(details_new, new_md, product, lambda x: 1, order)
+
     for key in details_new.keys():
         cmpnnt = Component.query.filter(
             Component.component_name == key).first()
-        db.session.add(Stock(doc.id, None, cmpnnt.id, details_new[key]*int(request.form['pworkflow_count'])))
+        db.session.add(Stock(doc.id, None, cmpnnt.id,
+                             details_new[key]*int(request.form['pworkflow_count'])))
         db.session.commit()
         Stock.query.filter(
             cmpnnt.id == Stock.component_id).first().get_count()
     for key in new_md.keys():
         cmpnnt = Component.query.filter(
             Component.component_name == key).first()
-        db.session.add(Stock(doc.id, None, cmpnnt.id, new_md[key]*int(request.form['pworkflow_count'])))
+        db.session.add(Stock(doc.id, None, cmpnnt.id,
+                             new_md[key]*int(request.form['pworkflow_count'])))
         db.session.commit()
         Stock.query.filter(
             cmpnnt.id == Stock.component_id).first().get_count()
-    db.session.add(Stock(new_doc.id, product.id, None, int(request.form['pworkflow_count'])))
+    db.session.add(Stock(new_doc.id, product.id, None,
+                         int(request.form['pworkflow_count'])))
     db.session.commit()
-    return render_template('pworkflow_row.html', order = order)
+    return render_template('pworkflow_row.html', order=order)
+
 
 @app.route('/executed_orders', methods=['GET', 'POST'])
 def executed_orders():
-    executed_orders = Document.query.filter(Document.order_status=='выполнен').all()
+    executed_orders = Document.query.filter(
+        Document.order_status == 'выполнен').all()
     roles = [x.name for x in current_user.roles]
     return render_template('executed_orders.html', orders=sorted(executed_orders, key=lambda x: x.id)[::-1], roles=roles)
+
 
 @app.route('/delete_workshop', methods=['GET', 'POST'])
 def delete_workshop():
     shop = int(request.form['shop'])
-    dets = db.session.query(Component, ComponentShop).filter(Component.id==ComponentShop.com_id).filter(ComponentShop.shop_id==shop).all()
-    prods = db.session.query(Product, ProductShop).filter(Product.id==ProductShop.pr_id).filter(ProductShop.prod_shop_id==shop).all()
-    shop = Shop.query.filter(Shop.id==shop).first()
+    dets = db.session.query(Component, ComponentShop).filter(
+        Component.id == ComponentShop.com_id).filter(ComponentShop.shop_id == shop).all()
+    prods = db.session.query(Product, ProductShop).filter(
+        Product.id == ProductShop.pr_id).filter(ProductShop.prod_shop_id == shop).all()
+    shop = Shop.query.filter(Shop.id == shop).first()
     if dets:
         for det in dets:
             det[0].shop.remove(shop)
@@ -1392,5 +1476,5 @@ def delete_workshop():
             db.session.commit()
     db.session.delete(shop)
     db.session.commit()
-    
+
     return redirect(url_for('workshops'))
