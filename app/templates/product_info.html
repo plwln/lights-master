@@ -16,13 +16,13 @@
    <td>{{specification.get_component().component_unit}}</td>
    <td>{{specification.count}}</td>
 </tr>
-   {%if specification.get_children(specification.get_component().id)%}
-   {{recurse(specification.get_children(specification.get_component().id),specification.get_component().id,specification.count)}}
-   {%endif%}
+{%if specification.get_children(specification.get_component().id)%}
+{{recurse(specification.get_children(specification.get_component().id),specification.get_component().id,specification.count)}}
+{%endif%}
 {%endif%}
 {%elif specification.get_type()=='com'%}
 <tr>
-<td scope="row">--{{specification.component_name}}</td>
+   <td scope="row">--{{specification.component_name}}</td>
    <td>{{specification.component_unit}}</td>
    <td>{{specification.get_count(parrent)*count}}</td>
 </tr>
@@ -52,21 +52,23 @@
          <p>Вес: <span>{{product.product_weight}}</span></p>
       </div>
       {%if 'Технолог' in roles or 'Admin' in roles%}
-      <div class="col p-0 pr-2">
-
-         <div class="p-0 col"><a
-               href="{{url_for('product_specification', product = product.id, det = 'hollow')}}"><button type="button"
-                  class="btn btn-success btn-sm mr-3">Изменить спецификацию</button></a></div>
-         <div class="row p-0 pr-4">
-            <div class="p-0 col-2 ml-3 mr-2 mt-2"><a
-                  href="{{url_for('create_product', cloned_product = product.id)}}"><button type="button"
-                     class="btn btn-info btn-sm mr-3">Клонировать</button></a></div>
-            <div class="p-0 pr-2 col-1 ml-5 mt-2"><a href="{{url_for('delete_product', id = product.id)}}"><button
-                     type="button" class="btn btn-danger btn-sm mr-3">Удалить</button></a></div>
+      <div class="col-6">
+         <div class="row">
+            <div class="col"><a
+                  href="{{url_for('product_specification', product = product.id, det = 'hollow')}}"><button
+                     type="button" class="col btn btn-success btn-sm">Изменить спецификацию</button></a></div>
          </div>
-         <div class="row p-0 pr-4">
-            <div class="p-0 col ml-3 mr-2 mt-2"><button onClick="javascript:CallPrint('print-content');" type="button"
-                  class="btn btn-secondary btn-sm mr-3">Печать</button></div>
+         <div class="row mt-2">
+            <div class=" col pr-0"><a href="{{url_for('create_product', cloned_product = product.id)}}"><button
+                     type="button" class=" col btn btn-info btn-sm">Клонировать</button></a></div>
+            <div class=" col"><a href="{{url_for('delete_product', id = product.id)}}"><button type="button"
+                     class="col btn btn-danger btn-sm">Удалить</button></a></div>
+         </div>
+         <div class="row mt-2">
+            <div class=" col pr-0"><button onClick="javascript:CallPrint('print-content');" type="button"
+                  class="col btn btn-secondary btn-sm">Печать</button></div>
+            <div class=" col"><button type="button" class=" pDownloadButton col btn btn-secondary btn-sm"
+                  product={{product.id}} data-toggle="modal" data-target="#download">Чертёж</button></div>
          </div>
       </div>
       {%endif%}
@@ -91,7 +93,7 @@
                </tr>
             </thead>
             <tbody>
-                  {{spec_dict[0]|safe}}
+               {{spec_dict[0]|safe}}
             </tbody>
          </table>
       </div>
@@ -180,7 +182,13 @@
       </div>
    </div>
 </div>
+<div class="modal fade" id='download' tabindex="-1" role="dialog" aria-labelledby="downloadLabel" aria-hidden="true">
+   <div class="modal-dialog" role="document">
+      <div class="modal-content uploadingBlock">
 
+      </div>
+   </div>
+</div>
 <script>
    function CallPrint(strid) {
       var prtContent = document.getElementById(strid);
@@ -195,5 +203,87 @@
       WinPrint.close();
       prtContent.innerHTML = strOldOne;
    }
+</script>
+<script>
+   $(document).ready(function () {
+      let component = 0;
+      let product = 0;
+      $(document).on('click', '.pDownloadButton', function () {
+         product = $(this).attr('product');
+         req = $.ajax({
+            url: '/upload_product_form',
+            type: 'POST',
+            data: {
+               'product': product,
+            }
+         });
+         req.done(function (data) {
+            $('.uploadingBlock').html(data);
+         });
+
+
+      });
+      $(document).on('click', '.upload', function () {
+         req = $.ajax({
+            url: '/upload_product_form',
+            type: 'POST',
+            data: {
+               'product': product,
+            }
+         });
+         req.done(function (data) {
+            $('.uploadingBlock').html(data);
+         });
+      });
+      $(document).on('click', '#upload-file-btn', function () {
+
+         var form_data = new FormData($('#upload-file')[0]);
+         name = ($('#file')[0].value).split('\\')[2]
+         console.log(name)
+         $.ajax({
+            url: '/product_name',
+            type: 'POST',
+            data: {
+               'product': product,
+               'name': name,
+            }
+         });
+         $.ajax({
+            type: 'POST',
+            url: '/upload',
+            data: form_data,
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: function (data) {
+               console.log('Success!');
+            },
+         });
+         req = $.ajax({
+            url: '/upload_product_form',
+            type: 'POST',
+            data: {
+               'product': product,
+            }
+         });
+         req.done(function (data) {
+            $('.uploadingBlock').html(data);
+         });
+      });
+      $(document).on('click', '.downloadButton', function () {
+         component = $(this).attr('component');
+         console.log(component)
+         req = $.ajax({
+            url: '/upload_form_info',
+            type: 'POST',
+            data: {
+               'component': component,
+            }
+         });
+         req.done(function (data) {
+            $('.uploadingBlock').html(data);
+         });
+      });
+   })
 </script>
 {%endblock%}

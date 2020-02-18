@@ -1,37 +1,38 @@
 {%for time in times%}
+{%if components[time]!=[]%}
 <p class='mb-0'>
     <b class='text-primary'>{{time}}</b>
 </p>
 <table class="table table-sm">
     <tbody>
         {%for component in components[time]%}
-        {%if component['obj'][0].pworkflow_count is none or component['obj'][0].pworkflow_count < component['count']%}
-        <tr id='row{{component["obj"][0].id}}'>
+        <tr id='row{{component["obj"][0][0].id}}'>
             <td>
-                {{component['obj'][2].product_name}}
+                {{component['obj'][0][2].product_name}}
             </td>
             <td><span class="">
-                {%if component['obj'][2].pstock_count is none%}
-                {{component['count']}}
-                {%else%}
-                    {%if component['obj'][2].pstock_count<component['count'] and component['obj'][2].pstock_count>0%}
-                    {{component['count']-component['obj'][2].pstock_count}}
-                    {%else%}
                     {{component['count']}}
-                    {%endif%}
+
                 </span>
-                {%endif%}
-                {%if component['obj'][0].pworkflow_count%}
-                / {{component['obj'][0].pworkflow_count}}
+
+                {%if component['workflow_count']%}
+                / {{component['workflow_count']}}
                 {%endif%}
             </td>
             <td class=p-1>
+                {%if 'Admin' in roles or 'Склад' in roles%}
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
-                    data-target="#c{{component['obj'][2].id}}">
+                    data-target="#p{{component['obj'][0][0].id}}">
                     Приход
                 </button>
-                <div class="modal fade" id="c{{component['obj'][2].id}}" tabindex="-1" role="dialog" aria-labelledby="exModal"
-                    style="display: none;" aria-hidden="true">
+                {%endif%}
+                <button class="btn btn-sm btn-outline-primary" type="button" data-toggle="collapse"
+                    data-target="#col{{component['obj'][0][0].id}}" aria-expanded="false"
+                    aria-controls="collapseExample">
+                    Товар
+                </button>
+                <div class="modal fade" id="p{{component['obj'][0][0].id}}" tabindex="-1" role="dialog"
+                    aria-labelledby="exModal" style="display: none;" aria-hidden="true">
                     <div class="modal-dialog modal-sm" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -41,13 +42,82 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <input type="text" id='wc{{component["obj"][0].id}}'
+                                <input type="text" id='wc{{component["obj"][0][0].id}}'
                                     class="form-control form-control-sm wf_count" placeholder="Кол-во"
                                     aria-label="Username">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" order_id='{{component["obj"][0].id}}'
-                                    class="btn btn-sm btn-success pReport" >Оформить</button>
+                                <button type="button" count='#wc{{component["obj"][0][0].id}}'
+                                    class="btn btn-sm btn-success pDocumentsButton" data-toggle='modal'
+                                    data-target="#pDocuments{{component['obj'][0][0].id}}">Оформить</button>
+                                <button type="button" class="btn btn-sm btn-light"
+                                    data-dismiss="modal">Отменить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="pDocuments{{component['obj'][0][0].id}}" tabindex="-1" role="dialog"
+                    aria-labelledby="exModal" style="display: none;" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h6 class="modal-title" id="exModal">Сделано: <span class='counter'
+                                        id='counter{{component["obj"][0][0].id}}'></span></h6>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div>
+                                    <!-- Table -->
+                                    <table class="table table-bordered">
+                                        <!-- Table Heading -->
+                                        <tbody>
+                                            <tr class="">
+                                                <th><input type="checkbox" class="custom-control-input"
+                                                        id="customCheck1" checked></th>
+                                                <th>Название</th>
+                                                <th>Заказ</th>
+                                                <th>Нужное кол-во</th>
+                                            </tr>
+                                            {%for o in component['obj']%}
+                                            <tr class="doccheck">
+                                                <td>
+                                                    <input head='{{o[0].id}}' class='checkbox'
+                                                        type="checkbox" id="pCheck{{o[1].id}}" value="{{o[1].id}}">
+                                                </td>
+
+                                                <td>
+                                                    {{o[0].get_product().product_name}}</td>
+                                                <!-- Date Of Birth -->
+                                                <td>№{{o[1].order_item}}</td>
+                                                <!-- Location -->
+                                                {%if o[0].pworkflow_count%}
+                                                
+                                                <td class='count pCount{{o[1].id}}' check='{{o[1].id}}'>{{o[0].count - o[0].pworkflow_count}}
+                                                </td>
+                                                {%else%}
+                                                <td class='count pCount{{o[1].id}}' check='{{o[1].id}}'>{{o[0].count}}
+                                                </td>
+                                                {%endif%}
+                                            </tr>
+                                            {%endfor%}
+                                            <tr class="doccheck">
+                                                <td>
+                                                    <input  head='{{component["obj"][0][0].id}}' class='checkbox' type="checkbox" id="pCheckStock" value="-1">
+                                                </td>
+                                                <!-- Name -->
+                                                <td colspan='3'>На склад</td>
+
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" stock_id='{{component["obj"][0][0].id}}'
+                                    class="btn btn-sm btn-success pReport" time='{{time}}'
+                                    doc='{{component["obj"][0][1].id}}'>Оформить</button>
                                 <button type="button" class="btn btn-sm btn-light"
                                     data-dismiss="modal">Отменить</button>
                             </div>
@@ -56,8 +126,31 @@
                 </div>
             </td>
         </tr>
-        {%endif%}
         {%endfor%}
     </tbody>
 </table>
+{%endif%}
 {%endfor%}
+<script>
+    $(document).ready(function () {
+        $(document).on('click', '.pDocumentsButton', function () {
+            let count = $(this).attr('count')
+
+            _this = $(count).val();
+            let items = $('.doccheck .count')
+            for (let item of items) {
+                $('.counter').text(_this)
+                let count = +($(item).text())
+                console.log(count)
+                if (count > +_this) {
+                    $(item).css('background', 'red');
+                }
+                else {
+                    $(item).css('background', 'green');
+
+                }
+            }
+        });
+
+    });
+</script>

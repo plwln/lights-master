@@ -108,11 +108,11 @@
     </thead>
     <tbody style="overflow: auto; height:100%;">
         {% for item in stock%}
-        {%if item.get_product().pstock_count!=0%}
+        {%if item.get_product() and item.get_product().pstock_count>0%}
           <tr>
             <td class="py-0" >{{item.get_product().product_name}}</td>
             <td class="py-0">{{item.get_product().product_item}}</td>
-            <td class="py-0">{{item.get_product().pstock_count}}|round(6)</td>
+            <td class="py-0">{{item.get_product().pstock_count}}</td>
         <td class="py-0">
                 <button type="button" class="btn btn-success btn-sm mr-3 py-0" data-toggle="modal" data-target="#del{{item.get_product().id}}">+</button>
                 

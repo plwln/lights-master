@@ -29,6 +29,9 @@
             {%if 'Технолог' in roles or 'Admin' in roles%}
             <button type="button" class="btn btn-danger btn-sm mr-3 py-0" data-toggle="modal" data-target="#p{{product.id}}">&times;</button>
             {%endif%}
+            <button type="button" class="btn btn-info btn-sm mr-3 py-0 downloadButton" data-toggle="modal"
+          data-target="#download" product='{{product.id}}'><img src="static/images/pencil.png" width="16"
+            height="16" alt="" style="vertical-align:middle"></button>
             <div class="modal fade" id='p{{product.id}}' tabindex="-1" role="dialog" aria-labelledby="{{product.get_name()+'Label'}}" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -48,7 +51,81 @@
       </tr>
     {%endfor%}
     </tbody>
+    <div class="modal fade" id='download' tabindex="-1" role="dialog" aria-labelledby="downloadLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content uploadingBlock">
+  
+        </div>
+      </div>
+    </div>
 </table>
 
 </div>
+<script>
+  $(document).ready(function () {
+    let product = 0;
+    $(document).on('click', '.downloadButton', function () {
+      product = $(this).attr('product');
+      req = $.ajax({
+        url: '/upload_product_form',
+        type: 'POST',
+        data: {
+          'product': product,
+        }
+      });
+      req.done(function (data) {
+        $('.uploadingBlock').html(data);
+      });
+
+
+    });
+    $(document).on('click', '.upload', function () {
+      req = $.ajax({
+        url: '/upload_product_form',
+        type: 'POST',
+        data: {
+          'product': product,
+        }
+      });
+      req.done(function (data) {
+        $('.uploadingBlock').html(data);
+      });
+    });
+    $(document).on('click', '#upload-file-btn', function () {
+
+      var form_data = new FormData($('#upload-file')[0]);
+      name = ($('#file')[0].value).split('\\')[2]
+      console.log(name)
+      $.ajax({
+        url: '/product_name',
+        type: 'POST',
+        data: {
+          'product': product,
+          'name':name,
+        }
+      });
+      $.ajax({
+            type: 'POST',
+            url: '/upload',
+            data: form_data,
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: function(data) {
+                console.log('Success!');
+            },
+        });
+      req = $.ajax({
+        url: '/upload_product_form',
+        type: 'POST',
+        data: {
+          'product': product,
+        }
+      });
+      req.done(function (data) {
+        $('.uploadingBlock').html(data);
+      });
+    });
+  });
+</script>
 {% endblock %}

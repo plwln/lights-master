@@ -1,6 +1,5 @@
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
-
 class Config(object):
     # ...
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'app.db')
@@ -10,3 +9,5 @@ class Config(object):
     USER_ENABLE_EMAIL = False      # Disable email authentication
     USER_ENABLE_USERNAME = True    # Enable username authentication
     USER_REQUIRE_RETYPE_PASSWORD = False    # Simplify register form
+    UPLOAD_FOLDER = 'C:/work/lights-master/uploads'
+    ALLOWED_EXTENSIONS = set(['pdf', 'png', 'jpg', 'jpeg'])

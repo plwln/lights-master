@@ -6,21 +6,12 @@
 <table class="table table-sm">
     <tbody>
         {%for component in components[time]%}
-        {%if component['count']>component['obj'][0][2].stock_count%}
         <tr id='row{{component["obj"][0][0].id}}'>
             <td>
                 {{component['obj'][0][2].component_name}}
             </td>
             <td><span class="">
-                    {%if component['obj'][0][2].stock_count>=0%}
-                    {{component['count']-component['obj'][0][2].stock_count}}
-                    {%else%}
-                    {%if component['workflow']%}
-                    {{component['count']-component['workflow']}}
-                    {%else%}
                     {{component['count']}}
-                    {%endif%}
-                    {%endif%}
 
                 </span>
 
@@ -29,7 +20,7 @@
                 {%endif%}
             </td>
             <td class=p-1>
-                {%if 'Admin' in roles%}
+                {%if 'Admin' in roles or 'Склад' in roles%}
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
                     data-target="#c{{component['obj'][0][0].id}}">
                     Приход
@@ -91,10 +82,11 @@
                                             </tr>
                                             {%for o in component['obj']%}
                                             {%set workflow_count=workflow.get_self_count(o[1].endtime, o[2].id, o[1].product_orders[0].id)%}
-                                            {%if o[2].stock_count<o[0].count%}
+                                            {%set count = o[2].get_allowed(o[1].product_orders[0], o[1].id)%}
+                                            {%if count%}
                                             <tr class="doccheck">
                                                 <td>
-                                                    <input head='{{component["obj"][0][0].id}}' class='checkbox'
+                                                    <input head='{{o[0].id}}' class='checkbox'
                                                         type="checkbox" id="check{{o[1].id}}" value="{{o[1].id}}">
                                                 </td>
 
@@ -103,27 +95,20 @@
                                                 <!-- Date Of Birth -->
                                                 <td>№{{o[1].order_item}}</td>
                                                 <!-- Location -->
-                                                {%if o[2].stock_count>=0%}
-
-                                                <td class='count count{{o[1].id}}' check='{{o[1].id}}'>
-                                                    {{o[0].count-o[2].stock_count}}</td>
+                                                {%if workflow_count%}
+                                                
+                                                <td class='count count{{o[1].id}}' check='{{o[1].id}}'>{{count - workflow_count}}
+                                                </td>
                                                 {%else%}
-                                                {%if o[2].stock_count+o[0].count>0%}
-                                                <td class='count count{{o[1].id}}' check='{{o[1].id}}'>
-                                                    {{o[0].count}}</td>
-                                                {%else%}
-                                                <td class='count count{{o[1].id}}' check='{{o[1].id}}'>{{o[0].count}}
+                                                <td class='count count{{o[1].id}}' check='{{o[1].id}}'>{{count}}
                                                 </td>
                                                 {%endif%}
-                                                {%endif%}
-                                                {%endif%}
-
+                                            {%endif%}
                                             </tr>
                                             {%endfor%}
                                             <tr class="doccheck">
                                                 <td>
-                                                    <input class='checkbox' type="checkbox" id="checkStock"
-                                                        value="-1">
+                                                    <input  head='{{component["obj"][0][0].id}}' class='checkbox' type="checkbox" id="checkStock" value="-1">
                                                 </td>
                                                 <!-- Name -->
                                                 <td colspan='3'>На склад</td>
@@ -145,7 +130,6 @@
                 </div>
             </td>
         </tr>
-        {%endif%}
         {%endfor%}
     </tbody>
 </table>

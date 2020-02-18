@@ -117,6 +117,7 @@ class Product(db.Model):
     pstock_count = db.Column(db.Float())
     p_unfired = db.Column(db.Float())
     product_shop_id = db.relationship('Shop', secondary='product_shop')
+    drawing_path = db.Column(db.String())
     def __init__(self, product_name, product_power, product_item, product_weight, product_material):
         self.product_name = product_name
         self.product_power = product_power
@@ -221,6 +222,7 @@ class Component(db.Model):
     stock_count = db.Column(db.Float())
     note_count = db.Column(db.Float())
     shop = db.relationship('Shop', secondary='component_shop')
+    drawing = db.Column(db.String())
     def __init__(self, component_name, component_unit, component_item):
         self.component_name = component_name
         self.component_unit = component_unit
@@ -230,6 +232,14 @@ class Component(db.Model):
             return self.shop[0].name
         else:
             return None
+    
+    def get_allowed(self, order, document):
+        allowed = Allowed.query.filter(Allowed.comp == self.id).filter( Allowed.id_order==order.id).filter(Allowed.id_document==document).first()
+        if allowed:
+            return allowed.a_count
+        else:
+            None
+
     def delete_component(id):
         specification = Specification.query.filter(Specification.component_id==id).first()
         child = ModalComponent.query.filter(ModalComponent.child_id==id).first()
@@ -592,15 +602,28 @@ class Workflow(db.Model):
     
     @staticmethod
     def get_count(time,component, order):
-        wf=Workflow.query.filter(Workflow.component==component and Workflow.time==time and Workflow.order_id==order).first()
+        wf = Workflow.query.filter(Workflow.component == component).filter(Workflow.wf_time ==time).filter(Workflow.order_id == order).first()
         if wf:
             return wf.wf_count
         else:
             return None
     
     def get_self_count(self, time, component, order):
-        wf=Workflow.query.filter(Workflow.component==component and Workflow.time==time and Workflow.order_id==order).first()
+        wf = Workflow.query.filter(Workflow.component == component).filter(Workflow.wf_time ==time).filter(Workflow.order_id == order).first()
         if wf:
             return wf.wf_count
         else:
             return None
+
+class Allowed(db.Model):
+    __tablename__ = 'allowed'
+    id = db.Column(db.Integer(), primary_key=True)
+    id_order= db.Column(db.Integer())
+    comp = db.Column(db.Integer())
+    id_document = db.Column(db.Integer())
+    a_count = db.Column(db.Float())
+    def __init__(self, comp,  id_order, id_document, a_count):
+        self.id_order = id_order
+        self.id_document = id_document
+        self.a_count = a_count
+        self.comp = comp

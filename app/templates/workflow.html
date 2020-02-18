@@ -60,25 +60,6 @@
             window.location.reload();
         });
         $('#shop1').click();
-        $(document).on('click', '.pReport', function () {
-            order = $(this).attr('order_id');
-            console.log('#wc' + order)
-            workflow_count = $('#wc' + order).val()
-            console.log(workflow_count)
-            req = $.ajax({
-                url: '/pworkflow_count',
-                type: 'POST',
-                data: {
-                    'order': order,
-                    'pworkflow_count': workflow_count,
-                }
-            });
-            req.done(function (data) {
-                $('#row' + order).html(data);
-                $('body').removeClass('modal-open')
-                $('.modal-backdrop').remove();
-            });
-        });
 
     });
 </script>
@@ -125,6 +106,30 @@
             stocks=[];
             req.done(function (data) {
                 $('#row' + stock).html(data);
+                $('body').removeClass('modal-open')
+                $('.modal-backdrop').remove();
+            });
+        });
+        
+        $(document).on('click', '.pReport', function () {
+            order = $(this).attr('stock_id');
+            time = $(this).attr('time');
+            doc = $(this).attr('doc');
+            console.log('#wc' + order)
+            workflow_count = $('#wc' + order).val()
+            console.log(workflow_count)
+            req = $.ajax({
+                url: '/pworkflow_count',
+                type: 'POST',
+                data: {
+                    'time':time,
+                    'order': order,
+                    'pworkflow_count': workflow_count,
+                    'docs':docs,
+                }
+            });
+            req.done(function (data) {
+                $('#row' + order).html(data);
                 $('body').removeClass('modal-open')
                 $('.modal-backdrop').remove();
             });
